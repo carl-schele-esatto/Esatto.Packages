@@ -17,7 +17,6 @@
 
   <PropertyGroup Label="NuGet">
     <PackageId>Backoffice.DictionaryFilterValues</PackageId>
-    <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>Carl Schéle</Authors>
     <Description>Extends the Umbraco 17 backoffice Dictionary section filter to also match translation VALUES, not just dictionary-item names. Useful for editors who remember a translated string but not the dictionary key. Adds one read-only API endpoint and a fetch-patching JS shim.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;dictionary;translation;filter;search</PackageTags>

@@ -15,7 +15,6 @@
 
   <PropertyGroup Label="NuGet">
     <PackageId>Backoffice.MediaTreeDnd</PackageId>
-    <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>Carl Schéle</Authors>
     <Description>Native HTML5 drag-and-drop for the Umbraco 17 backoffice Media tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;media;tree;drag-and-drop</PackageTags>

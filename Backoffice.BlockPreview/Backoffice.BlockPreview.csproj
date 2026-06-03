@@ -16,7 +16,6 @@
 
   <PropertyGroup Label="NuGet">
     <PackageId>Backoffice.BlockPreview</PackageId>
-    <VersionPrefix>1.1.0</VersionPrefix>
     <Authors>Carl Schéle</Authors>
     <Description>Frontend-styled previews for Umbraco block editors, rendered directly in the backoffice. Ships configurable Block Editor Custom View elements (starting with a YouTube video preview) that any site registers against its own content types via the manifest meta, with self-contained styling and no assumptions about the consuming site's CSS.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;block-editor;block-list;block-grid;preview;custom-view</PackageTags>

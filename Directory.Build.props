@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- Automatic versioning for every package in the mono-repo.
+       MinVer derives the version from git tags at build/pack time, so there is no manual
+       VersionPrefix to bump and no "duplicate version" feed rejections.
+
+       Each package is versioned independently via a per-package tag prefix
+       (set in Directory.Build.targets as "<PackageId>-"). Release a package by tagging:
+           git tag Backoffice.CustomEditors-1.2.0 && git push origin Backoffice.CustomEditors-1.2.0
+       Commits after a tag automatically become prereleases, e.g. 1.2.1-preview.0.3 -
+       handy for the .local-feed smoke-test builds. -->
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Untagged builds get cleaner labels, e.g. 1.2.1-preview.0.3 instead of ...-alpha... -->
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+</Project>

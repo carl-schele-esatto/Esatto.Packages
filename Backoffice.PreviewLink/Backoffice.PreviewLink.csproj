@@ -25,7 +25,6 @@
 
   <PropertyGroup Label="NuGet">
     <PackageId>Backoffice.PreviewLink</PackageId>
-    <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>Carl Schéle</Authors>
     <Description>Shareable preview links for Umbraco 17. Editors mint a tokenized URL via a workspace-action button; recipients open the URL externally and see the current draft (no backoffice login). Tokens are 7-day data-protected; recipient cookie scopes preview to the specific page for 5 minutes.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;preview;preview-link;share-preview;draft</PackageTags>

@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- Per-package independent versioning. Set here (not in Directory.Build.props) so each
+       project's $(PackageId) is already defined when this is evaluated. MinVer reads this
+       at version-compute time, so a package only picks up tags matching "<PackageId>-". -->
+  <PropertyGroup>
+    <MinVerTagPrefix>$(PackageId)-</MinVerTagPrefix>
+  </PropertyGroup>
+
+</Project>
