@@ -1,0 +1,18 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+
+## Node / Vite (client builds)
+**/node_modules/
+**/.vite/
+*.tsbuildinfo
+
+## NuGet local output
+*.nupkg
+
+## IDE / OS
+.vs/
+.idea/
+*.user
+.DS_Store
+Thumbs.db
