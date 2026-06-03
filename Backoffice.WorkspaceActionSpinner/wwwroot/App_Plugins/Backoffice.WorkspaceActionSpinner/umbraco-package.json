@@ -1,0 +1,14 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "backoffice-workspace-action-spinner",
+  "name": "Backoffice Workspace Action Spinner",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Backoffice Workspace Action Spinner",
+      "alias": "Backoffice.WorkspaceActionSpinner",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Backoffice.WorkspaceActionSpinner/workspace-action-spinner.js"
+    }
+  ]
+}

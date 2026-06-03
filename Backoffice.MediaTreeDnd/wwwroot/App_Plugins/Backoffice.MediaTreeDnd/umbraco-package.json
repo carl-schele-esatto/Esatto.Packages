@@ -1,0 +1,15 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "backoffice-media-tree-dnd",
+  "name": "Backoffice Media Tree DnD",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Backoffice Media Tree Drag and Drop",
+      "alias": "Backoffice.MediaTreeDnd.MediaTreeDragDrop",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Backoffice.MediaTreeDnd/media-tree-drag-drop.js",
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Media" }]
+    }
+  ]
+}

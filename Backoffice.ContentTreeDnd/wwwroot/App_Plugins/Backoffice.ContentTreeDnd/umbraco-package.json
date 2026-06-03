@@ -1,0 +1,15 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "backoffice-content-tree-dnd",
+  "name": "Backoffice Content Tree DnD",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Backoffice Content Tree Drag and Drop",
+      "alias": "Backoffice.ContentTreeDnd.ContentTreeDragDrop",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Backoffice.ContentTreeDnd/content-tree-drag-drop.js",
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

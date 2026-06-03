@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+
+    <RootNamespace>Backoffice.PreviewLink</RootNamespace>
+    <AssemblyName>Backoffice.PreviewLink</AssemblyName>
+
+    <!-- Compile our MVC Razor views (Views/PreviewLinkError/Index.cshtml) into
+         the assembly. Razor SDK's default mode is Razor Components (Blazor);
+         this flips on classic MVC view compilation. Without it the Razor view
+         is shipped as a loose file at best and emits RAZORSDK1004 at worst. -->
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <!-- Suppress "missing XML comment" since this is an OSS-style package. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Backoffice.PreviewLink</PackageId>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Authors>Carl Schéle</Authors>
+    <Description>Shareable preview links for Umbraco 17. Editors mint a tokenized URL via a workspace-action button; recipients open the URL externally and see the current draft (no backoffice login). Tokens are 7-day data-protected; recipient cookie scopes preview to the specific page for 5 minutes.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;preview;preview-link;share-preview;draft</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ASP.NET Core framework: provides Controller, Middleware infrastructure,
+         DataProtection, etc. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+
+    <!-- Umbraco.Cms.Core: IUmbracoContextAccessor, IPreviewTokenGenerator,
+         IPublishedUrlProvider, IDocumentNavigationQueryService, constants. -->
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+
+    <!-- Umbraco.Cms.Api.Management: ManagementApiControllerBase,
+         VersionedApiBackOfficeRoute, AuthorizationPolicies. -->
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
+
+    <!-- Umbraco.Cms.Web.Common: AuthorizationPolicies.SectionAccessContent. -->
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">true</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>

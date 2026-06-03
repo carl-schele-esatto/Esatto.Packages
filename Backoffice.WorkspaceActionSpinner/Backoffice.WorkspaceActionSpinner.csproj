@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer.
+         Default Razor SDK behaviour would prefix everything with /_content/<PackageId>/,
+         which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Backoffice.WorkspaceActionSpinner</PackageId>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <Authors>Carl Schéle</Authors>
+    <Description>Restores the post-modal spinner on Umbraco 17 workspace action buttons (Save / Save and publish / Publish with descendants / Schedule) when those actions gate the actual operation behind a culture-picker modal. Closes the UX gap where the only feedback during the 5+ second post-modal save is the thin tree-node progress bar, far from where the user clicked. Pure App_Plugins package — no C# code.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;workspace-action;ux</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Defaults: every `dotnet pack` auto-pushes to the esatto-packages feed.
+         Override with `dotnet pack -p:AutoPushToFeed=false` to pack-without-push. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">true</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>

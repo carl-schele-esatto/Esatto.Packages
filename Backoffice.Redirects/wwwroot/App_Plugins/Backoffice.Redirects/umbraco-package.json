@@ -1,0 +1,17 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "backoffice-redirects",
+  "name": "Backoffice Redirects",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Backoffice.Redirects.Dashboard",
+      "name": "Redirects",
+      "element": "/App_Plugins/Backoffice.Redirects/redirects-dashboard.js",
+      "elementName": "backoffice-redirects-dashboard",
+      "meta": { "label": "Redirects", "pathname": "redirects", "weight": 100 },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Settings" }]
+    }
+  ]
+}

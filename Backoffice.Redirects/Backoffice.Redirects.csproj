@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Backoffice.Redirects</RootNamespace>
+    <AssemblyName>Backoffice.Redirects</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Backoffice.Redirects</PackageId>
+    <VersionPrefix>1.0.1</VersionPrefix>
+    <Authors>Carl Schéle</Authors>
+    <Description>Dead-URL → new-URL redirects for Umbraco 17. Provides a SQL-backed Redirects table, a Settings-section dashboard for editors to manage 301 rules, an IContentFinder that resolves redirects at request time, and an IRedirectSiteContext plugin for multi-site setups. Single-site projects get a flat list; multi-site projects implement IRedirectSiteContext to scope redirects per site.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;redirects;url-redirects;301;multi-site</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
