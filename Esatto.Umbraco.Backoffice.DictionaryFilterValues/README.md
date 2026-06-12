@@ -10,18 +10,21 @@ The built-in Bellissima filter (`Type to filter...`) matches against item keys o
 dotnet add package Esatto.Umbraco.Backoffice.DictionaryFilterValues
 ```
 
-Restart the site / hard-refresh the backoffice. Activates automatically on the Translation section.
+Restart the site / hard-refresh the backoffice. It activates automatically — no configuration. The composer and Management API controller are auto-discovered; no DI wiring, no SQL migrations, no `Startup` changes.
 
-No DI configuration needed — the C# controller is auto-discovered via the Razor Class Library's application-part registration. No SQL migrations, no `Startup` changes.
+## How it works
 
-## How it works (one-paragraph version)
+On load, a small backoffice **entry point** swaps the *data source* behind Umbraco's built-in Dictionary collection using the supported extension registry — it re-points the collection's `repositoryAlias` at this package's own repository (registering ours, then re-registering the stock collection manifest pointed at it). The stock collection element, views, paging and workspace are untouched; only where the data comes from changes.
 
-A C# controller exposes `GET /umbraco/api/backoffice-dictionary-filter-values/search` which uses `IDictionaryItemService` to enumerate every dictionary item plus its translation values. A backoffice JS shim patches `window.fetch` to redirect non-empty-filter calls hitting `/umbraco/management/api/v1/dictionary?filter=...` to that custom endpoint, reshapes the response to match the OpenAPI client's expected envelope, and lets the rest of Bellissima render normally. First filter keystroke fetches once and caches in-memory; subsequent keystrokes filter the cache so typing stays instant. The cache is pre-warmed when the user navigates into the Translation section (via a `pushState` patch) so even the first keystroke is responsive.
+That repository calls an **authenticated** Management API endpoint which matches the editor's filter text against the dictionary key **or any translation value**, server-side. The endpoint reads from an in-memory cache of the whole dictionary — built once with a single bulk `IDictionaryItemService` call and invalidated automatically whenever a dictionary item is saved or deleted, so edits show up without a reload.
+
+No `window.fetch` patching, no anonymous endpoints, no client-side dump cache.
 
 ## Endpoint
 
-- `GET /umbraco/api/backoffice-dictionary-filter-values/search` — `[AllowAnonymous]`, read-only walk of dictionary items + their translation values.
-- Endpoint is anonymous because dictionary values are already served to anonymous visitors on public pages. If you have non-public dictionary strings (rare), this package is not appropriate without modification.
+- `GET /umbraco/management/api/v1/backoffice/dictionary-filter-values?filter=&skip=&take=`
+- **Authenticated** as a backoffice user (`AuthorizationPolicies.TreeAccessDictionary`); it is only ever called from inside the backoffice via the collection repository, with the bearer token attached automatically.
+- Returns dictionary items whose key or any translation value matches `filter` (case-insensitive; empty returns all), paged, in the same shape as the built-in dictionary collection endpoint.
 
 ## Compatibility
 
@@ -29,8 +32,10 @@ A C# controller exposes `GET /umbraco/api/backoffice-dictionary-filter-values/se
 |---------|--------|
 | 17.x    | Verified |
 
-Earlier versions of Umbraco use a different Dictionary collection repository surface — not supported.
+The collection data-source extension point and the Management API surface are specific to the Umbraco 17 (Bellissima) backoffice; earlier majors are not supported.
 
 ## License
 
 MIT.
+
+<!-- TODO: add a Screenshots section (GIF of the filter matching a translated value) once assets are provided. -->

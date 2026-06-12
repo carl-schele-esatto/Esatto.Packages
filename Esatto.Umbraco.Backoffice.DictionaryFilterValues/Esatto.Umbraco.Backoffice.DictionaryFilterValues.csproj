@@ -14,12 +14,14 @@
 
     <RootNamespace>Esatto.Umbraco.Backoffice.DictionaryFilterValues</RootNamespace>
     <AssemblyName>Esatto.Umbraco.Backoffice.DictionaryFilterValues</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.DictionaryFilterValues</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Extends the Umbraco 17 backoffice Dictionary section filter to also match translation VALUES, not just dictionary-item names. Useful for editors who remember a translated string but not the dictionary key. Adds one read-only API endpoint and a fetch-patching JS shim.</Description>
+    <Description>Extends the Umbraco 17 backoffice Dictionary section filter to also match translation VALUES, not just dictionary-item names. Useful for editors who remember a translated string but not the dictionary key. Adds one authenticated Management API endpoint and a backoffice entry point that re-points the built-in Dictionary collection's data source at it — no window.fetch patching, no anonymous endpoints.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;dictionary;translation;filter;search</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -32,20 +34,44 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.DictionaryFilterValues.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- ASP.NET Core framework — provides Controller, ApiController, Route,
-         AllowAnonymous, IActionResult, FromQuery, etc. Razor Class Library SDK
+         Authorize, IActionResult, FromQuery, etc. Razor Class Library SDK
          does NOT include this implicitly when there is no Razor content. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
 
-    <!-- Umbraco.Cms.Core provides IDictionaryItemService + IDictionaryItem.
-         Pinned to 17.0.0 minimum; resolves to whatever the consumer has. -->
+    <!-- The Management API surface spans three assemblies (mirrors Backoffice.Redirects):
+         Api.Management -> ManagementApiControllerBase + VersionedApiBackOfficeRoute;
+         Web.Common -> AuthorizationPolicies; Core -> IDictionaryItemService + dictionary
+         notifications + IComposer. Min-only 17.0.0; resolves to whatever the consumer has. -->
     <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <!-- Keep umbraco-package.json visible in the solution (built copy ships under wwwroot) -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project.
+       Skipped during IDE design-time builds to avoid running npm on every keystroke. -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
+    <Message Importance="high" Text="Installing backoffice client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building backoffice client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
   <PropertyGroup Label="AutoPush">
-    <!-- Defaults: every `dotnet pack` auto-pushes to the esatto-packages feed.
-         Override with `dotnet pack -p:AutoPushToFeed=false` to pack-without-push. -->
-    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">true</AutoPushToFeed>
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
     <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
   </PropertyGroup>
 
