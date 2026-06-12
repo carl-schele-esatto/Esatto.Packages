@@ -35,6 +35,9 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Min-only (>=14.0.0): built against Umbraco 14 but forward-compatible, so it
+         installs cleanly on v14 through the latest major. A capped range like
+         [14.0.0,15.0.0) would block install on v15+ and defeat the broad-reach goal. -->
     <PackageReference Include="Umbraco.Cms.Web.Common" Version="14.0.0" />
   </ItemGroup>
 

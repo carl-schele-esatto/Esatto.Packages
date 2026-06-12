@@ -11,7 +11,7 @@ namespace Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox;
 /// Value editor that encrypts the value on its way to storage and decrypts it on its way back
 /// into the backoffice editor. The database always holds ciphertext.
 /// </summary>
-public class EncryptedTextboxValueEditor : DataValueEditor
+public sealed class EncryptedTextboxValueEditor : DataValueEditor
 {
     private readonly IValueEncryptor _encryptor;
 
@@ -36,7 +36,19 @@ public class EncryptedTextboxValueEditor : DataValueEditor
     /// <summary>Backoffice -> DB: encrypt the submitted plaintext.</summary>
     public override object? FromEditor(ContentPropertyData editorValue, object? currentValue)
     {
-        var plaintext = editorValue.Value as string;
-        return _encryptor.Encrypt(plaintext);
+        var submitted = editorValue.Value as string;
+
+        // Data-loss guard: if the editor submitted nothing (e.g. the field showed empty because the
+        // stored ciphertext couldn't be decrypted) and the current stored value is ciphertext we
+        // can't currently read, preserve it instead of overwriting with empty. It may become
+        // recoverable once the Data Protection key ring returns.
+        if (string.IsNullOrEmpty(submitted)
+            && currentValue is string current
+            && _encryptor.IsUndecryptable(current))
+        {
+            return current;
+        }
+
+        return _encryptor.Encrypt(submitted);
     }
 }

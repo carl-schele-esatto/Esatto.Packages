@@ -51,12 +51,17 @@ public class DataProtectionValueEncryptorTests
     }
 
     [Fact]
-    public void Encrypting_an_already_encrypted_value_does_not_double_encrypt()
+    public void Encrypt_encrypts_even_a_value_that_starts_with_the_marker()
     {
         var sut = CreateSut();
-        var once = sut.Encrypt("secret");
-        var twice = sut.Encrypt(once);
-        Assert.Equal(once, twice);
+        const string input = "edp1:looks-like-ciphertext";
+
+        var result = sut.Encrypt(input);
+
+        Assert.NotNull(result);
+        Assert.NotEqual(input, result);
+        Assert.StartsWith("edp1:", result);
+        Assert.Equal(input, sut.Decrypt(result));
     }
 
     [Theory]
@@ -67,5 +72,24 @@ public class DataProtectionValueEncryptorTests
         var sut = CreateSut();
         var result = sut.Decrypt(corrupt);
         Assert.Null(result);
+    }
+
+    [Fact]
+    public void IsUndecryptable_distinguishes_unreadable_ciphertext_from_everything_else()
+    {
+        var sut = CreateSut();
+
+        // Marked but not a real protected payload -> can't decrypt -> true.
+        Assert.True(sut.IsUndecryptable("edp1:AAAA"));
+
+        // Unmarked plaintext -> false.
+        Assert.False(sut.IsUndecryptable("plain"));
+
+        // Null -> false.
+        Assert.False(sut.IsUndecryptable(null));
+
+        // A real, decryptable value -> false.
+        var real = sut.Encrypt("super-secret-api-key-123");
+        Assert.False(sut.IsUndecryptable(real));
     }
 }

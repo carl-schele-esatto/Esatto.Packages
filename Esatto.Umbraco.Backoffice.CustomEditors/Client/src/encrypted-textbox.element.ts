@@ -47,7 +47,10 @@ export default class EncryptedTextboxElement
   }
 
   #onInput(e: Event) {
-    this.value = (e.target as HTMLInputElement).value;
+    const newValue = (e.target as HTMLInputElement).value;
+    // Guard against redundant dispatches (matches the official text-box editor).
+    if (newValue === this.value) return;
+    this.value = newValue;
     this.dispatchEvent(new UmbChangeEvent());
   }
 
@@ -74,7 +77,7 @@ export default class EncryptedTextboxElement
     }
   }
 
-  render() {
+  override render() {
     const type = this._mask && !this._reveal ? "password" : "text";
     const revealLabel = this._reveal ? "Hide value" : "Show value";
     return html`
@@ -88,7 +91,6 @@ export default class EncryptedTextboxElement
         data-lpignore="true"
         data-form-type="other"
         @input=${this.#onInput}
-        @change=${this.#onInput}
       >
         ${this._mask
           ? html`<uui-button
@@ -96,10 +98,12 @@ export default class EncryptedTextboxElement
               compact
               look="default"
               label=${revealLabel}
-              title=${revealLabel}
               @click=${this.#toggleReveal}
             >
-              <uui-icon name=${this._reveal ? "icon-eye-off" : "icon-eye"}></uui-icon>
+              <uui-icon
+                name=${this._reveal ? "icon-eye-off" : "icon-eye"}
+                aria-hidden="true"
+              ></uui-icon>
             </uui-button>`
           : ""}
       </uui-input>

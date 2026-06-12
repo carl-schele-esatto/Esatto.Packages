@@ -8,18 +8,21 @@ namespace Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox;
 /// Property Editor UI references this alias via `propertyEditorSchemaAlias`.
 /// </summary>
 [DataEditor(
-    alias: "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox",
+    alias: EditorAlias,
     ValueType = ValueTypes.String)]
-public class EncryptedTextboxDataEditor : DataEditor
+public sealed class EncryptedTextboxDataEditor : DataEditor
 {
-    private readonly IDataValueEditorFactory _dataValueEditorFactory;
+    /// <summary>
+    /// The shared property-editor schema alias. Single source of truth for both the
+    /// <see cref="DataEditorAttribute"/> here and the value converter's IsConverter check.
+    /// </summary>
+    public const string EditorAlias = "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox";
 
     public EncryptedTextboxDataEditor(IDataValueEditorFactory dataValueEditorFactory)
         : base(dataValueEditorFactory)
     {
-        _dataValueEditorFactory = dataValueEditorFactory;
     }
 
     protected override IDataValueEditor CreateValueEditor()
-        => _dataValueEditorFactory.Create<EncryptedTextboxValueEditor>(Attribute!);
+        => DataValueEditorFactory.Create<EncryptedTextboxValueEditor>(Attribute!);
 }

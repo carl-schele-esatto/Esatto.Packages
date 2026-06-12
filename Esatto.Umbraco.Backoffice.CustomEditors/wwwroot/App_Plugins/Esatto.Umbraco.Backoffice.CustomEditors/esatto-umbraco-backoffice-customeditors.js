@@ -3,7 +3,7 @@ const e = [
     type: "propertyEditorUi",
     alias: "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox",
     name: "Encrypted Textbox",
-    element: () => import("./encrypted-textbox.element-BEdSRqvJ.js"),
+    element: () => import("./encrypted-textbox.element-BbN8xNJ6.js"),
     meta: {
       label: "Encrypted Textbox",
       icon: "icon-lock",
@@ -27,7 +27,7 @@ const e = [
     type: "propertyEditorUi",
     alias: "Esatto.Umbraco.Backoffice.CustomEditors.DateRange",
     name: "Date Range",
-    element: () => import("./date-range.element-BpXRzmlM.js"),
+    element: () => import("./date-range.element-DkIb_LWs.js"),
     meta: {
       label: "Date Range",
       icon: "icon-calendar",

@@ -15,9 +15,22 @@ export function toDayKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-/** Take just the date part of an ISO string ("2026-05-03T14:00" -> "2026-05-03"). */
-function dayPart(iso: string): string {
-  return iso.slice(0, 10);
+/**
+ * Take just the date part of an ISO string ("2026-05-03T14:00" -> "2026-05-03").
+ * Null-aware: returns null when the input is null.
+ */
+export function dayPart(iso: string | null): string | null {
+  return iso ? iso.slice(0, 10) : null;
+}
+
+/**
+ * Parse a "YYYY-MM-DD" (optionally longer ISO) day key into a LOCAL Date.
+ * Uses the numeric constructor so the date is NOT interpreted as UTC midnight,
+ * which would shift a day for users west of UTC.
+ */
+export function parseDayKey(key: string): Date {
+  const [y, m, d] = key.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 /**
@@ -27,6 +40,7 @@ function dayPart(iso: string): string {
  */
 export function buildMonthGrid(year: number, month: number): CalendarDay[] {
   const firstOfMonth = new Date(year, month, 1);
+  const firstOfMonthTime = firstOfMonth.getTime();
   // JS getDay(): 0=Sun..6=Sat. Convert to Monday-first offset (Mon=0..Sun=6).
   const mondayOffset = (firstOfMonth.getDay() + 6) % 7;
 
@@ -44,7 +58,7 @@ export function buildMonthGrid(year: number, month: number): CalendarDay[] {
       });
       cursor.setDate(cursor.getDate() + 1);
     }
-  } while (cursor.getMonth() === month || cursor < new Date(year, month, 1));
+  } while (cursor.getMonth() === month || cursor.getTime() < firstOfMonthTime);
 
   return days;
 }
@@ -55,7 +69,9 @@ export function isDayDisabled(
   min: string | null,
   max: string | null
 ): boolean {
-  if (min !== null && dayKey < dayPart(min)) return true;
-  if (max !== null && dayKey > dayPart(max)) return true;
+  const minDay = dayPart(min);
+  const maxDay = dayPart(max);
+  if (minDay !== null && dayKey < minDay) return true;
+  if (maxDay !== null && dayKey > maxDay) return true;
   return false;
 }

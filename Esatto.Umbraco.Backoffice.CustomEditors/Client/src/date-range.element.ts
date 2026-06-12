@@ -15,13 +15,14 @@ import type {
 import {
   UMB_VALIDATION_CONTEXT,
 } from "@umbraco-cms/backoffice/validation";
-import type { UmbDateRangeValue, DateRangeConfig } from "./types.js";
+import { type UmbDateRangeValue, type DateRangeConfig, EMPTY_RANGE } from "./types.js";
 import {
   normalizeValue,
   applyStartChange,
   applyEndChange,
   isRangeValid,
 } from "./date-range.logic.js";
+import { dayPart } from "./calendar.logic.js";
 import "./inline-calendar.element.js";
 
 const VALIDATION_KEY = "esatto-date-range-invalid";
@@ -89,51 +90,51 @@ export class BackofficeDateRangeEditorElement
     return `${dayKey}T${time && time.length ? time : "00:00"}:00`;
   }
 
-  #dayPart(iso: string | null): string | null {
-    return iso ? iso.slice(0, 10) : null;
-  }
-
   #timePart(iso: string | null): string {
     if (!iso || iso.length < 16) return "00:00";
     return iso.slice(11, 16);
   }
 
   #onStartDay = (e: Event) => {
+    const range = this.#range;
     const dayKey = (e.target as HTMLElement & { value: string | null }).value;
     // Deselecting the start clears the whole range (the end needs a start).
     if (!dayKey) {
-      this.#commit({ from: null, to: null });
+      this.#commit({ ...EMPTY_RANGE });
       return;
     }
-    const composed = this.#compose(dayKey, this.#timePart(this.#range.from));
-    this.#commit(applyStartChange(this.#range, composed));
+    const composed = this.#compose(dayKey, this.#timePart(range.from));
+    this.#commit(applyStartChange(range, composed));
   };
 
   #onEndDay = (e: Event) => {
+    const range = this.#range;
     // An end date is only meaningful once a start exists.
-    if (!this.#range.from) return;
+    if (!range.from) return;
     const dayKey = (e.target as HTMLElement & { value: string | null }).value;
     // Deselecting the end just clears the end.
     if (!dayKey) {
-      this.#commit({ from: this.#range.from, to: null });
+      this.#commit({ from: range.from, to: null });
       return;
     }
-    const composed = this.#compose(dayKey, this.#timePart(this.#range.to));
-    this.#commit(applyEndChange(this.#range, composed));
+    const composed = this.#compose(dayKey, this.#timePart(range.to));
+    this.#commit(applyEndChange(range, composed));
   };
 
   #onStartTime = (e: Event) => {
+    const range = this.#range;
     const time = (e.target as HTMLInputElement).value;
-    const day = this.#dayPart(this.#range.from);
+    const day = dayPart(range.from);
     if (!day) return;
-    this.#commit(applyStartChange(this.#range, this.#compose(day, time)));
+    this.#commit(applyStartChange(range, this.#compose(day, time)));
   };
 
   #onEndTime = (e: Event) => {
+    const range = this.#range;
     const time = (e.target as HTMLInputElement).value;
-    const day = this.#dayPart(this.#range.to);
+    const day = dayPart(range.to);
     if (!day) return;
-    this.#commit(applyEndChange(this.#range, this.#compose(day, time)));
+    this.#commit(applyEndChange(range, this.#compose(day, time)));
   };
 
   override render() {
@@ -146,7 +147,7 @@ export class BackofficeDateRangeEditorElement
         <div class="cal-col">
           <span class="label">Start</span>
           <esatto-date-range-calendar
-            .value=${this.#dayPart(range.from)}
+            .value=${dayPart(range.from)}
             .min=${this._config.minDate}
             .max=${this._config.maxDate}
             @change=${this.#onStartDay}
@@ -154,6 +155,7 @@ export class BackofficeDateRangeEditorElement
           ${this._config.includeTime && range.from
             ? html`<input
                 type="time"
+                aria-label="Start time"
                 .value=${this.#timePart(range.from)}
                 @change=${this.#onStartTime}
               />`
@@ -163,7 +165,7 @@ export class BackofficeDateRangeEditorElement
         <div class="cal-col">
           <span class="label">End</span>
           <esatto-date-range-calendar
-            .value=${this.#dayPart(range.to)}
+            .value=${dayPart(range.to)}
             .min=${endMin}
             .max=${this._config.maxDate}
             ?disabled=${!range.from}
@@ -175,6 +177,7 @@ export class BackofficeDateRangeEditorElement
           ${this._config.includeTime && range.to
             ? html`<input
                 type="time"
+                aria-label="End time"
                 .value=${this.#timePart(range.to)}
                 @change=${this.#onEndTime}
               />`

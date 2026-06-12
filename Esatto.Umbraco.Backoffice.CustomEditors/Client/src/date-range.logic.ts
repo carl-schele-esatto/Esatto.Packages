@@ -1,4 +1,4 @@
-import type { UmbDateRangeValue } from "./types.js";
+import { type UmbDateRangeValue, EMPTY_RANGE } from "./types.js";
 
 /** Convert whatever Umbraco hands us into a well-formed range object. */
 export function normalizeValue(value: unknown): UmbDateRangeValue {
@@ -9,7 +9,8 @@ export function normalizeValue(value: unknown): UmbDateRangeValue {
       to: typeof v.to === "string" ? v.to : null,
     };
   }
-  return { from: null, to: null };
+  // Spread so callers never share the module-level constant's reference.
+  return { ...EMPTY_RANGE };
 }
 
 /** Both ends picked. */
