@@ -1,21 +1,21 @@
 const e = [
   {
     type: "propertyEditorUi",
-    alias: "Backoffice.CustomEditors.MaskedTextBox",
-    name: "Masked Text Box",
-    element: () => import("./masked-text-box.element-BSHgUsB4.js"),
+    alias: "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox",
+    name: "Encrypted Text Box",
+    element: () => import("./encrypted-textbox.element-BEdSRqvJ.js"),
     meta: {
-      label: "Masked Text Box",
+      label: "Encrypted Text Box",
       icon: "icon-lock",
       group: "common",
-      // Built-in string schema, so this UI is also pickable on content data types.
-      propertyEditorSchemaAlias: "Umbraco.Plain.String",
+      // Custom C# schema (EncryptedTextboxDataEditor) — encrypts at rest.
+      propertyEditorSchemaAlias: "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox",
       settings: {
         properties: [
           {
             alias: "mask",
             label: "Mask value",
-            description: "Hide the value (e.g. for API keys / secrets) behind a reveal toggle.",
+            description: "Hide the value on screen behind a reveal toggle.",
             propertyEditorUiAlias: "Umb.PropertyEditorUi.Toggle"
           }
         ],
@@ -43,10 +43,10 @@ const e = [
       }
     }
   }
-], a = [
+], t = [
   ...e
 ];
 export {
-  a as manifests
+  t as manifests
 };
 //# sourceMappingURL=esatto-umbraco-backoffice-customeditors.js.map

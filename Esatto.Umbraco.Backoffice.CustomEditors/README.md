@@ -1,34 +1,32 @@
 # Esatto.Umbraco.Backoffice.CustomEditors
 
-A library of reusable **property editor UIs** for the Umbraco backoffice.
+A library of reusable **property editor UIs** for the Umbraco backoffice, including an **Encrypted Text Box** for secure data at rest and a **Date Range** editor with dual inline calendars.
 
 ![Date Range editor](docs/preview.png)
 
 ## Editors
 
-### Masked Text Box — `Backoffice.CustomEditors.MaskedTextBox`
+### Encrypted Text Box — `Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox`
 
-A text input that hides its value behind a reveal (👁) toggle — for API keys, secrets,
-tokens and other sensitive fields. Masking is **on by default**, so it's safe to bind to
-sensitive fields without configuration. On a content data type, a **Mask value** toggle lets
-editors turn masking off.
+A text input that encrypts its value at rest using **ASP.NET Core Data Protection**, and transparently decrypts it in the backoffice editor and in `Model.Value(alias)` on the front-end (so templates receive plaintext).
 
-> Masking is a UI affordance (it stops shoulder-surfing / screenshots). It does **not**
-> encrypt the value — persistence/encryption is the responsibility of the consuming feature.
+The input includes a reveal (👁) toggle that **masks the value on screen** — masking is **on by default**, so it's safe to bind to sensitive fields without configuration. On a content data type, a **Mask value** toggle lets editors turn masking off.
+
+⚠️ **Operational requirement**: The site must **persist and (for multi-server/containers) share its ASP.NET Core Data Protection key ring**. If that key ring is lost, encrypted values **cannot be recovered**. Additionally, encryption protects data **at rest in the database** — it does not restrict who can read the decrypted value in the backoffice or in templates.
 
 #### Use on a content Data Type
-Create a Data Type using the **Masked Text Box** editor (stores a plain string), then assign
+Create a Data Type using the **Encrypted Text Box** editor (stores an encrypted string), then assign
 it to a document type property like any other editor.
 
 #### Use from code (e.g. a custom settings schema)
 Reference the editor UI alias directly:
 
 ```
-Backoffice.CustomEditors.MaskedTextBox
+Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox
 ```
 
 For example, an Umbraco.AI provider can point a sensitive field's `EditorUiAlias` at this
-alias so its connection setting renders masked.
+alias so its connection setting renders encrypted and masked.
 
 ### Date Range — `Esatto.Umbraco.Backoffice.CustomEditors.DateRange`
 

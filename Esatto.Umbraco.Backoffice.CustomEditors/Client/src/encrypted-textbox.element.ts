@@ -21,10 +21,12 @@ import type {
  * "Mask value" toggle lets editors turn it off, which is why this is reusable beyond any
  * single feature.
  *
- * Note: masking is a UI affordance only — it does not encrypt the stored value.
+ * The masking here is a UI affordance only — it hides the plaintext on screen. Encryption
+ * at rest is handled server-side by the custom C# schema (EncryptedTextboxDataEditor) this
+ * UI is paired with; this component only ever deals with the plaintext value.
  */
-@customElement("bce-masked-text-box")
-export default class BceMaskedTextBoxElement
+@customElement("esatto-encrypted-textbox")
+export default class EncryptedTextboxElement
   extends UmbElementMixin(LitElement)
   implements UmbPropertyEditorUiElement
 {
@@ -79,7 +81,7 @@ export default class BceMaskedTextBoxElement
       <uui-input
         type=${type}
         .value=${this.value ?? ""}
-        name="bce-masked-value"
+        name="esatto-encrypted-value"
         autocomplete="new-password"
         spellcheck="false"
         data-1p-ignore="true"
@@ -116,6 +118,6 @@ export default class BceMaskedTextBoxElement
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bce-masked-text-box": BceMaskedTextBoxElement;
+    "esatto-encrypted-textbox": EncryptedTextboxElement;
   }
 }
