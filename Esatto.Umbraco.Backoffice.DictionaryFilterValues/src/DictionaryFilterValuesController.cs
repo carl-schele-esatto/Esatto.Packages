@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Services;
 
-namespace Backoffice.DictionaryFilterValues;
+namespace Esatto.Umbraco.Backoffice.DictionaryFilterValues;
 
 /// <summary>
 /// Returns dictionary items along with their translation values, so the

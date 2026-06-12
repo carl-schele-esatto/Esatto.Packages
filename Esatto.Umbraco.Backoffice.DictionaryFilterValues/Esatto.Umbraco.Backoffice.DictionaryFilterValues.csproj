@@ -12,20 +12,23 @@
          which Umbraco's package discovery does not look at. -->
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
 
-    <RootNamespace>Backoffice.DictionaryFilterValues</RootNamespace>
+    <RootNamespace>Esatto.Umbraco.Backoffice.DictionaryFilterValues</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.DictionaryFilterValues</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>Backoffice.DictionaryFilterValues</PackageId>
+    <PackageId>Esatto.Umbraco.Backoffice.DictionaryFilterValues</PackageId>
     <Authors>Carl Schéle</Authors>
     <Description>Extends the Umbraco 17 backoffice Dictionary section filter to also match translation VALUES, not just dictionary-item names. Useful for editors who remember a translated string but not the dictionary key. Adds one read-only API endpoint and a fetch-patching JS shim.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;dictionary;translation;filter;search</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

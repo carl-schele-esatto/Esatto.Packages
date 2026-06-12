@@ -1,0 +1,15 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "esatto-umbraco-backoffice-dictionary-filter-values",
+  "name": "Esatto Dictionary Filter Values",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Esatto Dictionary Filter Values",
+      "alias": "Esatto.Umbraco.Backoffice.DictionaryFilterValues.FetchPatch",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.DictionaryFilterValues/dictionary-filter-values.js",
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Translation" }]
+    }
+  ]
+}

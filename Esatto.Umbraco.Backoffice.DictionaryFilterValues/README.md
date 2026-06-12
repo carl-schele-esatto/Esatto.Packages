@@ -1,4 +1,4 @@
-# Backoffice.DictionaryFilterValues
+# Esatto.Umbraco.Backoffice.DictionaryFilterValues
 
 Extends the Umbraco 17 backoffice **Dictionary** section filter to also match translation **values**, not just dictionary-item names.
 
@@ -7,7 +7,7 @@ The built-in Bellissima filter (`Type to filter...`) matches against item keys o
 ## Install
 
 ```bash
-dotnet add package Backoffice.DictionaryFilterValues
+dotnet add package Esatto.Umbraco.Backoffice.DictionaryFilterValues
 ```
 
 Restart the site / hard-refresh the backoffice. Activates automatically on the Translation section.
