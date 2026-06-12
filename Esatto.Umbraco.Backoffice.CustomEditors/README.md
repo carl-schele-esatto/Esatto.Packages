@@ -1,12 +1,12 @@
 # Esatto.Umbraco.Backoffice.CustomEditors
 
-A library of reusable **property editor UIs** for the Umbraco backoffice, including an **Encrypted Text Box** for secure data at rest and a **Date Range** editor with dual inline calendars.
+A library of reusable **property editor UIs** for the Umbraco backoffice, including an **Encrypted Textbox** for secure data at rest and a **Date Range** editor with dual inline calendars.
 
 ![Date Range editor](docs/preview.png)
 
 ## Editors
 
-### Encrypted Text Box — `Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox`
+### Encrypted Textbox — `Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox`
 
 A text input that encrypts its value at rest using **ASP.NET Core Data Protection**, and transparently decrypts it in the backoffice editor and in `Model.Value(alias)` on the front-end (so templates receive plaintext).
 
@@ -15,7 +15,7 @@ The input includes a reveal (👁) toggle that **masks the value on screen** —
 ⚠️ **Operational requirement**: The site must **persist and (for multi-server/containers) share its ASP.NET Core Data Protection key ring**. If that key ring is lost, encrypted values **cannot be recovered**. Additionally, encryption protects data **at rest in the database** — it does not restrict who can read the decrypted value in the backoffice or in templates.
 
 #### Use on a content Data Type
-Create a Data Type using the **Encrypted Text Box** editor (stores an encrypted string), then assign
+Create a Data Type using the **Encrypted Textbox** editor (stores an encrypted string), then assign
 it to a document type property like any other editor.
 
 #### Use from code (e.g. a custom settings schema)
@@ -35,7 +35,7 @@ the database holds ciphertext:
 
 ```cshtml
 @{
-    // Replace "yourPropertyAlias" with your Encrypted Text Box property's alias.
+    // Replace "yourPropertyAlias" with your Encrypted Textbox property's alias.
     var secret = Model.Value<string>("yourPropertyAlias");
 }
 ```

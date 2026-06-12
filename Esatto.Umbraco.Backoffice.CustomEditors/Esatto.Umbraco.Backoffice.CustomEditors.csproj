@@ -17,7 +17,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.CustomEditors</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>A library of reusable property editor UIs for the Umbraco backoffice. Ships a Masked Text Box editor (hides sensitive values behind a reveal toggle) and a Date Range editor (two inline calendars with start/end constraint, optional time and min/max bounds).</Description>
+    <Description>A library of reusable property editor UIs for the Umbraco backoffice. Ships an Encrypted Textbox editor (encrypts sensitive values at rest via ASP.NET Core Data Protection, masked on screen) and a Date Range editor (two inline calendars with start/end constraint, optional time and min/max bounds).</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;property-editor;custom-editor;masked;password;secret;date-range;date-picker;calendar</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -2,10 +2,10 @@ const e = [
   {
     type: "propertyEditorUi",
     alias: "Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox",
-    name: "Encrypted Text Box",
+    name: "Encrypted Textbox",
     element: () => import("./encrypted-textbox.element-BEdSRqvJ.js"),
     meta: {
-      label: "Encrypted Text Box",
+      label: "Encrypted Textbox",
       icon: "icon-lock",
       group: "common",
       // Custom C# schema (EncryptedTextboxDataEditor) — encrypts at rest.

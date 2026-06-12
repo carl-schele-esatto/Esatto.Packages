@@ -4,7 +4,7 @@ using Umbraco.Cms.Core.PropertyEditors;
 namespace Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox;
 
 /// <summary>
-/// Server-side schema for the Encrypted Text Box. Stores a string (ciphertext). The matching
+/// Server-side schema for the Encrypted Textbox. Stores a string (ciphertext). The matching
 /// Property Editor UI references this alias via `propertyEditorSchemaAlias`.
 /// </summary>
 [DataEditor(

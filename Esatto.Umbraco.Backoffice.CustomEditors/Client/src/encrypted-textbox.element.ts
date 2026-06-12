@@ -14,7 +14,7 @@ import type {
 } from "@umbraco-cms/backoffice/property-editor";
 
 /**
- * A text box that masks its value (like a password field) with a reveal toggle.
+ * The Encrypted Textbox UI: a masked text input (like a password field) with a reveal toggle.
  *
  * Masking is controlled by the `mask` config value and defaults to ON, so the editor is
  * safe to bind to sensitive fields without any configuration. On a content data type the
