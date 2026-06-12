@@ -1,0 +1,13 @@
+{
+  "id": "Backoffice.DateRange",
+  "name": "Backoffice Date Range",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "name": "Backoffice Date Range Bundle",
+      "alias": "Backoffice.DateRange.Bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/Backoffice.DateRange/backoffice-date-range.js"
+    }
+  ]
+}

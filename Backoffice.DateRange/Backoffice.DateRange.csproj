@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- net8.0 is the floor: this package must install on Umbraco v14+; net8 assets
+         still serve to v17 hosts. Do NOT bump to net10 (it would exclude v14-v16). -->
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Backoffice.DateRange</RootNamespace>
+    <AssemblyName>Backoffice.DateRange</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Backoffice.DateRange</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>A date range property editor for the Umbraco backoffice. Presents two inline calendars (start and end) where the end calendar cannot be set before the start; configurable per data type for date-only vs date+time and optional min/max bounds.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;property-editor;date-range;date-picker;calendar</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\*" Pack="true" PackagePath="docs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="14.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <!-- Keep umbraco-package.json visible in the solution (built copy ships under wwwroot) -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project.
+       Skipped during IDE design-time builds to avoid running npm on every keystroke. -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
+    <Message Importance="high" Text="Installing backoffice client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building backoffice client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
