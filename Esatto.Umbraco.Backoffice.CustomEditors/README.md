@@ -28,6 +28,21 @@ Esatto.Umbraco.Backoffice.CustomEditors.EncryptedTextbox
 For example, an Umbraco.AI provider can point a sensitive field's `EditorUiAlias` at this
 alias so its connection setting renders encrypted and masked.
 
+#### Read the value in Razor
+
+The value is **transparently decrypted on read**, so it behaves like an ordinary string — only
+the database holds ciphertext:
+
+```cshtml
+@{
+    // Replace "yourPropertyAlias" with your Encrypted Text Box property's alias.
+    var secret = Model.Value<string>("yourPropertyAlias");
+}
+```
+
+`secret` is the decrypted plaintext. Treat it as sensitive — it is only protected at rest in the
+database, not wherever you render or pass it.
+
 ### Date Range — `Esatto.Umbraco.Backoffice.CustomEditors.DateRange`
 
 A date range editor that presents two **inline calendars** — a **start** and an **end** —
