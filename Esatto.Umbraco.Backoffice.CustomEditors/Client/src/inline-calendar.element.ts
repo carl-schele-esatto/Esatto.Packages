@@ -19,7 +19,7 @@ const MONTHS = [
  * An inline month calendar for a single date.
  * Fires a bubbling `change` event; read the selected day key from `.value`.
  */
-@customElement("bo-date-range-calendar")
+@customElement("esatto-date-range-calendar")
 export class BackofficeInlineCalendarElement extends UmbElementMixin(LitElement) {
   /** Selected day key (YYYY-MM-DD) or null. */
   @property({ type: String })
@@ -196,6 +196,6 @@ export default BackofficeInlineCalendarElement;
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bo-date-range-calendar": BackofficeInlineCalendarElement;
+    "esatto-date-range-calendar": BackofficeInlineCalendarElement;
   }
 }

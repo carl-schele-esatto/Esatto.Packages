@@ -5,9 +5,9 @@ export default defineConfig({
     lib: {
       entry: "src/bundle.manifests.ts", // Bundle registers one or more manifests
       formats: ["es"],
-      fileName: "backoffice-date-range",
+      fileName: "esatto-umbraco-backoffice-customeditors",
     },
-    outDir: "../wwwroot/App_Plugins/Backoffice.DateRange", // built assets land here
+    outDir: "../wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.CustomEditors", // built assets land here
     emptyOutDir: true,
     sourcemap: true,
     rollupOptions: {

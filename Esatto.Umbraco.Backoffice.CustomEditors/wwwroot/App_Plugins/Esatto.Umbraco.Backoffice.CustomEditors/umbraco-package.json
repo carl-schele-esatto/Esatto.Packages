@@ -1,0 +1,14 @@
+{
+  "id": "Esatto.Umbraco.Backoffice.CustomEditors",
+  "name": "Esatto Umbraco Backoffice Custom Editors",
+  "version": "1.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "name": "Esatto Custom Editors Bundle",
+      "alias": "Esatto.Umbraco.Backoffice.CustomEditors.Bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.CustomEditors/esatto-umbraco-backoffice-customeditors.js"
+    }
+  ]
+}

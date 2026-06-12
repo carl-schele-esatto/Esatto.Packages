@@ -24,9 +24,9 @@ import {
 } from "./date-range.logic.js";
 import "./inline-calendar.element.js";
 
-const VALIDATION_KEY = "backoffice-date-range-invalid";
+const VALIDATION_KEY = "esatto-date-range-invalid";
 
-@customElement("bo-date-range")
+@customElement("esatto-date-range")
 export class BackofficeDateRangeEditorElement
   extends UmbElementMixin(LitElement)
   implements UmbPropertyEditorUiElement
@@ -145,12 +145,12 @@ export class BackofficeDateRangeEditorElement
       <div class="calendars">
         <div class="cal-col">
           <span class="label">Start</span>
-          <bo-date-range-calendar
+          <esatto-date-range-calendar
             .value=${this.#dayPart(range.from)}
             .min=${this._config.minDate}
             .max=${this._config.maxDate}
             @change=${this.#onStartDay}
-          ></bo-date-range-calendar>
+          ></esatto-date-range-calendar>
           ${this._config.includeTime && range.from
             ? html`<input
                 type="time"
@@ -162,13 +162,13 @@ export class BackofficeDateRangeEditorElement
 
         <div class="cal-col">
           <span class="label">End</span>
-          <bo-date-range-calendar
+          <esatto-date-range-calendar
             .value=${this.#dayPart(range.to)}
             .min=${endMin}
             .max=${this._config.maxDate}
             ?disabled=${!range.from}
             @change=${this.#onEndDay}
-          ></bo-date-range-calendar>
+          ></esatto-date-range-calendar>
           ${!range.from
             ? html`<span class="hint">Select a start date first.</span>`
             : null}
@@ -217,6 +217,6 @@ export default BackofficeDateRangeEditorElement;
 
 declare global {
   interface HTMLElementTagNameMap {
-    "bo-date-range": BackofficeDateRangeEditorElement;
+    "esatto-date-range": BackofficeDateRangeEditorElement;
   }
 }

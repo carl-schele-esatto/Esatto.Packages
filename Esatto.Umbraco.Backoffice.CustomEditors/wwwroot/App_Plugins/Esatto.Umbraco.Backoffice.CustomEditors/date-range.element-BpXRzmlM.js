@@ -30,7 +30,7 @@ function W(t) {
   return t.slice(0, 10);
 }
 function q(t, e) {
-  const o = (new Date(t, e, 1).getDay() + 6) % 7, r = new Date(t, e, 1 - o), u = [], l = new Date(r);
+  const o = (new Date(t, e, 1).getDay() + 6) % 7, s = new Date(t, e, 1 - o), u = [], l = new Date(s);
   do
     for (let A = 0; A < 7; A++)
       u.push({
@@ -47,9 +47,9 @@ function Q(t, e, a) {
 var Z = Object.defineProperty, tt = Object.getOwnPropertyDescriptor, F = (t) => {
   throw TypeError(t);
 }, v = (t, e, a, o) => {
-  for (var r = o > 1 ? void 0 : o ? tt(e, a) : e, u = t.length - 1, l; u >= 0; u--)
-    (l = t[u]) && (r = (o ? l(e, a, r) : l(r)) || r);
-  return o && r && Z(e, a, r), r;
+  for (var s = o > 1 ? void 0 : o ? tt(e, a) : e, u = t.length - 1, l; u >= 0; u--)
+    (l = t[u]) && (s = (o ? l(e, a, s) : l(s)) || s);
+  return o && s && Z(e, a, s), s;
 }, et = (t, e, a) => e.has(t) || F("Cannot " + a), at = (t, e, a) => e.has(t) ? F("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, a), M = (t, e, a) => (et(t, e, "access private method"), a), y, R, U, J;
 const it = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"], nt = [
   "January",
@@ -99,10 +99,10 @@ let d = class extends K(V) {
       <div class="grid ${this.disabled ? "dimmed" : ""}">
         ${it.map((a) => f`<span class="weekday">${a}</span>`)}
         ${t.map((a) => {
-      const o = this.disabled || !a.inCurrentMonth || Q(a.key, this.min, this.max), r = a.key === e;
+      const o = this.disabled || !a.inCurrentMonth || Q(a.key, this.min, this.max), s = a.key === e;
       return f`
             <button
-              class="day ${r ? "selected" : ""} ${a.inCurrentMonth ? "" : "muted"}"
+              class="day ${s ? "selected" : ""} ${a.inCurrentMonth ? "" : "muted"}"
               ?disabled=${o}
               @click=${() => M(this, y, J).call(this, a.key)}
             >
@@ -207,16 +207,16 @@ v([
   T()
 ], d.prototype, "_viewMonth", 2);
 d = v([
-  I("bo-date-range-calendar")
+  I("esatto-date-range-calendar")
 ], d);
-var rt = Object.defineProperty, st = Object.getOwnPropertyDescriptor, L = (t) => {
+var st = Object.defineProperty, rt = Object.getOwnPropertyDescriptor, L = (t) => {
   throw TypeError(t);
 }, $ = (t, e, a, o) => {
-  for (var r = o > 1 ? void 0 : o ? st(e, a) : e, u = t.length - 1, l; u >= 0; u--)
-    (l = t[u]) && (r = (o ? l(e, a, r) : l(r)) || r);
-  return o && r && rt(e, a, r), r;
-}, O = (t, e, a) => e.has(t) || L("Cannot " + a), s = (t, e, a) => (O(t, e, "read from private field"), a ? a.call(t) : e.get(t)), m = (t, e, a) => e.has(t) ? L("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, a), ot = (t, e, a, o) => (O(t, e, "write to private field"), e.set(t, a), a), n = (t, e, a) => (O(t, e, "access private method"), a), D, i, c, h, P, _, b, w, x, E, k, S;
-const z = "backoffice-date-range-invalid";
+  for (var s = o > 1 ? void 0 : o ? rt(e, a) : e, u = t.length - 1, l; u >= 0; u--)
+    (l = t[u]) && (s = (o ? l(e, a, s) : l(s)) || s);
+  return o && s && st(e, a, s), s;
+}, O = (t, e, a) => e.has(t) || L("Cannot " + a), r = (t, e, a) => (O(t, e, "read from private field"), a ? a.call(t) : e.get(t)), m = (t, e, a) => e.has(t) ? L("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, a), ot = (t, e, a, o) => (O(t, e, "write to private field"), e.set(t, a), a), n = (t, e, a) => (O(t, e, "access private method"), a), D, i, c, h, P, _, b, w, x, E, k, S;
+const z = "esatto-date-range-invalid";
 let p = class extends K(V) {
   constructor() {
     super(), m(this, i), this.value = null, this._config = { includeTime: !1, minDate: null, maxDate: null }, m(this, D), m(this, x, (t) => {
@@ -225,23 +225,23 @@ let p = class extends K(V) {
         n(this, i, h).call(this, { from: null, to: null });
         return;
       }
-      const a = n(this, i, _).call(this, e, n(this, i, w).call(this, s(this, i, c).from));
-      n(this, i, h).call(this, B(s(this, i, c), a));
+      const a = n(this, i, _).call(this, e, n(this, i, w).call(this, r(this, i, c).from));
+      n(this, i, h).call(this, B(r(this, i, c), a));
     }), m(this, E, (t) => {
-      if (!s(this, i, c).from) return;
+      if (!r(this, i, c).from) return;
       const e = t.target.value;
       if (!e) {
-        n(this, i, h).call(this, { from: s(this, i, c).from, to: null });
+        n(this, i, h).call(this, { from: r(this, i, c).from, to: null });
         return;
       }
-      const a = n(this, i, _).call(this, e, n(this, i, w).call(this, s(this, i, c).to));
-      n(this, i, h).call(this, Y(s(this, i, c), a));
+      const a = n(this, i, _).call(this, e, n(this, i, w).call(this, r(this, i, c).to));
+      n(this, i, h).call(this, Y(r(this, i, c), a));
     }), m(this, k, (t) => {
-      const e = t.target.value, a = n(this, i, b).call(this, s(this, i, c).from);
-      a && n(this, i, h).call(this, B(s(this, i, c), n(this, i, _).call(this, a, e)));
+      const e = t.target.value, a = n(this, i, b).call(this, r(this, i, c).from);
+      a && n(this, i, h).call(this, B(r(this, i, c), n(this, i, _).call(this, a, e)));
     }), m(this, S, (t) => {
-      const e = t.target.value, a = n(this, i, b).call(this, s(this, i, c).to);
-      a && n(this, i, h).call(this, Y(s(this, i, c), n(this, i, _).call(this, a, e)));
+      const e = t.target.value, a = n(this, i, b).call(this, r(this, i, c).to);
+      a && n(this, i, h).call(this, Y(r(this, i, c), n(this, i, _).call(this, a, e)));
     }), this.consumeContext(H, (t) => {
       ot(this, D, t), n(this, i, P).call(this);
     });
@@ -254,38 +254,38 @@ let p = class extends K(V) {
     };
   }
   render() {
-    const t = s(this, i, c), e = t.from ?? this._config.minDate;
+    const t = r(this, i, c), e = t.from ?? this._config.minDate;
     return f`
       <div class="calendars">
         <div class="cal-col">
           <span class="label">Start</span>
-          <bo-date-range-calendar
+          <esatto-date-range-calendar
             .value=${n(this, i, b).call(this, t.from)}
             .min=${this._config.minDate}
             .max=${this._config.maxDate}
-            @change=${s(this, x)}
-          ></bo-date-range-calendar>
+            @change=${r(this, x)}
+          ></esatto-date-range-calendar>
           ${this._config.includeTime && t.from ? f`<input
                 type="time"
                 .value=${n(this, i, w).call(this, t.from)}
-                @change=${s(this, k)}
+                @change=${r(this, k)}
               />` : null}
         </div>
 
         <div class="cal-col">
           <span class="label">End</span>
-          <bo-date-range-calendar
+          <esatto-date-range-calendar
             .value=${n(this, i, b).call(this, t.to)}
             .min=${e}
             .max=${this._config.maxDate}
             ?disabled=${!t.from}
-            @change=${s(this, E)}
-          ></bo-date-range-calendar>
+            @change=${r(this, E)}
+          ></esatto-date-range-calendar>
           ${t.from ? null : f`<span class="hint">Select a start date first.</span>`}
           ${this._config.includeTime && t.to ? f`<input
                 type="time"
                 .value=${n(this, i, w).call(this, t.to)}
-                @change=${s(this, S)}
+                @change=${r(this, S)}
               />` : null}
         </div>
       </div>
@@ -301,8 +301,8 @@ h = function(t) {
   this.value = t.from === null && t.to === null ? null : t, this.dispatchEvent(new G()), n(this, i, P).call(this);
 };
 P = function() {
-  const t = s(this, D);
-  t && (t.messages.removeMessageByKey(z), j(s(this, i, c)) || t.messages.addMessage(
+  const t = r(this, D);
+  t && (t.messages.removeMessageByKey(z), j(r(this, i, c)) || t.messages.addMessage(
     "client",
     "$",
     "The end date cannot be before the start date.",
@@ -359,11 +359,11 @@ $([
   g({ attribute: !1 })
 ], p.prototype, "config", 1);
 p = $([
-  I("bo-date-range")
+  I("esatto-date-range")
 ], p);
 const ht = p;
 export {
   p as BackofficeDateRangeEditorElement,
   ht as default
 };
-//# sourceMappingURL=date-range.element-Dj37r0-E.js.map
+//# sourceMappingURL=date-range.element-BpXRzmlM.js.map

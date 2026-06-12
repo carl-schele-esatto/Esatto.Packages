@@ -1,35 +1,41 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>true</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <RootNamespace>Backoffice.CustomEditors</RootNamespace>
-    <AssemblyName>Backoffice.CustomEditors</AssemblyName>
+    <RootNamespace>Esatto.Umbraco.Backoffice.CustomEditors</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.CustomEditors</AssemblyName>
 
     <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>Backoffice.CustomEditors</PackageId>
+    <PackageId>Esatto.Umbraco.Backoffice.CustomEditors</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>A small library of reusable property editor UIs for the Umbraco backoffice. Ships a Masked Text Box editor — a text input that hides its value behind a reveal toggle (for API keys, secrets and other sensitive fields) and is configurable per data type via a "Mask value" option.</Description>
-    <PackageTags>umbraco;umbraco-marketplace;backoffice;property-editor;custom-editor;masked;password;secret</PackageTags>
+    <Description>A library of reusable property editor UIs for the Umbraco backoffice. Ships a Masked Text Box editor (hides sensitive values behind a reveal toggle) and a Date Range editor (two inline calendars with start/end constraint, optional time and min/max bounds).</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;property-editor;custom-editor;masked;password;secret;date-range;date-picker;calendar</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\*" Pack="true" PackagePath="docs\" />
   </ItemGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="14.0.0" />
   </ItemGroup>
 
   <ItemGroup>
