@@ -2,7 +2,7 @@
 
 A library of reusable **property editor UIs** for the Umbraco backoffice, including an **Encrypted Textbox** for secure data at rest and a **Date Range** editor with dual inline calendars.
 
-![Date Range editor](docs/preview.png)
+![Date Range editor](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.CustomEditors/docs/preview.png)
 
 ## Editors
 
@@ -70,7 +70,7 @@ shown side by side with no popups.
    - **Latest selectable date** — optional; dates after this cannot be chosen.
 3. Assign the data type to a document type property like any other editor.
 
-![Data type settings](docs/settings.png)
+![Data type settings](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.CustomEditors/docs/settings.png)
 
 #### Read the value in Razor
 
