@@ -1,4 +1,4 @@
-# Backoffice.ContentTreeDnd
+# Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop
 
 Native HTML5 drag-and-drop for the Umbraco 17 backoffice **Content** tree.
 
@@ -13,7 +13,7 @@ Pure App_Plugins package — no C# code, no `Startup` configuration. Drops in vi
 ## Install
 
 ```bash
-dotnet add package Backoffice.ContentTreeDnd
+dotnet add package Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop
 ```
 
 Restart the site / hard-refresh the backoffice. The drag-and-drop activates automatically on the Content section.

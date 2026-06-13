@@ -1,0 +1,15 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop",
+  "name": "Esatto Umbraco Backoffice Content Tree Drag and Drop",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Content Tree Drag and Drop",
+      "alias": "Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop.ContentTreeDragDrop",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop/content-tree-drag-drop.js",
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

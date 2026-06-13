@@ -2,7 +2,7 @@
 
 Native HTML5 drag-and-drop for the Umbraco 17 backoffice **Media** tree.
 
-Media-tree counterpart to [Backoffice.ContentTreeDnd](../Backoffice.ContentTreeDnd) (which handles the Content tree). Same architecture, different entity type and Management API surface.
+Media-tree counterpart to [Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop](../Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop) (which handles the Content tree). Same architecture, different entity type and Management API surface.
 
 - Three-zone drop targets per row: above sibling / into as child / below sibling
 - Optimistic same-parent reorder — instant visual feedback, rolled back on API error
@@ -20,7 +20,7 @@ dotnet add package Backoffice.MediaTreeDnd
 
 Restart the site / hard-refresh the backoffice. The drag-and-drop activates automatically on the Media section.
 
-## Pairing with Backoffice.ContentTreeDnd
+## Pairing with Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop
 
 The two packages are independent — installing one does not require the other. Both can be installed side-by-side; their `attachShadow` patches chain cleanly because each wrapper calls through to the original.
 

@@ -11,10 +11,12 @@
          Default Razor SDK behaviour would prefix everything with /_content/<PackageId>/,
          which Umbraco's package discovery does not look at. -->
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>Backoffice.ContentTreeDnd</PackageId>
+    <PackageId>Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop</PackageId>
     <Authors>Carl Schéle</Authors>
     <Description>Native HTML5 drag-and-drop for the Umbraco 17 backoffice Content tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;tree;drag-and-drop</PackageTags>
@@ -27,6 +29,22 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <!-- Keep umbraco-package.json visible in the solution (built copy ships under wwwroot) -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project.
+       Skipped during IDE design-time builds to avoid running npm on every keystroke. -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
+    <Message Importance="high" Text="Installing backoffice client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building backoffice client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
 
   <PropertyGroup Label="AutoPush">
     <!-- Defaults: every `dotnet pack` auto-pushes to the esatto-packages feed.
