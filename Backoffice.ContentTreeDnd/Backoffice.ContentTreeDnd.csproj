@@ -19,11 +19,13 @@
     <Description>Native HTML5 drag-and-drop for the Umbraco 17 backoffice Content tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;tree;drag-and-drop</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <PropertyGroup Label="AutoPush">
