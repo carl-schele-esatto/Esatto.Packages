@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Http;
 
-namespace Backoffice.PreviewLink;
+namespace Esatto.Umbraco.Backoffice.SharedPreviewLink;
 
 /// <summary>
 /// Hides Umbraco's front-end preview badge (the floating "Preview mode"

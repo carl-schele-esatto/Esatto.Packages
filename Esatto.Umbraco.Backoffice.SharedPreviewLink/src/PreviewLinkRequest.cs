@@ -1,4 +1,4 @@
-namespace Backoffice.PreviewLink;
+namespace Esatto.Umbraco.Backoffice.SharedPreviewLink;
 
 public class PreviewLinkRequest
 {

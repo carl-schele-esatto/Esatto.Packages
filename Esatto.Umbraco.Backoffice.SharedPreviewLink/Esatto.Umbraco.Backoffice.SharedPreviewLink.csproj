@@ -10,8 +10,8 @@
     <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer. -->
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
 
-    <RootNamespace>Backoffice.PreviewLink</RootNamespace>
-    <AssemblyName>Backoffice.PreviewLink</AssemblyName>
+    <RootNamespace>Esatto.Umbraco.Backoffice.SharedPreviewLink</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.SharedPreviewLink</AssemblyName>
 
     <!-- Compile our MVC Razor views (Views/PreviewLinkError/Index.cshtml) into
          the assembly. Razor SDK's default mode is Razor Components (Blazor);
@@ -24,16 +24,19 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>Backoffice.PreviewLink</PackageId>
+    <PackageId>Esatto.Umbraco.Backoffice.SharedPreviewLink</PackageId>
     <Authors>Carl Schéle</Authors>
     <Description>Shareable preview links for Umbraco 17. Editors mint a tokenized URL via a workspace-action button; recipients open the URL externally and see the current draft (no backoffice login). Tokens are 7-day data-protected; recipient cookie scopes preview to the specific page for 5 minutes.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;preview;preview-link;share-preview;draft</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\**\*.png" Pack="true" PackagePath="docs\" />
   </ItemGroup>
 
   <ItemGroup>

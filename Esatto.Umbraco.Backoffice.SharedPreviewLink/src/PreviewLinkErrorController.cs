@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Backoffice.PreviewLink;
+namespace Esatto.Umbraco.Backoffice.SharedPreviewLink;
 
 [Route("preview-link-error")]
 public class PreviewLinkErrorController : Controller

@@ -11,7 +11,7 @@ using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
 
-namespace Backoffice.PreviewLink;
+namespace Esatto.Umbraco.Backoffice.SharedPreviewLink;
 
 /// <summary>
 /// Mints a shareable preview link for an Umbraco draft (or published) page.
@@ -34,7 +34,7 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
     /// <see cref="PreviewLinkController"/> (mint) and
     /// <see cref="PreviewLinkMiddleware"/> (verify) — must match.
     /// </summary>
-    public const string ProtectorPurpose = "Backoffice.PreviewLink";
+    public const string ProtectorPurpose = "Esatto.Umbraco.Backoffice.SharedPreviewLink";
 
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromDays(7);
 
@@ -58,6 +58,7 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
     [ProducesResponseType(typeof(PreviewLinkResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult Mint([FromBody] PreviewLinkRequest request)
     {
         if (request == null || request.ContentKey == Guid.Empty)
@@ -111,7 +112,7 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
         });
     }
 
-    private string? BuildDraftUrl(Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent content, string? cultureCode)
+    private string? BuildDraftUrl(IPublishedContent content, string? cultureCode)
     {
         var segments = new List<string>();
         var cur = content;
@@ -122,7 +123,7 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
             {
                 segments.Insert(0, seg);
             }
-            cur = cur.Parent<Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent>();
+            cur = cur.Parent<IPublishedContent>();
         }
 
         var root = content.AncestorOrSelf(1);

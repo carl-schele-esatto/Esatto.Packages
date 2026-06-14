@@ -212,8 +212,12 @@ export class BackofficePreviewLinkButtonElement extends UmbElementMixin(LitEleme
     _formatExpiry(expiresAtIso) {
         try {
             const d = new Date(expiresAtIso);
+            if (Number.isNaN(d.getTime())) return '';
             const datePart = d.toISOString().split('T')[0];
-            return `Expires ${datePart} (in 7 days)`;
+            const msPerDay = 24 * 60 * 60 * 1000;
+            const days = Math.max(0, Math.round((d.getTime() - Date.now()) / msPerDay));
+            const suffix = days === 1 ? 'in 1 day' : `in ${days} days`;
+            return `Expires ${datePart} (${suffix})`;
         } catch {
             return '';
         }

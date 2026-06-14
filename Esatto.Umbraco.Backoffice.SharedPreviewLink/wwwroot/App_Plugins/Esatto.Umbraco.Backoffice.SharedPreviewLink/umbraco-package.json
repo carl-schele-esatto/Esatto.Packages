@@ -1,0 +1,24 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.SharedPreviewLink",
+  "name": "Esatto Shared Preview Link",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "name": "Esatto Shared Preview Workspace Action",
+      "alias": "Esatto.Umbraco.Backoffice.SharedPreviewLink.SharePreviewWorkspaceAction",
+      "type": "workspaceAction",
+      "kind": "default",
+      "weight": 200,
+      "api": "/App_Plugins/Esatto.Umbraco.Backoffice.SharedPreviewLink/share-preview-action.js",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.SharedPreviewLink/share-preview-button.js",
+      "elementName": "backoffice-preview-link-button",
+      "meta": {
+        "label": "Share preview"
+      },
+      "conditions": [
+        { "alias": "Umb.Condition.WorkspaceAlias", "match": "Umb.Workspace.Document" }
+      ]
+    }
+  ]
+}

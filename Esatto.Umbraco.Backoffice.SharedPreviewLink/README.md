@@ -1,4 +1,4 @@
-# Backoffice.PreviewLink
+# Esatto.Umbraco.Backoffice.SharedPreviewLink
 
 Shareable preview links for Umbraco 17.
 
@@ -9,10 +9,24 @@ Editors click **Share preview** in any document workspace; a tokenized URL is mi
 - Works on **never-published drafts**, not just published-with-edits
 - Three friendly error pages: expired (410), invalid (400), not-found (404)
 
+## How it works
+
+1. In any document workspace, click **Share preview**:
+
+   ![Share preview button](docs/share-preview-button.png)
+
+2. The document is saved first (the usual variant picker appears for multi-variant docs):
+
+   ![Save modal](docs/save-modal.png)
+
+3. A tokenized preview link is minted — copy it, or open it directly:
+
+   ![Preview link modal](docs/preview-link-modal.png)
+
 ## Install
 
 ```bash
-dotnet add package Backoffice.PreviewLink
+dotnet add package Esatto.Umbraco.Backoffice.SharedPreviewLink
 ```
 
 Then add ONE line to your `Program.cs`, **before** `app.UseUmbraco()`:
@@ -29,7 +43,7 @@ That's it. The Management API endpoint (`POST /umbraco/management/api/v1/backoff
 
 - **Mint** ([`PreviewLinkController`](src/PreviewLinkController.cs)) — `[Authorize(SectionAccessContent)]` Management API endpoint. Takes `{ contentKey }`, uses `ITimeLimitedDataProtector` to protect the GUID for 7 days, appends `?preview-token=...` to the content's absolute URL, returns `{ url, expiresAt }`.
 - **Verify** ([`PreviewLinkMiddleware`](src/PreviewLinkMiddleware.cs)) — runs before `app.UseUmbraco()` so the cookie it sets takes effect on the redirected request. Validates the token, ensures the token matches the request path (so a token for page A can't preview page B), generates an Umbraco preview cookie via `IPreviewTokenGenerator`, sets the cookie scoped to the canonical page path, then 302-redirects to the same URL minus the token param.
-- **Workspace action** ([`share-preview-action.js`](wwwroot/App_Plugins/Backoffice.PreviewLink/share-preview-action.js) + [`share-preview-button.js`](wwwroot/App_Plugins/Backoffice.PreviewLink/share-preview-button.js)) — saves the draft via `ctx.requestSave()` before minting, then shows a modal with Copy + Show-in-browser buttons.
+- **Workspace action** ([`share-preview-action.js`](wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.SharedPreviewLink/share-preview-action.js) + [`share-preview-button.js`](wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.SharedPreviewLink/share-preview-button.js)) — saves the draft via `ctx.requestSave()` before minting, then shows a modal with Copy + Show-in-browser buttons.
 - **Error page** ([`Views/PreviewLinkError/Index.cshtml`](Views/PreviewLinkError/Index.cshtml)) — self-contained, inline CSS, no design-system dependency. Adapts to `prefers-color-scheme: dark`. Consumer can override by placing a view at the same path in their app.
 
 ## Customizing the error page

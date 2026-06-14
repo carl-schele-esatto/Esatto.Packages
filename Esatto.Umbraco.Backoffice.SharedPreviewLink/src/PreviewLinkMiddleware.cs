@@ -13,7 +13,7 @@ using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
 
-namespace Backoffice.PreviewLink;
+namespace Esatto.Umbraco.Backoffice.SharedPreviewLink;
 
 public static class PreviewLinkMiddlewareExtension
 {
