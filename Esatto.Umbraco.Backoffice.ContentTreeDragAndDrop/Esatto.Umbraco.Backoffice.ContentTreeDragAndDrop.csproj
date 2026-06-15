@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <!-- net10.0 to match Umbraco 17's TFM and allow the Umbraco.Cms.Core 17.0.0
+         reference below (which is net10.0-only). No managed code ships, so this is
+         a build-target change only. -->
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>true</IsPackable>
@@ -31,6 +34,16 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
     <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- This is a pure App_Plugins package with no C# code, so it needs no Umbraco
+         assembly to build. But the Umbraco Marketplace derives a package's supported
+         version range from its Umbraco.Cms.* dependency range and only lists packages
+         that meet the minimum Umbraco version — with no such dependency the sync can't
+         place this package and skips it. Declaring a min-only (>=17.0.0) dependency on
+         the lightest Umbraco package makes it discoverable and badges it as v17+. -->
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
   </ItemGroup>
 
   <ItemGroup>
