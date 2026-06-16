@@ -13,15 +13,15 @@ Editors click **Share preview** in any document workspace; a tokenized URL is mi
 
 1. In any document workspace, click **Share preview**:
 
-   ![Share preview button](docs/share-preview-button.png)
+   ![Share preview button](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.SharedPreviewLink/docs/share-preview-button.png)
 
 2. The document is saved first (the usual variant picker appears for multi-variant docs):
 
-   ![Save modal](docs/save-modal.png)
+   ![Save modal](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.SharedPreviewLink/docs/save-modal.png)
 
 3. A tokenized preview link is minted — copy it, or open it directly:
 
-   ![Preview link modal](docs/preview-link-modal.png)
+   ![Preview link modal](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.SharedPreviewLink/docs/preview-link-modal.png)
 
 ## Install
 
