@@ -8,23 +8,29 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
-    <RootNamespace>Backoffice.Redirects</RootNamespace>
-    <AssemblyName>Backoffice.Redirects</AssemblyName>
+    <RootNamespace>Esatto.Umbraco.Backoffice.Redirects</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.Redirects</AssemblyName>
 
     <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet">
-    <PackageId>Backoffice.Redirects</PackageId>
+    <PackageId>Esatto.Umbraco.Backoffice.Redirects</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Dead-URL → new-URL redirects for Umbraco 17. Provides a SQL-backed Redirects table, a Settings-section dashboard for editors to manage 301 rules, an IContentFinder that resolves redirects at request time, and an IRedirectSiteContext plugin for multi-site setups. Single-site projects get a flat list; multi-site projects implement IRedirectSiteContext to scope redirects per site.</Description>
-    <PackageTags>umbraco;umbraco-marketplace;backoffice;redirects;url-redirects;301;multi-site</PackageTags>
+    <Description>Dead-URL → new-URL redirects for Umbraco 17. Provides a SQL-backed Redirects table, a Settings-section dashboard for editors to manage 301 rules, and an IContentFinder that resolves redirects at request time. A single flat list of redirects: exact case-insensitive matching with query-string preservation, draft rows, and idempotent migrations.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;redirects;url-redirects;301</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.Redirects</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\**\*.png" Pack="true" PackagePath="docs\" />
   </ItemGroup>
 
   <ItemGroup>

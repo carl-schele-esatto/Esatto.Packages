@@ -12,7 +12,6 @@ import { tryExecute, UmbApiError } from '@umbraco-cms/backoffice/resources';
 // attach the bearer token and the request 401s.
 const API_BASE = '/umbraco/management/api/v1/backoffice/redirects';
 const SECURITY = [{ scheme: 'bearer', type: 'http' }];
-const SESSION_STORAGE_KEY = 'backoffice.redirects.site';
 
 class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
     static properties = {
@@ -21,15 +20,13 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
         _newUrl: { state: true },
         _error: { state: true },
         _busy: { state: true },
+        _loaded: { state: true },
         _editingId: { state: true },
         _editOldPath: { state: true },
         _editNewUrl: { state: true },
         _editError: { state: true },
         _searchDraft: { state: true },
         _searchTerm: { state: true },
-        _sites: { state: true },
-        _activeSite: { state: true },
-        _sitesLoaded: { state: true },
     };
 
     #notifications;
@@ -41,92 +38,37 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
         this._newUrl = '';
         this._error = '';
         this._busy = false;
+        this._loaded = false;
         this._editingId = null;
         this._editOldPath = '';
         this._editNewUrl = '';
         this._editError = '';
         this._searchDraft = '';
         this._searchTerm = '';
-        this._sites = [];          // [{ key, label }, ...]
-        this._activeSite = null;   // currently-selected site key (string) or '' in single-site mode
-        this._sitesLoaded = false;
 
         this.consumeContext(UMB_NOTIFICATION_CONTEXT, (ctx) => { this.#notifications = ctx; });
     }
 
     connectedCallback() {
         super.connectedCallback();
-        this.#bootstrap();
-    }
-
-    async #bootstrap() {
-        this._busy = true;
-        try {
-            const { data, error } = await tryExecute(
-                this,
-                umbHttpClient.get({ url: `${API_BASE}/sites`, security: SECURITY }),
-            );
-            if (error) throw error;
-
-            const sites = data ?? [];
-            this._sites = sites;
-
-            if (sites.length === 0) {
-                // Single-site mode — server returned no sites. Operate on the
-                // empty key so the controller's IsAllowed check passes.
-                this._activeSite = '';
-                this._sitesLoaded = true;
-                await this.#loadRows();
-                return;
-            }
-
-            // Multi-site mode — restore last active site from sessionStorage if
-            // it's still in the allowed list, otherwise pick the first.
-            const siteKeys = sites.map((s) => s.key);
-            const stored = sessionStorage.getItem(SESSION_STORAGE_KEY);
-            const initial = siteKeys.includes(stored) ? stored : siteKeys[0];
-            this._activeSite = initial;
-            this._sitesLoaded = true;
-
-            await this.#loadRows();
-        } catch (err) {
-            this.#notifications?.peek('danger', { data: { message: err.message ?? 'Load failed.' } });
-            this._sitesLoaded = true;
-        } finally {
-            this._busy = false;
-        }
+        this.#loadRows();
     }
 
     async #loadRows() {
-        if (this._activeSite === null) { this._rows = []; return; }
         this._busy = true;
         try {
-            const url = `${API_BASE}?site=${encodeURIComponent(this._activeSite)}`;
             const { data, error } = await tryExecute(
                 this,
-                umbHttpClient.get({ url, security: SECURITY }),
+                umbHttpClient.get({ url: API_BASE, security: SECURITY }),
             );
             if (error) throw error;
             this._rows = data ?? [];
         } catch (err) {
             this.#notifications?.peek('danger', { data: { message: err.message ?? 'Load failed.' } });
         } finally {
+            this._loaded = true;
             this._busy = false;
         }
-    }
-
-    #switchSite(siteKey) {
-        if (siteKey === this._activeSite) return;
-        this._activeSite = siteKey;
-        sessionStorage.setItem(SESSION_STORAGE_KEY, siteKey);
-        // Drop in-flight edit / search state when switching context.
-        this.#cancelEdit();
-        this._oldPath = '';
-        this._newUrl = '';
-        this._error = '';
-        this._searchDraft = '';
-        this._searchTerm = '';
-        this.#loadRows();
     }
 
     async #add() {
@@ -141,7 +83,7 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
                 this,
                 umbHttpClient.post({
                     url: API_BASE,
-                    body: { siteKey: this._activeSite ?? '', oldPath: this._oldPath, newUrl: this._newUrl },
+                    body: { oldPath: this._oldPath, newUrl: this._newUrl },
                     security: SECURITY,
                 }),
                 { disableNotifications: true },
@@ -190,7 +132,7 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
                 this,
                 umbHttpClient.put({
                     url: `${API_BASE}/${row.id}`,
-                    body: { siteKey: this._activeSite ?? '', oldPath: this._editOldPath, newUrl: this._editNewUrl },
+                    body: { oldPath: this._editOldPath, newUrl: this._editNewUrl },
                     security: SECURITY,
                 }),
                 { disableNotifications: true },
@@ -315,44 +257,13 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
         `;
     }
 
-    #renderSiteSwitcher() {
-        // Hide the tab bar in single-site mode (0 or 1 sites returned).
-        if (this._sites.length < 2) return '';
-        return html`
-            <div class="site-switcher" role="tablist" aria-label="Site">
-                ${this._sites.map((s) => html`
-                    <button
-                        type="button"
-                        role="tab"
-                        aria-selected=${s.key === this._activeSite ? 'true' : 'false'}
-                        class=${`site-chip ${s.key === this._activeSite ? 'active' : ''}`}
-                        ?disabled=${this._busy}
-                        @click=${() => this.#switchSite(s.key)}>
-                        ${s.label || s.key}
-                    </button>
-                `)}
-            </div>
-        `;
-    }
-
-    #activeSiteLabel() {
-        if (!this._activeSite) return null;
-        const site = this._sites.find((s) => s.key === this._activeSite);
-        return site?.label || this._activeSite;
-    }
-
     render() {
-        if (!this._sitesLoaded) {
+        if (!this._loaded) {
             return html`<uui-box headline="Redirects"><p>Loading…</p></uui-box>`;
         }
 
-        const activeLabel = this.#activeSiteLabel();
-        const headline = activeLabel ? `Redirects — ${activeLabel}` : 'Redirects';
-
         return html`
-            <uui-box headline=${headline}>
-                ${this.#renderSiteSwitcher()}
-
+            <uui-box headline="Redirects">
                 <p>Redirect dead URLs (that no longer resolve to a page) to a new URL. Matches are exact, case-insensitive, and preserve query strings.<br/>Responses are 301 (permanent). Leave <strong>New URL</strong> empty to save a <em>draft</em> — the row is listed here but no redirect fires until a target is set.</p>
 
                 <uui-form>
@@ -476,29 +387,6 @@ class BackofficeRedirectsDashboard extends UmbElementMixin(LitElement) {
         .draft-badge { color: var(--uui-color-text-alt); font-style: italic; }
         uui-table-row.draft uui-table-cell:first-child { color: var(--uui-color-text-alt); }
         uui-table-row.editing .edit-input { width: 100%; }
-        .site-switcher {
-            display: flex;
-            gap: var(--uui-size-space-2);
-            margin-block-end: var(--uui-size-space-5);
-            border-block-end: 1px solid var(--uui-color-border, #d8d7d9);
-        }
-        .site-chip {
-            appearance: none;
-            background: none;
-            border: none;
-            padding: var(--uui-size-space-3) var(--uui-size-space-4);
-            font: inherit;
-            color: var(--uui-color-text-alt);
-            cursor: pointer;
-            border-block-end: 2px solid transparent;
-            margin-block-end: -1px;
-        }
-        .site-chip.active {
-            color: var(--uui-color-text);
-            font-weight: var(--uui-font-weight-bold, 700);
-            border-block-end-color: var(--uui-color-focus, #3879ff);
-        }
-        .site-chip:disabled { opacity: 0.6; cursor: default; }
     `;
 }
 

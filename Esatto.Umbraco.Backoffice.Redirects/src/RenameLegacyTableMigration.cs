@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using NPoco;
 using Umbraco.Cms.Infrastructure.Migrations;
 
-namespace Backoffice.Redirects;
+namespace Esatto.Umbraco.Backoffice.Redirects;
 
 /// <summary>
 /// Renames the legacy <c>esattoRedirects</c> table to the canonical
@@ -78,31 +78,30 @@ public sealed class RenameLegacyTableMigration : AsyncMigrationBase
                 "{Migration}: renaming index {Legacy} -> {Target}",
                 nameof(RenameLegacyTableMigration),
                 LegacyCompositeIndexName,
-                RedirectEntity.OldPathSiteKeyIndexName);
+                RedirectEntity.LegacyCompositeIndexName);
             Database.Execute(
                 $"EXEC sp_rename '{RedirectEntity.TableName}.{LegacyCompositeIndexName}', " +
-                $"'{RedirectEntity.OldPathSiteKeyIndexName}', 'INDEX'");
+                $"'{RedirectEntity.LegacyCompositeIndexName}', 'INDEX'");
         }
 
-        // The legacy single-column index is dropped by EnsureSiteKeyColumnMigration
-        // if it still exists post-rename. Don't drop it here — keep this migration
-        // focused on rename-only.
+        // The legacy single-column index is normalized below by collapse-to-single-site step.
+        // Don't drop it here — keep this migration focused on rename-only.
         if (IndexExists(RedirectEntity.TableName, LegacyOldPathIndexName))
         {
             Logger.LogInformation(
-                "{Migration}: renaming legacy index {Legacy} -> {Target} (will be dropped by ensure-sitekey step)",
+                "{Migration}: renaming legacy index {Legacy} -> {Target} (normalized below by collapse-to-single-site step)",
                 nameof(RenameLegacyTableMigration),
                 LegacyOldPathIndexName,
-                RedirectEntity.LegacyOldPathIndexName);
+                RedirectEntity.OldPathIndexName);
             Database.Execute(
                 $"EXEC sp_rename '{RedirectEntity.TableName}.{LegacyOldPathIndexName}', " +
-                $"'{RedirectEntity.LegacyOldPathIndexName}', 'INDEX'");
+                $"'{RedirectEntity.OldPathIndexName}', 'INDEX'");
         }
 
         return Task.CompletedTask;
     }
 
-    // Cross-database index lookup — see EnsureSiteKeyColumnMigration for why the
+    // Cross-database index lookup — see CollapseToSingleSiteMigration for why the
     // SQL-Server catalog-view query was replaced with GetDefinedIndexes. This
     // rename path is SQL-Server-only legacy migration (sp_rename), but the helper
     // is kept database-agnostic so the guard itself never throws on SQLite.
