@@ -39,6 +39,23 @@ app.UseUmbraco()
 
 That's it. The Management API endpoint (`POST /umbraco/management/api/v1/backoffice/preview-link`), the workspace action button, the error page, and the validating middleware are all wired in automatically.
 
+## Requirements: persistent DataProtection keys
+
+Tokens are valid for **7 days**, so they must stay decryptable across app restarts. That requires the consuming app to **persist its ASP.NET Core DataProtection keys** to durable storage. ASP.NET Core's default key ring is *not* reliably retained across restarts on many hosts — when it resets, every link minted before the restart fails to decrypt and the recipient sees **"This preview link has expired"** (even seconds after minting). The same reset also logs Umbraco out of the backoffice ("Failed to decrypt back-office token cookie").
+
+Configure a durable key store in `Program.cs` (service registration, before `builder.Build()`):
+
+```csharp
+builder.Services.AddDataProtection()
+    .SetApplicationName("YourApp")
+    .PersistKeysToFileSystem(new DirectoryInfo(
+        Path.Combine(builder.Environment.ContentRootPath, "umbraco", "Data", "DataProtectionKeys")));
+```
+
+Keep the keys folder out of source control. For multi-instance / cloud hosting, persist to **shared** storage (Azure Blob, database) and protect the keys (e.g. Key Vault) so every instance shares one ring. This is standard Umbraco DataProtection guidance; it also keeps backoffice sessions stable across restarts.
+
+If a token ever fails, the middleware now logs the reason at `Warning` (key-ring mismatch vs. genuine expiry) instead of silently rendering "expired".
+
 ## Architecture
 
 - **Mint** ([`PreviewLinkController`](src/PreviewLinkController.cs)) — `[Authorize(SectionAccessContent)]` Management API endpoint. Takes `{ contentKey }`, uses `ITimeLimitedDataProtector` to protect the GUID for 7 days, appends `?preview-token=...` to the content's absolute URL, returns `{ url, expiresAt }`.
@@ -59,6 +76,7 @@ The mint endpoint requires `SectionAccessContent` (any backoffice user with Cont
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Verified |
+| 18.x    | Verified |
 
 Depends on `Umbraco.Cms.Core`, `Umbraco.Cms.Api.Management`, and `Umbraco.Cms.Web.Common` — all 17.x.
 

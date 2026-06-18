@@ -118,13 +118,27 @@ public class PreviewLinkMiddleware
             var unprotected = _protector.Unprotect(token);
             contentKey = Guid.ParseExact(unprotected, "N");
         }
-        catch (System.Security.Cryptography.CryptographicException)
+        catch (System.Security.Cryptography.CryptographicException ex)
         {
+            // The token could not be decrypted/validated. This is the genuine-expiry case
+            // (link older than its 7-day lifetime) — but it ALSO fires when the host's
+            // DataProtection key ring differs from the one that minted the token. That
+            // happens when the consuming app does NOT persist its DataProtection keys:
+            // every link minted before an app restart then fails here ("The payload was
+            // invalid"). Logged rather than silently swallowed so it isn't misdiagnosed as
+            // simple expiry — see README → Requirements for the key-persistence prerequisite.
+            _logger.LogWarning(ex,
+                "[PreviewLink] Token failed to decrypt/validate: {Reason}. If the link is not "
+                + "genuinely older than 7 days, the host's DataProtection keys are most likely "
+                + "not persisted across app restarts.",
+                ex.Message);
             await RenderErrorAsync(context, "expired", StatusCodes.Status410Gone);
             return;
         }
-        catch (FormatException)
+        catch (FormatException ex)
         {
+            _logger.LogWarning(ex,
+                "[PreviewLink] Decrypted token was not a valid content key.");
             await RenderErrorAsync(context, "invalid", StatusCodes.Status400BadRequest);
             return;
         }
