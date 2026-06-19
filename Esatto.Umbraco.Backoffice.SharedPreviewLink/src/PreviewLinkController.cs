@@ -98,8 +98,15 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
             }
         }
 
+        // Embed the EXACT minted path alongside the content key. Minting runs in the
+        // full Umbraco request context where the URL is resolved correctly (including the
+        // culture/domain prefix). The verifying middleware runs BEFORE UseUmbraco(), where
+        // URL reconstruction is unreliable — so it compares the request path against this
+        // authoritative path exactly, which binds a token to one page across every routing
+        // config (culture-in-path, domains, home/root) without guesswork.
+        var mintedPath = NormalizePath(new Uri(absoluteUrl).AbsolutePath);
         var token = _protector.Protect(
-            request.ContentKey.ToString("N"),
+            request.ContentKey.ToString("N") + "|" + mintedPath,
             TokenLifetime);
 
         var separator = absoluteUrl.Contains('?') ? "&" : "?";
@@ -110,6 +117,17 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
             Url = fullUrl,
             ExpiresAt = DateTime.UtcNow.Add(TokenLifetime),
         });
+    }
+
+    /// <summary>
+    /// Normalizes a URL path for stable comparison between mint and verify: decodes
+    /// percent-escapes, trims surrounding slashes, lower-cases, and guarantees a single
+    /// leading slash. The site root and the home page both normalize to "/".
+    /// </summary>
+    internal static string NormalizePath(string? path)
+    {
+        var trimmed = Uri.UnescapeDataString(path ?? "/").Trim('/');
+        return trimmed.Length == 0 ? "/" : "/" + trimmed.ToLowerInvariant();
     }
 
     private string? BuildDraftUrl(IPublishedContent content, string? cultureCode)

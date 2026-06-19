@@ -113,10 +113,23 @@ public class PreviewLinkMiddleware
         var token = tokenValues.ToString();
 
         Guid contentKey;
+        string? mintedPath = null;
         try
         {
             var unprotected = _protector.Unprotect(token);
-            contentKey = Guid.ParseExact(unprotected, "N");
+            // Payload is "<contentKey:N>" (legacy) or "<contentKey:N>|<minted-path>"
+            // (1.0.4+). The embedded path is the authoritative URL the mint side computed
+            // in the full Umbraco context.
+            var sep = unprotected.IndexOf('|');
+            if (sep >= 0)
+            {
+                contentKey = Guid.ParseExact(unprotected.Substring(0, sep), "N");
+                mintedPath = unprotected.Substring(sep + 1);
+            }
+            else
+            {
+                contentKey = Guid.ParseExact(unprotected, "N");
+            }
         }
         catch (System.Security.Cryptography.CryptographicException ex)
         {
@@ -143,16 +156,14 @@ public class PreviewLinkMiddleware
             return;
         }
 
-        // Middleware runs before UseUmbraco(), so IUmbracoContextAccessor has
-        // no ambient context yet. Create one explicitly via the factory so we
-        // can resolve content + canonical URL. Dispose before handing off —
-        // Umbraco's own pipeline will create the request-scoped context that
-        // actually renders the page.
-        string? canonicalPath;
+        // Resolve the content. Middleware runs before UseUmbraco(), so create an explicit
+        // UmbracoContext via the factory; dispose before handing off so Umbraco's pipeline
+        // creates the request-scoped context that renders the page. preview: true so
+        // DRAFT-only content is resolvable — the whole point of a preview link. For legacy
+        // tokens (no embedded path) also build the content-relative path for the fallback.
+        string? relativePath = null;
         using (var ctxRef = umbracoContextFactory.EnsureUmbracoContext())
         {
-            // preview: true so DRAFT-only content is resolvable here — the
-            // whole point of a preview link is to render unpublished drafts.
             var content = ctxRef.UmbracoContext.Content?.GetById(preview: true, contentKey);
             if (content == null)
             {
@@ -163,26 +174,46 @@ public class PreviewLinkMiddleware
                 return;
             }
 
-            // Canonical URL path. Compare against the request path to ensure
-            // the token isn't being reused across pages. URL provider's route
-            // table is published-only — for drafts it returns "#" OR (in the
-            // middleware's ad-hoc UmbracoContext) just the leaf segment without
-            // the parent chain. Build the path from the document navigation
-            // service which works on content keys directly and is independent
-            // of cache/preview state.
-            var cultureCode = content.GetCultureFromDomains();
-            canonicalPath = BuildDraftRelativeUrl(
-                ctxRef.UmbracoContext.Content!, navigation, contentKey, cultureCode)
-                ?.TrimEnd('/').ToLowerInvariant();
+            if (mintedPath is null)
+            {
+                // The content's path RELATIVE to its culture/domain root: the segments
+                // BELOW the root node, "" for the home/root page. Excludes any culture/
+                // domain prefix (e.g. "/en"), which is reconciled in the fallback matcher.
+                var cultureCode = content.GetCultureFromDomains();
+                relativePath = BuildContentRelativePath(
+                    ctxRef.UmbracoContext.Content!, navigation, contentKey, cultureCode);
+            }
         }
 
-        var requestPath = context.Request.Path.Value?.TrimEnd('/').ToLowerInvariant();
+        // Original-case request path for the cookie + redirect.
+        var rawRequestPath = context.Request.Path.Value ?? "/";
 
-        if (string.IsNullOrEmpty(canonicalPath) || canonicalPath != requestPath)
+        // Verify the request URL belongs to the token's content so a token can't be reused
+        // to preview a different page.
+        bool pathOk;
+        if (mintedPath is not null)
+        {
+            // 1.0.4+ token: exact match against the authoritative path the mint side
+            // recorded — tight across every routing config (culture-in-path, domains, root).
+            pathOk = string.Equals(
+                PreviewLinkController.NormalizePath(rawRequestPath),
+                mintedPath,
+                StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            // Legacy token (pre-1.0.4, no embedded path): the request may carry a leading
+            // culture/domain prefix (e.g. "/en") the content-relative path omits, so match
+            // the relative segments against the TAIL of the request (≤1 prefix segment).
+            var requestPath = rawRequestPath.TrimEnd('/').ToLowerInvariant();
+            pathOk = RequestPathMatchesContent(requestPath, relativePath!);
+        }
+
+        if (!pathOk)
         {
             _logger.LogWarning(
-                "[PreviewLink] Path mismatch for key {ContentKey}: canonical='{Canonical}' request='{Request}'",
-                contentKey, canonicalPath, requestPath);
+                "[PreviewLink] Path mismatch for key {ContentKey}: expected='{Expected}' request='{Request}'",
+                contentKey, mintedPath ?? relativePath, rawRequestPath);
             await RenderErrorAsync(context, "notfound", StatusCodes.Status404NotFound);
             return;
         }
@@ -194,13 +225,17 @@ public class PreviewLinkMiddleware
             .GenerateTokenAsync(Constants.Security.SuperUserKey);
         if (tokenAttempt.Success && !string.IsNullOrEmpty(tokenAttempt.Result))
         {
-            // Cookie Path scoped to the canonical path WITHOUT a trailing slash.
-            // RFC 6265 path matching: a cookie with Path "/foo/" is NOT sent on
-            // a request to "/foo" — the cookie-path can't be longer than the
-            // request-path. Path "/foo" matches both "/foo" and "/foo/sub".
+            // Cookie Path scoped to the request path (the URL the recipient is on,
+            // and the target of the 302 below), trimmed of any trailing slash. This
+            // is correct regardless of culture/domain prefixing; the previously-used
+            // reconstructed path dropped the culture prefix and broke prefixed sites.
+            // RFC 6265 path matching: Path "/foo" is sent on "/foo" and "/foo/sub";
+            // a trailing slash ("/foo/") would NOT be sent on "/foo".
+            var cookiePath = rawRequestPath.TrimEnd('/');
+            if (cookiePath.Length == 0) cookiePath = "/";
             var cookieOptions = new CookieOptions
             {
-                Path = canonicalPath,
+                Path = cookiePath,
                 HttpOnly = true,
                 Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
@@ -260,30 +295,39 @@ public class PreviewLinkMiddleware
         await _next(context);
     }
 
-    // Construct the relative URL for any document (published or draft) by
-    // walking the ancestor key chain via the navigation service and looking
-    // each one up in the draft-aware content cache. Avoids the unreliable
-    // IPublishedContent.Parent traversal which fails on draft-loaded content
-    // in the ad-hoc UmbracoContext.
-    private static string? BuildDraftRelativeUrl(
+    // Build the content's path RELATIVE to its culture/domain root for any document
+    // (published or draft) by walking the ancestor key chain via the navigation
+    // service and looking each one up in the draft-aware content cache. Avoids the
+    // unreliable IPublishedContent.Parent traversal which fails on draft-loaded
+    // content in the ad-hoc UmbracoContext.
+    //
+    // Returns the segments BELOW the root node: "" for the home/root page itself,
+    // "/about" for a level-2 page, "/about/team" for level-3, etc. The root's own
+    // segment is never part of the URL path (the root maps to the culture/domain
+    // root), so it is dropped.
+    private static string BuildContentRelativePath(
         IPublishedContentCache contentCache,
         IDocumentNavigationQueryService navigation,
         Guid contentKey,
         string? cultureCode)
     {
-        if (!navigation.TryGetAncestorsKeys(contentKey, out var ancestorKeys))
+        // Full chain root → … → self, then drop the FIRST element (the root). Done
+        // AFTER appending self so the home/root page (no ancestors) correctly yields
+        // an empty chain rather than its own segment.
+        IEnumerable<Guid> pathKeys;
+        if (navigation.TryGetAncestorsKeys(contentKey, out var ancestorKeys))
         {
-            return null;
+            // ancestorKeys: immediate parent first, root last → Reverse() = root first.
+            pathKeys = ancestorKeys.Reverse().Concat(new[] { contentKey }).Skip(1);
+        }
+        else
+        {
+            // No ancestors ⇒ this IS the root/home page ⇒ empty relative path.
+            pathKeys = Array.Empty<Guid>();
         }
 
-        // TryGetAncestorsKeys returns immediate parent first, root last —
-        // reverse to walk root → parent → ... → self. Skip the root itself
-        // (level 1) because its UrlSegment isn't part of the URL path
-        // (domains attach there, not path).
-        var keys = ancestorKeys.Reverse().Skip(1).Concat(new[] { contentKey });
-
         var segments = new List<string>();
-        foreach (var key in keys)
+        foreach (var key in pathKeys)
         {
             var node = contentCache.GetById(preview: true, key);
             if (node == null) continue;
@@ -294,6 +338,36 @@ public class PreviewLinkMiddleware
             }
         }
 
-        return segments.Count == 0 ? "/" : "/" + string.Join("/", segments);
+        return segments.Count == 0 ? string.Empty : "/" + string.Join("/", segments);
+    }
+
+    // True when the request path corresponds to the token's content. The content-
+    // relative segments must match the TAIL of the request path; any leading
+    // remainder is the culture/domain path prefix (e.g. "/en") and is allowed up to
+    // one segment. Both inputs are expected lowercased and trailing-slash-trimmed.
+    //
+    // Examples (relativePath ⇒ accepted request paths): "/about" ⇒ "/about",
+    // "/en/about"; "" (home) ⇒ "/", "/en". Rejected: "/about" ⇒ "/en/contact"
+    // (tail mismatch) or "/a/b/about" (prefix longer than one segment).
+    private static bool RequestPathMatchesContent(string requestPath, string relativePath)
+    {
+        var reqSegs = requestPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var relSegs = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+        if (reqSegs.Length < relSegs.Length) return false;
+
+        // The relative segments must be the suffix of the request segments.
+        var offset = reqSegs.Length - relSegs.Length;
+        for (var i = 0; i < relSegs.Length; i++)
+        {
+            if (!string.Equals(reqSegs[offset + i], relSegs[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+
+        // Allow at most one leading prefix segment (a culture/domain path like "/en").
+        // 0 = no prefix (invariant or hostname-routed); 1 = culture-in-path.
+        return offset <= 1;
     }
 }
