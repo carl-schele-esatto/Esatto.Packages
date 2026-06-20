@@ -81,7 +81,14 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
             return NotFound(new { error = "Content not found" });
         }
 
-        var cultureCode = content.GetCultureFromDomains();
+        // Prefer the culture the editor is previewing (sent by the workspace action from
+        // the backoffice's active language). Without it, GetCultureFromDomains() returns the
+        // DEFAULT culture for every request, so variant/multilingual pages get the wrong
+        // culture's URL (e.g. a Swedish page minted as "/en/..."). Fall back to the
+        // domain-derived culture for invariant content or clients that don't send it.
+        var cultureCode = !string.IsNullOrWhiteSpace(request.Culture)
+            ? request.Culture
+            : content.GetCultureFromDomains();
         var absoluteUrl = _urlProvider.GetUrl(content, UrlMode.Absolute, culture: cultureCode);
         if (string.IsNullOrWhiteSpace(absoluteUrl) || absoluteUrl == "#")
         {

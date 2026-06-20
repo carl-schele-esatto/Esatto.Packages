@@ -2,6 +2,7 @@ import { UmbWorkspaceActionBase } from '@umbraco-cms/backoffice/workspace';
 import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 import { umbHttpClient } from '@umbraco-cms/backoffice/http-client';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
+import { UMB_APP_LANGUAGE_CONTEXT } from '@umbraco-cms/backoffice/language';
 
 // Share Preview workspace action — click logic.
 //
@@ -45,11 +46,28 @@ export class BackofficePreviewLinkWorkspaceAction extends UmbWorkspaceActionBase
             throw new Error('Document unique key unavailable after save');
         }
 
+        // Culture of the variant the editor is actively VIEWING in the document workspace
+        // (the open language tab / split-view pane) — the server builds the preview URL for
+        // THIS culture. This follows the variant you're viewing, NOT the checkbox in the
+        // Save dialog. Falls back to the global app language, then (server-side) to the
+        // content's domain culture for invariant content.
+        let culture = null;
+        try {
+            const activeVariants = ctx.splitView?.getActiveVariants?.() ?? [];
+            culture = activeVariants.find((v) => v?.culture)?.culture ?? null;
+            if (!culture) {
+                const appLanguage = await this.getContext(UMB_APP_LANGUAGE_CONTEXT);
+                culture = appLanguage?.getAppCulture?.() ?? null;
+            }
+        } catch {
+            // context unavailable → let the server fall back to the domain culture
+        }
+
         const { data, error } = await tryExecute(
             this,
             umbHttpClient.post({
                 url: API_BASE,
-                body: { contentKey },
+                body: { contentKey, culture },
                 security: SECURITY,
             }),
         );
