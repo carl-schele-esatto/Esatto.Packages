@@ -39,11 +39,13 @@ export class BackofficePreviewLinkWorkspaceAction extends UmbWorkspaceActionBase
             throw new Error('The document workspace context is missing');
         }
 
-        await ctx.requestSave();
-
+        // Intentionally NO save here — the link is minted for the document's current
+        // SAVED draft, with no save-picker dialog. Umbraco forces the variant save-picker
+        // modal for multilingual documents, so saving here would always pop that modal.
+        // Editors save their work the normal way before sharing a preview.
         const contentKey = ctx.getUnique();
         if (!contentKey) {
-            throw new Error('Document unique key unavailable after save');
+            throw new Error('Document unique key unavailable');
         }
 
         // Culture of the variant the editor is actively VIEWING in the document workspace

@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing } from '@umbraco-cms/backoffice/external/lit';
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
+import { UMB_DOCUMENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/document';
 
 // Share Preview workspace action — button + modal element.
 //
@@ -47,6 +48,9 @@ export class BackofficePreviewLinkButtonElement extends UmbElementMixin(LitEleme
         _modalOpen: { state: true },
         _shareData: { state: true },
         _copyState: { state: true },
+        _isNew: { state: true },
+        _persistedVariants: { state: true },
+        _activeCulture: { state: true },
     };
 
     static styles = css`
@@ -106,8 +110,30 @@ export class BackofficePreviewLinkButtonElement extends UmbElementMixin(LitEleme
         this._modalOpen = false;
         this._shareData = null;
         this._copyState = '';
+        this._isNew = false;
+        this._persistedVariants = [];
+        this._activeCulture = null;
         this.manifest = null;
         this.api = null;
+
+        // Hide the action when there's nothing to preview: a not-yet-created document
+        // (isNew), OR the variant the editor is currently viewing hasn't been SAVED yet
+        // (e.g. the document exists in English but the Swedish variant is "Not created").
+        //
+        // We key off `persistedData` — the last server-SAVED state — NOT `variantOptions`,
+        // which Umbraco builds from the in-memory CURRENT data. Typing a name into a
+        // not-created variant immediately adds it to current data, so variantOptions would
+        // report it as "created" before any save. But the preview link mints against the
+        // SAVED draft on the server, which still has nothing for that variant. persistedData
+        // changes only on load/save, so the button appears exactly when there's a saved
+        // draft to preview. Re-renders automatically after a save / when switching variants.
+        this.consumeContext(UMB_DOCUMENT_WORKSPACE_CONTEXT, (workspace) => {
+            this.observe(workspace?.isNew, (isNew) => { this._isNew = !!isNew; }, '_observeIsNew');
+            this.observe(workspace?.persistedData, (data) => { this._persistedVariants = data?.variants ?? []; }, '_observePersistedVariants');
+            this.observe(workspace?.splitView?.activeVariantsInfo, (active) => {
+                this._activeCulture = active?.[0]?.culture ?? null;
+            }, '_observeActiveVariant');
+        });
     }
 
     updated(changed) {
@@ -241,7 +267,22 @@ export class BackofficePreviewLinkButtonElement extends UmbElementMixin(LitEleme
         `;
     }
 
+    // The viewed variant is previewable only once it has been SAVED to the server. We match
+    // the active culture against the persisted variants (server state): a variant is "created"
+    // when a persisted entry exists for that culture and its state isn't NotCreated. Invariant
+    // documents have a single persisted variant with culture === null, which matches the null
+    // active culture. Returns false while nothing is persisted yet, so the button stays hidden
+    // on brand-new or never-saved variants — including while a name is typed but not saved.
+    #activeVariantIsCreated() {
+        const variants = this._persistedVariants;
+        if (!variants || variants.length === 0) return false;
+        const match = variants.find((v) => v.culture === this._activeCulture);
+        return !!match && match.state !== 'NotCreated';
+    }
+
     render() {
+        // Nothing to preview yet → hide: new document, or the viewed variant isn't created.
+        if (this._isNew || !this.#activeVariantIsCreated()) return nothing;
         const label = this.manifest?.meta?.label ?? 'Share preview';
         return html`
             <uui-button
