@@ -1,11 +1,11 @@
-import { LitElement as H } from "@umbraco-cms/backoffice/external/lit";
-import { UmbElementMixin as W } from "@umbraco-cms/backoffice/element-api";
-import { UMB_NOTIFICATION_CONTEXT as Y } from "@umbraco-cms/backoffice/notification";
-import { UMB_ACTION_EVENT_CONTEXT as V } from "@umbraco-cms/backoffice/action";
-import { UmbRequestReloadChildrenOfEntityEvent as X } from "@umbraco-cms/backoffice/entity-action";
-import { DocumentService as q } from "@umbraco-cms/backoffice/external/backend-api";
-import { tryExecute as C } from "@umbraco-cms/backoffice/resources";
-function B(n) {
+import { LitElement as J } from "@umbraco-cms/backoffice/external/lit";
+import { UmbElementMixin as Q } from "@umbraco-cms/backoffice/element-api";
+import { UMB_NOTIFICATION_CONTEXT as tt } from "@umbraco-cms/backoffice/notification";
+import { UMB_ACTION_EVENT_CONTEXT as et } from "@umbraco-cms/backoffice/action";
+import { UmbRequestReloadChildrenOfEntityEvent as nt } from "@umbraco-cms/backoffice/entity-action";
+import { DocumentService as L } from "@umbraco-cms/backoffice/external/backend-api";
+import { tryExecute as N } from "@umbraco-cms/backoffice/resources";
+function $(n) {
   const e = (n.querySelector(":scope > umb-document-tree-item, :scope > umb-default-tree-item") ?? n.shadowRoot?.querySelector("umb-document-tree-item, umb-default-tree-item"))?.shadowRoot?.querySelector("uui-menu-item"), o = e?.shadowRoot?.querySelector('#menu-item, [id="menu-item"], button, .menu-item-body');
   if (o) return o.getBoundingClientRect();
   if (e) {
@@ -15,15 +15,15 @@ function B(n) {
   const r = n.getBoundingClientRect();
   return new DOMRect(r.left, r.top, r.width, Math.min(r.height, 32));
 }
-function Z(n, t, e) {
+function ot(n, t, e) {
   const o = e - n, r = t / 3;
   return o < r ? "before" : o > t - r ? "after" : "into";
 }
-function D(n, t) {
-  const e = B(n);
-  return Z(e.top, e.height, t);
+function O(n, t) {
+  const e = $(n);
+  return ot(e.top, e.height, t);
 }
-const b = (() => {
+const q = (() => {
   const n = document.createElement("div");
   return n.id = "backoffice-content-tree-dnd-indicator", n.style.cssText = `
     position: fixed;
@@ -33,8 +33,8 @@ const b = (() => {
     box-sizing: border-box;
   `, document.body.appendChild(n), n;
 })();
-function j(n, t) {
-  const e = B(n), o = "var(--uui-color-selected, #3879ff)", r = "rgba(56, 121, 255, 0.08)", i = `
+function D(n, t) {
+  const e = $(n), o = "var(--uui-color-selected, #3879ff)", r = "rgba(56, 121, 255, 0.08)", i = `
     position: fixed;
     pointer-events: none;
     z-index: 99999;
@@ -43,60 +43,60 @@ function j(n, t) {
     left: ${e.left}px;
     width: ${e.width}px;
   `;
-  t === "before" ? b.style.cssText = `${i}
+  t === "before" ? q.style.cssText = `${i}
       top: ${e.top - 1}px;
       height: 2px;
       background: ${o};
-    ` : t === "after" ? b.style.cssText = `${i}
+    ` : t === "after" ? q.style.cssText = `${i}
       top: ${e.bottom - 1}px;
       height: 2px;
       background: ${o};
-    ` : b.style.cssText = `${i}
+    ` : q.style.cssText = `${i}
       top: ${e.top}px;
       height: ${e.height}px;
       border: 2px solid ${o};
       background: ${r};
     `;
 }
-function l() {
-  b.style.display = "none";
+function f() {
+  q.style.display = "none";
 }
-function m(n) {
+function v(n) {
   if (!n) return null;
   if (n.parentElement) return n.parentElement;
   const t = n.getRootNode?.();
   return t && t.host ? t.host : null;
 }
-function f(n, t) {
+function b(n, t) {
   if (!n || n.nodeType !== 1) return;
   const e = n;
   t(e);
   for (const o of e.children)
-    f(o, t);
+    b(o, t);
   if (e.shadowRoot)
     for (const o of e.shadowRoot.children)
-      f(o, t);
+      b(o, t);
 }
-const S = "backofficeContentTreeDndAttached", J = 700, P = "document", K = "application/x-backoffice-content-tree-dnd", A = "__backofficeContentTreeDndPatched";
-function a(n) {
-  const t = n;
-  return !t || t.nodeType !== 1 || t.tagName !== "UMB-TREE-ITEM" ? !1 : (t.getAttribute("entitytype") ?? t.getAttribute("entity-type")) === P;
-}
+const P = "backofficeContentTreeDndAttached", rt = 700, X = "document", it = "application/x-backoffice-content-tree-dnd", B = "__backofficeContentTreeDndPatched";
 function d(n) {
+  const t = n;
+  return !t || t.nodeType !== 1 || t.tagName !== "UMB-TREE-ITEM" ? !1 : (t.getAttribute("entitytype") ?? t.getAttribute("entity-type")) === X;
+}
+function a(n) {
   return n.props?.item?.unique ?? n.api?.unique ?? n._item?.unique ?? n.getAttribute?.("data-unique") ?? null;
 }
-function y(n) {
+function x(n) {
   const t = n.props?.item?.parent;
   if (t !== void 0)
     return t.unique ?? null;
-  let e = m(n);
+  let e = v(n);
   for (; e; ) {
-    if (a(e)) return d(e);
-    e = m(e);
+    if (d(e)) return a(e);
+    e = v(e);
   }
   return null;
 }
-function w(n) {
+function k(n) {
   function t(e) {
     if (!(!e || e.nodeType !== 1)) {
       if (e.tagName !== "SLOT")
@@ -113,55 +113,61 @@ function w(n) {
   if (n.shadowRoot)
     for (const e of n.shadowRoot.children) t(e);
 }
-function I(n) {
-  let t = m(n);
+function _(n) {
+  let t = v(n);
   for (; t; ) {
-    if (a(t)) return t;
-    t = m(t);
+    if (d(t)) return t;
+    t = v(t);
   }
   return null;
 }
-function Q(n) {
+function st(n) {
   let t = n;
   for (; t; ) {
-    if (a(t)) return t;
-    t = m(t);
+    if (d(t)) return t;
+    t = v(t);
   }
   return null;
 }
-function tt(n) {
+function R(n) {
   let t = null;
-  return f(document.documentElement, (e) => {
-    t || a(e) && d(e) === n && (t = e);
+  return b(document.documentElement, (e) => {
+    t || d(e) && a(e) === n && (t = e);
   }), t;
 }
-const T = /* @__PURE__ */ new WeakSet(), _ = [];
-let g = null;
-function U(n) {
-  if (g = n, n)
-    for (const t of _)
-      v(t);
+function ct() {
+  const n = [];
+  return b(document.documentElement, (t) => {
+    d(t) && n.push(t);
+  }), n;
 }
-function v(n) {
+const C = /* @__PURE__ */ new WeakSet(), Z = [];
+let I = null;
+function z(n) {
+  if (I = n, n)
+    for (const t of Z)
+      S(t);
+}
+function S(n) {
   if (!n) return;
   const t = n.nodeType === 9 ? n.documentElement : n;
-  f(t, (e) => {
-    a(e) && (g?.attachItem(e), w(e)), e.shadowRoot && !T.has(e.shadowRoot) && E(e.shadowRoot);
+  b(t, (e) => {
+    d(e) && (I?.attachItem(e), k(e)), e.shadowRoot && !C.has(e.shadowRoot) && M(e.shadowRoot);
   });
 }
-function E(n) {
-  if (!n || T.has(n)) return;
-  T.add(n), _.push(n), new MutationObserver((e) => {
+function M(n) {
+  if (!n || C.has(n)) return;
+  C.add(n), Z.push(n), new MutationObserver((e) => {
     for (const o of e) {
-      if (o.type === "attributes" && a(o.target)) {
-        g?.attachItem(o.target);
+      if (o.type === "attributes" && d(o.target)) {
+        I?.attachItem(o.target);
         continue;
       }
       for (const r of o.addedNodes) {
         if (!(r instanceof Element)) continue;
-        a(r) && g?.attachItem(r), v(r);
-        const i = Q(r);
-        i && w(i);
+        d(r) && I?.attachItem(r), S(r);
+        const i = st(r);
+        i && k(i);
       }
     }
   }).observe(n, {
@@ -171,184 +177,334 @@ function E(n) {
     // Lit reflects `entityType` to lowercase `entitytype` (no hyphen) in 17.0.0.
     // Watch both forms in case of version drift.
     attributeFilter: ["entitytype", "entity-type"]
-  }), v(n);
+  }), S(n);
 }
-const M = window;
-if (!M[A]) {
-  M[A] = !0;
+const F = window;
+if (!F[B]) {
+  F[B] = !0;
   const n = Element.prototype.attachShadow;
   Element.prototype.attachShadow = function(t) {
     const e = n.call(this, t);
     try {
-      E(e);
+      M(e);
     } catch (o) {
       console.warn("[backoffice-content-tree-dnd] observeRoot failed:", o);
     }
     return e;
-  }, E(document);
+  }, M(document);
 }
-function et(n) {
+function G(n) {
   const t = /* @__PURE__ */ new Set();
-  return f(n, (e) => {
-    if (e !== n && a(e)) {
-      const o = d(e);
+  return b(n, (e) => {
+    if (e !== n && d(e)) {
+      const o = a(e);
       o && t.add(o);
     }
   }), t;
 }
-function O(n, t, e) {
+function A(n, t, e) {
   return n === t || e.has(n);
 }
-function N(n) {
-  const t = n ? d(n) : null, e = [];
-  return f(n ?? document, (r) => {
-    if (r !== n && a(r) && y(r) === t) {
-      const s = d(r);
-      s && e.push(s);
+function H(n) {
+  const t = n ? a(n) : null, e = [];
+  return b(n ?? document, (r) => {
+    if (r !== n && d(r) && x(r) === t) {
+      const c = a(r);
+      c && e.push(c);
     }
   }), e;
 }
-function L(n, t, e, o) {
-  const r = n.filter((c) => c !== t), i = r.indexOf(e);
+function K(n, t, e, o) {
+  const r = n.filter((s) => s !== t), i = r.indexOf(e);
   if (i === -1) return null;
-  const s = o === "before" ? i : i + 1;
-  return [...r.slice(0, s), t, ...r.slice(s)];
+  const c = o === "before" ? i : i + 1;
+  return [...r.slice(0, c), t, ...r.slice(c)];
 }
-function nt(n, t, e) {
+function ut(n, t, e) {
   if (!n || !t || n === t) return;
   const o = t.parentNode;
   o && (e === "before" ? o.insertBefore(n, t) : o.insertBefore(n, t.nextSibling));
 }
-class ot extends W(H) {
-  #i;
-  #s;
+const y = (() => {
+  const n = document.createElement("div");
+  return n.id = "backoffice-content-tree-dnd-spinner", n.style.cssText = `
+    position: fixed;
+    pointer-events: none;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    color: var(--uui-color-selected, #3879ff);
+  `, n.innerHTML = '<uui-loader-circle style="font-size: 1.2em;"></uui-loader-circle>', document.body.appendChild(n), n;
+})();
+function W(n) {
+  const t = $(n);
+  y.style.left = `${t.left}px`, y.style.top = `${t.top}px`, y.style.width = `${Math.min(t.height, 28)}px`, y.style.height = `${t.height}px`, y.style.display = "flex";
+}
+function at() {
+  y.style.display = "none";
+}
+function Y(n, t, e) {
+  let o = n + t;
+  for (; o >= 0 && o < e.length; ) {
+    if (!e[o].blocked) return o;
+    o += t;
+  }
+  return n;
+}
+function dt(n, t, e) {
+  switch (t) {
+    case "ArrowDown":
+      return { type: "none", state: { ...n, targetIndex: Y(n.targetIndex, 1, e), zone: "before" } };
+    case "ArrowUp":
+      return { type: "none", state: { ...n, targetIndex: Y(n.targetIndex, -1, e), zone: "before" } };
+    case "ArrowRight":
+      return { type: "none", state: { ...n, zone: "into" } };
+    case "ArrowLeft": {
+      const o = e[n.targetIndex]?.parentUnique ?? null;
+      if (!o) return { type: "none", state: n };
+      const r = e.findIndex((i) => i.unique === o);
+      return r < 0 ? { type: "none", state: n } : { type: "none", state: { ...n, targetIndex: r, zone: "after" } };
+    }
+    case " ":
+    case "Enter": {
+      const o = e[n.targetIndex];
+      return !o || o.blocked ? { type: "none", state: n } : { type: "commit", state: n };
+    }
+    case "Escape":
+      return { type: "cancel" };
+    default:
+      return { type: "none", state: n };
+  }
+}
+const V = (() => {
+  const n = document.createElement("div");
+  return n.id = "backoffice-content-tree-dnd-live", n.setAttribute("aria-live", "polite"), n.setAttribute("aria-atomic", "true"), n.style.cssText = `
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); border: 0;
+  `, document.body.appendChild(n), n;
+})();
+function E(n) {
+  V.textContent = "", V.textContent = n;
+}
+class ft extends Q(J) {
+  #c;
+  #u;
   #t = null;
-  #e = null;
   #o = null;
-  #c = !1;
+  #i = !1;
+  #e = null;
+  #s = null;
+  #d = !1;
   constructor() {
-    super(), this.consumeContext(Y, (t) => {
-      this.#i = t;
-    }), this.consumeContext(V, (t) => {
-      this.#s = t;
+    super(), this.consumeContext(tt, (t) => {
+      this.#c = t;
+    }), this.consumeContext(et, (t) => {
+      this.#u = t;
     });
   }
   connectedCallback() {
-    super.connectedCallback(), U(this), this.#f();
+    super.connectedCallback(), z(this), this.#b();
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), U(null), this.#e && clearTimeout(this.#e);
+    super.disconnectedCallback(), z(null), this.#e && clearTimeout(this.#e);
   }
   attachItem(t) {
     const e = t;
-    if (e.dataset[S]) return;
-    e.dataset[S] = "1", t.setAttribute("draggable", "true"), w(t), new MutationObserver(() => w(t)).observe(t, { childList: !0, subtree: !0 });
+    if (e.dataset[P]) return;
+    e.dataset[P] = "1", t.setAttribute("draggable", "true"), k(t), new MutationObserver(() => k(t)).observe(t, { childList: !0, subtree: !0 });
   }
-  #f() {
-    this.#c || (this.#c = !0, document.addEventListener("dragstart", (t) => {
+  #b() {
+    this.#d || (this.#d = !0, document.addEventListener("dragstart", (t) => {
       const e = this.#r(t);
-      e && this.#h(t, e);
+      e && this.#g(t, e);
     }, !0), document.addEventListener("dragenter", (t) => {
       !this.#r(t) || !this.#t || t.preventDefault();
     }, !0), document.addEventListener("dragover", (t) => {
       const e = this.#r(t);
       if (!e) {
-        l();
+        f();
         return;
       }
-      this.#l(t, e);
+      this.#y(t, e);
     }, !0), document.addEventListener("dragleave", (t) => {
       const e = this.#r(t);
-      e && this.#m(t, e);
+      e && this.#w(t, e);
     }, !0), document.addEventListener("drop", (t) => {
       const e = this.#r(t);
-      e && this.#p(t, e);
-    }, !0), document.addEventListener("dragend", () => this.#b(), !0));
+      e && this.#x(t, e);
+    }, !0), document.addEventListener("dragend", () => this.#v(), !0), document.addEventListener("keydown", (t) => this.#T(t), !0));
   }
   #r(t) {
     const e = t.composedPath?.() ?? [];
     for (const o of e)
-      if (a(o)) return o;
+      if (d(o)) return o;
     return null;
   }
-  #h(t, e) {
-    const o = d(e);
+  #g(t, e) {
+    if (this.#i) {
+      t.preventDefault();
+      return;
+    }
+    const o = a(e);
     if (!o) {
       t.preventDefault();
       return;
     }
-    const r = y(e), i = et(e);
-    t.dataTransfer.effectAllowed = "move", t.dataTransfer.setData(K, o), this.#t = { sourceUnique: o, sourceParentUnique: r, descendantUniques: i };
+    const r = x(e), i = G(e);
+    t.dataTransfer.effectAllowed = "move", t.dataTransfer.setData(it, o), this.#t = { sourceUnique: o, sourceParentUnique: r, descendantUniques: i };
   }
-  #l(t, e) {
+  #y(t, e) {
     if (!this.#t) return;
-    const o = d(e);
+    const o = a(e);
     if (!o) return;
-    if (O(o, this.#t.sourceUnique, this.#t.descendantUniques)) {
-      l();
+    if (A(o, this.#t.sourceUnique, this.#t.descendantUniques)) {
+      f();
       return;
     }
-    const r = D(e, t.clientY);
-    t.preventDefault(), t.dataTransfer.dropEffect = "move", j(e, r), this.#o !== e && (this.#e && clearTimeout(this.#e), this.#o = e, this.#e = setTimeout(() => {
+    const r = O(e, t.clientY);
+    t.preventDefault(), t.dataTransfer.dropEffect = "move", D(e, r), this.#s !== e && (this.#e && clearTimeout(this.#e), this.#s = e, this.#e = setTimeout(() => {
       !e.hasAttribute("show-children") && !e.hasAttribute("is-expanded") && !e.hasAttribute("open") && (typeof e.toggleChildren == "function" ? e.toggleChildren() : e.shadowRoot?.querySelector('[name="caret"], [data-mark="chevron"]')?.click?.());
-    }, J));
+    }, rt));
   }
-  #m(t, e) {
-    t.relatedTarget && e.contains(t.relatedTarget) || (l(), this.#o === e && this.#e && (clearTimeout(this.#e), this.#e = null, this.#o = null));
+  #w(t, e) {
+    t.relatedTarget && e.contains(t.relatedTarget) || (f(), this.#s === e && this.#e && (clearTimeout(this.#e), this.#e = null, this.#s = null));
   }
-  async #p(t, e) {
+  async #x(t, e) {
     if (!this.#t) return;
-    const o = d(e);
-    if (!o || O(o, this.#t.sourceUnique, this.#t.descendantUniques)) return;
-    const r = D(e, t.clientY);
-    t.preventDefault(), l();
-    const i = this.#t.sourceUnique, s = this.#t.sourceParentUnique, c = y(e), u = tt(i);
-    u && (u.style.opacity = "0.4");
+    const o = a(e);
+    if (!o || A(o, this.#t.sourceUnique, this.#t.descendantUniques)) return;
+    const r = O(e, t.clientY);
+    t.preventDefault(), f(), await this.#f(e, r);
+  }
+  // Shared move/sort/reload/optimistic/rollback/spinner logic, driven by a
+  // resolved (targetEl, zone). Used by pointer-drop (#onDrop) and reusable by a
+  // future keyboard-commit path. Reads source info from #dragState.
+  async #f(t, e) {
+    if (!this.#t) return;
+    const o = a(t);
+    if (!o || A(o, this.#t.sourceUnique, this.#t.descendantUniques) || this.#i) return;
+    this.#i = !0;
+    const r = this.#t.sourceUnique, i = this.#t.sourceParentUnique, c = x(t), s = R(r);
+    s && (s.style.opacity = "0.4", W(s));
     try {
-      if (r === "into") {
-        if (s === o) return;
-        await this.#a(i, o), await this.#n(s), await this.#n(o);
+      if (e === "into") {
+        if (i === o) return;
+        await this.#h(r, o), await this.#n(i), await this.#n(o);
         return;
       }
-      if (s === c) {
-        const p = I(e), z = N(p), x = L(z, i, o, r);
-        if (!x)
+      if (i === c) {
+        const h = _(t), g = H(h), m = K(g, r, o, e);
+        if (!m)
           throw new Error("Target sibling not found in parent's rendered children");
-        const F = u?.nextSibling ?? null, R = u?.parentNode ?? null;
-        nt(u, e, r);
+        const T = s?.nextSibling ?? null, w = s?.parentNode ?? null;
+        ut(s, t, e), s && W(s);
         try {
-          await this.#u(c, x);
-        } catch (G) {
-          throw u && R && R.insertBefore(u, F), G;
+          await this.#p(c, m);
+        } catch (U) {
+          throw s && w && w.insertBefore(s, T), U;
         }
         return;
       }
-      await this.#a(i, c);
-      const h = I(e), $ = N(h), k = L($, i, o, r);
-      if (!k) {
-        await this.#n(s), await this.#n(c), this.#d("Moved, but couldn't set the position — it's at the bottom of the new parent.");
+      await this.#h(r, c);
+      const u = _(t), l = H(u), p = K(l, r, o, e);
+      if (!p) {
+        await this.#n(i), await this.#n(c), this.#m("Moved, but couldn't set the position — it's at the bottom of the new parent.");
         return;
       }
       try {
-        await this.#u(c, k), await this.#n(s), await this.#n(c);
-      } catch (p) {
-        await this.#n(s), await this.#n(c), this.#d(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${p?.message ?? p})`);
+        await this.#p(c, p), await this.#n(i), await this.#n(c);
+      } catch (h) {
+        await this.#n(i), await this.#n(c), this.#m(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${h?.message ?? h})`);
       }
-    } catch (h) {
-      console.error("[backoffice-content-tree-dnd] drop failed", h), this.#w(h?.message ?? String(h)), await this.#n(s).catch(() => {
+    } catch (u) {
+      console.error("[backoffice-content-tree-dnd] drop failed", u), this.#E(u?.message ?? String(u)), await this.#n(i).catch(() => {
       }), await this.#n(c).catch(() => {
       });
     } finally {
-      u && (u.style.opacity = "");
+      at(), s && (s.style.opacity = ""), this.#i = !1;
     }
   }
-  #b() {
-    this.#t = null, l(), this.#e && clearTimeout(this.#e), this.#e = null, this.#o = null;
+  #v() {
+    this.#t = null, f(), this.#e && clearTimeout(this.#e), this.#e = null, this.#s = null;
   }
-  async #a(t, e) {
-    const { error: o } = await C(
+  // --- Keyboard "grab & place" reordering -----------------------------------
+  // Enumerate all visible document tree-items in visual order as KbCandidates,
+  // keeping a parallel element array so a resolved targetIndex maps back to a
+  // DOM element. Elements without a readable unique are skipped. Requires a
+  // grab in progress (uses #dragState for the source/descendant blocked check).
+  #l() {
+    const t = [], e = [], o = this.#t?.sourceUnique ?? null, r = this.#t?.descendantUniques ?? /* @__PURE__ */ new Set();
+    for (const i of ct()) {
+      const c = a(i);
+      c && (t.push({
+        unique: c,
+        parentUnique: x(i),
+        blocked: c === o || r.has(c)
+      }), e.push(i));
+    }
+    return { candidates: t, els: e };
+  }
+  #a(t) {
+    return t?.props?.item?.name ?? "item";
+  }
+  #T(t) {
+    if (this.#o === null) {
+      if (t.key !== " ") return;
+      const u = this.#r(t);
+      if (!u) return;
+      const l = a(u);
+      if (!l || this.#i) return;
+      t.preventDefault(), t.stopPropagation();
+      const p = x(u), h = G(u);
+      this.#t = { sourceUnique: l, sourceParentUnique: p, descendantUniques: h };
+      const { candidates: g, els: m } = this.#l(), T = g.findIndex((j) => j.unique === l), w = T >= 0 ? T : 0;
+      this.#o = { sourceUnique: l, targetIndex: w, zone: "before" };
+      const U = m[w] ?? u;
+      D(U, "before"), E(
+        `Grabbed ${this.#a(u)}. Use arrow keys to choose a position, space to drop, escape to cancel.`
+      );
+      return;
+    }
+    const { candidates: e, els: o } = this.#l();
+    if (e.length === 0) {
+      t.key === "Escape" && (t.preventDefault(), t.stopPropagation()), f(), this.#o = null, this.#t = null;
+      return;
+    }
+    const r = Math.min(Math.max(this.#o.targetIndex, 0), e.length - 1), i = { ...this.#o, targetIndex: r };
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "Escape"].includes(t.key)) return;
+    t.preventDefault(), t.stopPropagation();
+    const s = dt(i, t.key, e);
+    if (s.type === "none") {
+      this.#o = s.state;
+      const u = o[s.state.targetIndex];
+      if (!u) {
+        f();
+        return;
+      }
+      D(u, s.state.zone), E(`${s.state.zone} ${this.#a(u)}`);
+      return;
+    }
+    if (s.type === "commit") {
+      const u = o[s.state.targetIndex], l = s.state.zone, p = s.state.sourceUnique, h = this.#a(R(p) ?? void 0);
+      if (f(), !u) {
+        this.#o = null, this.#t = null;
+        return;
+      }
+      this.#o = null, (async () => {
+        await this.#f(u, l), E(`Moved ${h}.`);
+        const g = R(p), m = g?.querySelector("[tabindex],a,button");
+        m?.focus ? m.focus() : g?.focus?.(), this.#t = null;
+      })();
+      return;
+    }
+    f(), E("Move cancelled."), this.#o = null, this.#t = null;
+  }
+  async #h(t, e) {
+    const { error: o } = await N(
       this,
-      q.putDocumentByIdMove({
+      L.putDocumentByIdMove({
         path: { id: t },
         body: { target: e ? { id: e } : null }
       }),
@@ -356,10 +512,10 @@ class ot extends W(H) {
     );
     if (o) throw o;
   }
-  async #u(t, e) {
-    const { error: o } = await C(
+  async #p(t, e) {
+    const { error: o } = await N(
       this,
-      q.putDocumentSort({
+      L.putDocumentSort({
         body: {
           parent: t ? { id: t } : null,
           sorting: e.map((r, i) => ({ id: r, sortOrder: i }))
@@ -370,29 +526,29 @@ class ot extends W(H) {
     if (o) throw o;
   }
   async #n(t) {
-    if (!this.#s) {
+    if (!this.#u) {
       console.warn("[backoffice-content-tree-dnd] reload: action-event context not available — tree won't auto-refresh");
       return;
     }
-    const e = t ? P : "document-root";
-    this.#s.dispatchEvent(
-      new X({
+    const e = t ? X : "document-root";
+    this.#u.dispatchEvent(
+      new nt({
         unique: t ?? null,
         entityType: e
       })
     );
   }
-  #w(t) {
-    console.error("[backoffice-content-tree-dnd]", t), this.#i?.peek("danger", { data: { message: t } });
+  #E(t) {
+    console.error("[backoffice-content-tree-dnd]", t), this.#c?.peek("danger", { data: { message: t } });
   }
-  #d(t) {
-    console.warn("[backoffice-content-tree-dnd]", t), this.#i?.peek("warning", { data: { message: t } });
+  #m(t) {
+    console.warn("[backoffice-content-tree-dnd]", t), this.#c?.peek("warning", { data: { message: t } });
   }
   render() {
     return null;
   }
 }
-customElements.get("backoffice-content-tree-dnd") || customElements.define("backoffice-content-tree-dnd", ot);
+customElements.get("backoffice-content-tree-dnd") || customElements.define("backoffice-content-tree-dnd", ft);
 (() => {
   if (document.querySelector("backoffice-content-tree-dnd")) return;
   const n = document.createElement("backoffice-content-tree-dnd");

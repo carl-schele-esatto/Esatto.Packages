@@ -116,3 +116,14 @@ export function findTreeItemByUnique(unique: string): AnyTreeItem | null {
   });
   return found;
 }
+
+export function listTreeItemsInOrder(): AnyTreeItem[] {
+  // Enumerate all visible document tree-items in composed DOM order, which
+  // matches their visual top-to-bottom order in the rendered tree. Used by the
+  // keyboard "grab & place" path to build its candidate list.
+  const out: AnyTreeItem[] = [];
+  walkDescendantsComposed(document.documentElement, (el) => {
+    if (isTreeItem(el)) out.push(el);
+  });
+  return out;
+}

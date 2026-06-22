@@ -20,12 +20,16 @@ import {
   propagateDraggable,
   findVisualParentTreeItem,
   findTreeItemByUnique,
+  listTreeItemsInOrder,
   type AnyTreeItem,
 } from './tree-item';
-import { getDropZone } from './drop-zone';
+import { getDropZone, type DropZone } from './drop-zone';
 import { collectDescendantUniques, isBlockedTarget } from './cycle-guard';
 import { listSiblingsInOrder, computeReorder, optimisticReorder } from './siblings';
 import { renderIndicator, hideIndicator } from './indicator';
+import { showSpinner, hideSpinner } from './spinner';
+import { reduceKey, type KbState, type KbCandidate } from './keyboard';
+import { announce } from './announce';
 
 interface DragState {
   sourceUnique: string;
@@ -37,6 +41,8 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
   #notifications?: typeof UMB_NOTIFICATION_CONTEXT.TYPE;
   #actionEvents?: typeof UMB_ACTION_EVENT_CONTEXT.TYPE;
   #dragState: DragState | null = null;
+  #kbState: KbState | null = null;
+  #movePending = false;
   #hoverTimer: ReturnType<typeof setTimeout> | null = null;
   #lastHoverTarget: AnyTreeItem | null = null;
   #globalListenersInstalled = false;
@@ -115,6 +121,10 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
       void this.#onDrop(e, el);
     }, true);
     document.addEventListener('dragend', () => this.#onDragEnd(), true);
+    // Keyboard "grab & place" reordering (ARIA APG). Capture phase so the
+    // tree's own key handling (open node, expand/collapse, roving tabindex)
+    // doesn't fire for the keys we own while grabbed.
+    document.addEventListener('keydown', (e) => this.#onKeyDown(e), true);
   }
 
   #findTreeItemInPath(event: Event): AnyTreeItem | null {
@@ -129,6 +139,7 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
   }
 
   #onDragStart(event: DragEvent, el: AnyTreeItem): void {
+    if (this.#movePending) { event.preventDefault(); return; }
     const sourceUnique = readUnique(el);
     if (!sourceUnique) {
       event.preventDefault();
@@ -191,10 +202,26 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
     const targetUnique = readUnique(el);
     if (!targetUnique) return;
     if (isBlockedTarget(targetUnique, this.#dragState.sourceUnique, this.#dragState.descendantUniques)) return;
-
     const zone = getDropZone(el, event.clientY);
     event.preventDefault();
     hideIndicator();
+    await this.#performMove(el, zone);
+  }
+
+  // Shared move/sort/reload/optimistic/rollback/spinner logic, driven by a
+  // resolved (targetEl, zone). Used by pointer-drop (#onDrop) and reusable by a
+  // future keyboard-commit path. Reads source info from #dragState.
+  async #performMove(el: AnyTreeItem, zone: DropZone): Promise<void> {
+    if (!this.#dragState) return;
+    const targetUnique = readUnique(el);
+    if (!targetUnique) return;
+    if (isBlockedTarget(targetUnique, this.#dragState.sourceUnique, this.#dragState.descendantUniques)) return;
+
+    // In-flight move lock: any second call (stray Space/Enter, double pointer
+    // drop, grab-during-flight) returns immediately. Set before the first
+    // await; released unconditionally in the finally block below.
+    if (this.#movePending) return;
+    this.#movePending = true;
 
     const sourceUnique = this.#dragState.sourceUnique;
     const sourceParentUnique = this.#dragState.sourceParentUnique;
@@ -203,8 +230,11 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
     // Find the source DOM element so we can do an optimistic move on success.
     const sourceEl = findTreeItemByUnique(sourceUnique);
 
-    // Visual feedback: dim the source while the API call is in flight.
-    if (sourceEl) (sourceEl as HTMLElement).style.opacity = '0.4';
+    // Visual feedback: dim the source AND show a spinner while the API is in flight.
+    if (sourceEl) {
+      (sourceEl as HTMLElement).style.opacity = '0.4';
+      showSpinner(sourceEl);
+    }
 
     try {
       if (zone === 'into') {
@@ -236,6 +266,9 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
         const rollbackBefore = sourceEl?.nextSibling ?? null;
         const rollbackParent = sourceEl?.parentNode ?? null;
         optimisticReorder(sourceEl, el, zone);
+        // Re-pin the spinner over the row's NEW position — the fixed overlay was
+        // placed at the pre-move coordinates; the optimistic reorder moved the row.
+        if (sourceEl) showSpinner(sourceEl);
 
         try {
           await this.#sort(targetParentUnique, newOrder);
@@ -250,6 +283,10 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
       }
 
       // Cross-parent slot: move + sort.
+      // Accepted fallback (do NOT "fix" into a hard failure): if the slot can't be
+      // computed or the sort fails, we reload both branches and leave the node at
+      // the bottom of the new parent with a warning. A successful move with an
+      // imperfect position beats blocking the move or rolling back a completed move.
       await this.#move(sourceUnique, targetParentUnique);
       const parentEl = findVisualParentTreeItem(el);
       const siblings = listSiblingsInOrder(parentEl);
@@ -281,7 +318,9 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
       await this.#reload(sourceParentUnique).catch(() => {});
       await this.#reload(targetParentUnique).catch(() => {});
     } finally {
+      hideSpinner();
       if (sourceEl) (sourceEl as HTMLElement).style.opacity = '';
+      this.#movePending = false;
     }
   }
 
@@ -291,6 +330,141 @@ export class BackofficeContentTreeDnd extends UmbElementMixin(LitElement) {
     if (this.#hoverTimer) clearTimeout(this.#hoverTimer);
     this.#hoverTimer = null;
     this.#lastHoverTarget = null;
+  }
+
+  // --- Keyboard "grab & place" reordering -----------------------------------
+
+  // Enumerate all visible document tree-items in visual order as KbCandidates,
+  // keeping a parallel element array so a resolved targetIndex maps back to a
+  // DOM element. Elements without a readable unique are skipped. Requires a
+  // grab in progress (uses #dragState for the source/descendant blocked check).
+  #buildCandidates(): { candidates: KbCandidate[]; els: AnyTreeItem[] } {
+    const candidates: KbCandidate[] = [];
+    const els: AnyTreeItem[] = [];
+    const sourceUnique = this.#dragState?.sourceUnique ?? null;
+    const descendantUniques = this.#dragState?.descendantUniques ?? new Set<string>();
+    for (const el of listTreeItemsInOrder()) {
+      const unique = readUnique(el);
+      if (!unique) continue;
+      candidates.push({
+        unique,
+        parentUnique: readParentUnique(el),
+        blocked: unique === sourceUnique || descendantUniques.has(unique),
+      });
+      els.push(el);
+    }
+    return { candidates, els };
+  }
+
+  #targetName(el: AnyTreeItem | undefined): string {
+    return (el as any)?.props?.item?.name ?? 'item';
+  }
+
+  #onKeyDown(e: KeyboardEvent): void {
+    if (this.#kbState === null) {
+      // Not grabbed: only Space initiates a grab. Enter keeps its normal
+      // "open node" behavior; all other keys pass through untouched.
+      if (e.key !== ' ') return;
+      const el = this.#findTreeItemInPath(e);
+      if (!el) return;
+      const sourceUnique = readUnique(el);
+      if (!sourceUnique) return;
+      // Don't start a new grab while a move is in flight.
+      if (this.#movePending) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Build source state exactly like #onDragStart so #performMove and the
+      // cycle guard work identically to the pointer-drag path.
+      const sourceParentUnique = readParentUnique(el);
+      const descendantUniques = collectDescendantUniques(el);
+      this.#dragState = { sourceUnique, sourceParentUnique, descendantUniques };
+
+      const { candidates, els } = this.#buildCandidates();
+      const sourceIndex = candidates.findIndex((c) => c.unique === sourceUnique);
+      const targetIndex = sourceIndex >= 0 ? sourceIndex : 0;
+      this.#kbState = { sourceUnique, targetIndex, zone: 'before' };
+
+      const indicatorEl = els[targetIndex] ?? el;
+      renderIndicator(indicatorEl, 'before');
+      announce(
+        `Grabbed ${this.#targetName(el)}. Use arrow keys to choose a position, space to drop, escape to cancel.`,
+      );
+      return;
+    }
+
+    // Grabbed: rebuild candidates fresh (the tree may have expanded), then run
+    // the pure reducer. Clamp the (possibly stale) target index defensively.
+    const { candidates, els } = this.#buildCandidates();
+    if (candidates.length === 0) {
+      // Nothing to target anymore — cancel cleanly.
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); }
+      hideIndicator();
+      this.#kbState = null;
+      this.#dragState = null;
+      return;
+    }
+    const clampedIndex = Math.min(Math.max(this.#kbState.targetIndex, 0), candidates.length - 1);
+    const state: KbState = { ...this.#kbState, targetIndex: clampedIndex };
+
+    const handledKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter', 'Escape'];
+    if (!handledKeys.includes(e.key)) return; // pass through unhandled keys
+    e.preventDefault();
+    e.stopPropagation();
+
+    const r = reduceKey(state, e.key, candidates);
+
+    if (r.type === 'none') {
+      this.#kbState = r.state;
+      const el = els[r.state.targetIndex];
+      if (!el) {
+        hideIndicator();
+        return;
+      }
+      renderIndicator(el, r.state.zone);
+      announce(`${r.state.zone} ${this.#targetName(el)}`);
+      return;
+    }
+
+    if (r.type === 'commit') {
+      const targetEl = els[r.state.targetIndex];
+      const zone = r.state.zone;
+      const sourceUnique = r.state.sourceUnique;
+      const sourceName = this.#targetName(findTreeItemByUnique(sourceUnique) ?? undefined);
+      hideIndicator();
+      if (!targetEl) {
+        // Stale index with no element — bail without moving.
+        this.#kbState = null;
+        this.#dragState = null;
+        return;
+      }
+      // Clear #kbState synchronously so the grabbed branch can't re-enter
+      // mid-flight. #dragState stays set until after the move resolves
+      // (#performMove reads it); the #movePending lock blocks any second
+      // #performMove during the in-flight window.
+      this.#kbState = null;
+      void (async () => {
+        await this.#performMove(targetEl, zone);
+        announce(`Moved ${sourceName}.`);
+        // Best-effort refocus the moved node so keyboard users keep their place.
+        const found = findTreeItemByUnique(sourceUnique);
+        const inner = found?.querySelector('[tabindex],a,button') as HTMLElement | null;
+        if (inner?.focus) {
+          inner.focus();
+        } else {
+          (found as HTMLElement | null)?.focus?.();
+        }
+        this.#dragState = null;
+      })();
+      return;
+    }
+
+    // r.type === 'cancel'
+    hideIndicator();
+    announce('Move cancelled.');
+    this.#kbState = null;
+    this.#dragState = null;
   }
 
   async #move(unique: string, targetParentUnique: string | null): Promise<void> {

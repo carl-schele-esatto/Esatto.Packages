@@ -21,8 +21,8 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Native HTML5 drag-and-drop for the Umbraco 17 backoffice Content tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
-    <PackageTags>umbraco;umbraco-marketplace;backoffice;tree;drag-and-drop</PackageTags>
+    <Description>Native HTML5 drag-and-drop and keyboard reordering for the Umbraco 17/18 backoffice Content tree. Three-zone (above / into / below) drop targets, optimistic same-parent reorder, full cross-parent move, a move-in-progress spinner, and WCAG-compliant keyboard "grab &amp; place". Pure App_Plugins package — no C# code.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;tree;drag-and-drop</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
