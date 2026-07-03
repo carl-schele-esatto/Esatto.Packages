@@ -25,4 +25,15 @@
     <ProjectReference Include="..\Esatto.Umbraco.Backoffice.CustomEditors\Esatto.Umbraco.Backoffice.CustomEditors.csproj" />
   </ItemGroup>
 
+  <!-- The shipped CustomEditors package is deliberately min-only (Umbraco >=14.0.0). Restored
+       standalone it would drag in Umbraco 14's now-vulnerable transitive deps (MessagePack 2.5.x,
+       Lucene.Net.Replicator, MimeKit 4.6.0). Pin the Umbraco graph here to 17 so the local test
+       build resolves the same patched versions a modern consumer gets. Test-only; does not affect
+       the package's min-only contract. -->
+  <ItemGroup Label="Test-only: resolve Umbraco 17 patched graph">
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+    <!-- Umbraco 17's HybridCache still brings MessagePack 3.1.4 (GHSA-hv8m-jj95-wg3x); floor to 3.1.7. -->
+    <PackageReference Include="MessagePack" Version="3.1.7" />
+  </ItemGroup>
+
 </Project>
