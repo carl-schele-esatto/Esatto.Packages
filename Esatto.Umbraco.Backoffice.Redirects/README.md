@@ -1,6 +1,6 @@
 # Esatto.Umbraco.Backoffice.Redirects
 
-URL redirects admin for Umbraco 17. Editors manage dead-URL → new-URL rules from a Settings-section dashboard; the runtime serves 301 responses via an Umbraco `IContentFinder`.
+URL redirects admin for Umbraco 17 & 18. Editors manage dead-URL → new-URL rules from a Settings-section dashboard; the runtime serves 301 responses via an Umbraco `IContentFinder`.
 
 - SQL-backed `Redirects` table — no Umbraco content nodes, no uSync churn
 - Exact, case-insensitive matching with query-string preservation
@@ -61,6 +61,7 @@ This is metadata-only — no row data is touched. The rename runs only when the 
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Verified |
+| 18.x    | Verified |
 
 ## License
 

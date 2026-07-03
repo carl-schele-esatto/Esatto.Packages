@@ -17,7 +17,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.Redirects</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Dead-URL → new-URL redirects for Umbraco 17. Provides a SQL-backed Redirects table, a Settings-section dashboard for editors to manage 301 rules, and an IContentFinder that resolves redirects at request time. A single flat list of redirects: exact case-insensitive matching with query-string preservation, draft rows, and idempotent migrations.</Description>
+    <Description>Dead-URL → new-URL redirects for Umbraco 17 &amp; 18. Provides a SQL-backed Redirects table, a Settings-section dashboard for editors to manage 301 rules, and an IContentFinder that resolves redirects at request time. A single flat list of redirects: exact case-insensitive matching with query-string preservation, draft rows, and idempotent migrations.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;redirects;url-redirects;301</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
