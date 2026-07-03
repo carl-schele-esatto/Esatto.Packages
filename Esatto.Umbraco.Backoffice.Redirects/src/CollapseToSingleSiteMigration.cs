@@ -12,8 +12,13 @@ namespace Esatto.Umbraco.Backoffice.Redirects;
 /// single-site installs (the table is created single-site by the add step).
 /// </summary>
 /// <remarks>
-/// Single-site data is assumed (every legacy row had an empty site key), so
-/// flattening cannot produce an oldPath collision; no dedup is required.
+/// A table carried over from the multi-site package can hold the same
+/// <c>oldPath</c> under different site keys, so before creating the single-
+/// column unique index this migration deduplicates by <c>oldPath</c> — keeping
+/// the lowest-id row and deleting the rest. When a specific site's target must
+/// be kept deliberately, prune the unwanted rows (e.g. by the old <c>siteKey</c>)
+/// BEFORE this migration runs; the automatic dedup is a last-resort guard so a
+/// legacy multi-site table can never crash the collapse.
 /// </remarks>
 public sealed class CollapseToSingleSiteMigration : AsyncMigrationBase
 {
@@ -63,7 +68,27 @@ public sealed class CollapseToSingleSiteMigration : AsyncMigrationBase
             }
         }
 
-        // 3. Ensure a single-column UNIQUE index on oldPath. If an index with the
+        // 3. Deduplicate by oldPath before creating the unique index. A table
+        // carried over from the multi-site package can hold the same oldPath
+        // under different (now-dropped) site keys; collapsing to single-site
+        // makes those collide, which would fail the UNIQUE index below. Keep the
+        // lowest-id row per oldPath and delete the rest. No-op when oldPaths are
+        // already unique (fresh installs, or a table pre-pruned by the consumer).
+        // The NOT IN (SELECT MIN(id) … GROUP BY oldPath) form is valid on SQL
+        // Server and SQLite alike, and runs only during this migration transition
+        // (not on every boot).
+        var removedDuplicates = Database.Execute(
+            $"DELETE FROM [{RedirectEntity.TableName}] WHERE id NOT IN " +
+            $"(SELECT MIN(id) FROM [{RedirectEntity.TableName}] GROUP BY oldPath)");
+        if (removedDuplicates > 0)
+        {
+            Logger.LogWarning(
+                "{Migration}: removed {Count} duplicate oldPath row(s) from {Table} before creating the unique index. "
+                + "If a specific site's target should have been kept, prune by the legacy siteKey BEFORE upgrading.",
+                nameof(CollapseToSingleSiteMigration), removedDuplicates, RedirectEntity.TableName);
+        }
+
+        // 4. Ensure a single-column UNIQUE index on oldPath. If an index with the
         // canonical name exists but is NOT unique (legacy esatto rename path),
         // drop and recreate it unique.
         var defined = Database.SqlContext.SqlSyntax
