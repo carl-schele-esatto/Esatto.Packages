@@ -15,7 +15,15 @@ Cross-site content teasers for Umbraco 17 & 18.
    ```
 
 3. To let *other* sites read this one, enable the Delivery API and set its key, and register
-   an `ICrossContentTeaserMapper` (see the interface docs). Consumer-only sites may register the
-   shipped `NullCrossContentTeaserMapper`.
+   your own `ICrossContentTeaserMapper` (see the interface docs):
+
+   ```csharp
+   builder.Services.AddSingleton<ICrossContentTeaserMapper, MyMapper>();
+   ```
+
+   The package defaults to the shipped `NullCrossContentTeaserMapper` (registered via
+   `TryAddSingleton`), so the producer endpoint returns 404 instead of failing to activate on
+   consumer-only installs. A producer site's own registration above wins over this default
+   regardless of registration order, so no manual step is required to opt out of the default.
 
 The backoffice picker UI alias is `Backoffice.CrossContent.CasePicker` (backed by `Umbraco.Plain.Json`).

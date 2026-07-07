@@ -19,6 +19,12 @@ public sealed class CrossContentComposer : IComposer
         builder.Services.AddHttpClient<ICrossContentCaseListClient, CrossContentCaseListClient>(ConfigureClient);
 
         builder.Services.AddSingleton<ICrossContentTeaserClient, CrossContentTeaserClient>();
+
+        // Default to a fail-closed (404) mapper so the producer endpoint never 500s on
+        // consumer-only installs due to an unresolved ICrossContentTeaserMapper. A producer
+        // site's own AddSingleton<ICrossContentTeaserMapper, ...>() registration wins over
+        // this default regardless of registration order.
+        builder.Services.TryAddSingleton<ICrossContentTeaserMapper, NullCrossContentTeaserMapper>();
     }
 
     private static void ConfigureClient(IServiceProvider sp, HttpClient client)
