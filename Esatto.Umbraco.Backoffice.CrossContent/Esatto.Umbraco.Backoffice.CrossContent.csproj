@@ -18,7 +18,7 @@
     <PackageId>Esatto.Umbraco.Backoffice.CrossContent</PackageId>
     <Authors>Carl Schéle</Authors>
     <Description>Cross-site content teasers for Umbraco 17 &amp; 18. Lets a site pull "case" teasers from another Umbraco site over HTTP and render them as listing cards that link out to the source site. Ships a backoffice picker, a stale-while-revalidate teaser cache, and a key-gated producer endpoint; each site points CrossContent:BaseUrl/ApiKey at the site it wants to read.</Description>
-    <PackageTags>umbraco;umbraco-marketplace;cross-site;content;teaser;delivery-api</PackageTags>
+    <PackageTags>umbraco;cross-site;content;teaser;delivery-api</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
