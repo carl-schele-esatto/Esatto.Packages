@@ -5,7 +5,7 @@ public sealed class CrossContentOptions
 {
     public const string SectionName = "CrossContent";
 
-    /// <summary>Target site base URL, e.g. https://esatto.se.</summary>
+    /// <summary>Target site base URL, e.g. https://othersite.example.</summary>
     public string BaseUrl { get; set; } = "";
 
     /// <summary>Shared API key = the target site's Umbraco:CMS:DeliveryApi:ApiKey. Never committed.</summary>

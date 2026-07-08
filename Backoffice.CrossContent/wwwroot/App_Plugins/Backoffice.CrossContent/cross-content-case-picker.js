@@ -35,7 +35,7 @@ export class BackofficeCrossContentCasePicker extends UmbElementMixin(LitElement
     const { data, error } = await tryExecute(this, umbHttpClient.get({ url: LIST_URL, security: SECURITY }));
     this._loading = false;
     if (error) {
-      this._error = "Kunde inte hämta case.";
+      this._error = "Could not load cases.";
       this._cases = [];
       return;
     }
@@ -50,7 +50,7 @@ export class BackofficeCrossContentCasePicker extends UmbElementMixin(LitElement
   render() {
     if (this._loading) return html`<uui-loader-bar></uui-loader-bar>`;
     if (this._error) return html`<p style="color:var(--uui-color-danger)">${this._error}</p>`;
-    if (!this._cases.length) return html`<p style="color:var(--uui-color-text-alt)">Inga case hittades.</p>`;
+    if (!this._cases.length) return html`<p style="color:var(--uui-color-text-alt)">No cases found.</p>`;
     const selectedKey = this.value?.key;
     return html`
       <uui-radio-group>

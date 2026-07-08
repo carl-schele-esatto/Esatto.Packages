@@ -2,6 +2,8 @@
 
 Cross-site content teasers for Umbraco 17 & 18.
 
+> **Scope:** this package is oriented around a "case"-style content type. By default it lists `contentType:casePage` from the target's Delivery API and the picker stores `type: "casePage"`. For a differently-named content type, override `CrossContent:CaseListPath` with your own Delivery-API filter (the consumer only uses each item's `id`/`name`).
+
 ## Install
 
 1. Add the package.
@@ -37,7 +39,7 @@ To **consume** another site's cases:
    ```json
    "CrossContent": { "BaseUrl": "https://othersite.example", "ApiKey": "<other site's DeliveryApi key>", "TeaserPath": "api/crosscontent/teaser" }
    ```
-   (Set `TeaserPath` to `api/esatto-teaser` only if the target still serves a legacy route.)
+   (Override `TeaserPath` only if the target serves its teaser on a non-default/legacy route instead of this package's `api/crosscontent/teaser`.)
 3. Copy the three sample configs into your site's uSync folders, **regenerating every GUID**, and add `crossContentCasePage` to your `caseListingPage`'s `<Structure>`. They live under `docs/sample-usync/{DataTypes,ContentTypes,Templates}/`, mirroring your site's own uSync folder structure — copy each file into the matching uSync folder:
    - `docs/sample-usync/DataTypes/CrossContentCasePicker.config` → your uSync `DataTypes/`
    - `docs/sample-usync/ContentTypes/crosscontentcasepage.config` → your uSync `ContentTypes/`
