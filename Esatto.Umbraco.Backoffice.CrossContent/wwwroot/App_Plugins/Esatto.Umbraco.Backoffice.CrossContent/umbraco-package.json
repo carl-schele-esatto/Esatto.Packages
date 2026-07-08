@@ -1,0 +1,21 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.CrossContent",
+  "name": "Backoffice CrossContent",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "type": "propertyEditorUi",
+      "alias": "Esatto.Umbraco.Backoffice.CrossContent.CasePicker",
+      "name": "CrossContent Case Picker",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.CrossContent/cross-content-case-picker.js",
+      "elementName": "backoffice-cross-content-case-picker",
+      "meta": {
+        "label": "CrossContent Case Picker",
+        "icon": "icon-handshake",
+        "group": "CrossContent",
+        "propertyEditorSchemaAlias": "Umbraco.Plain.Json"
+      }
+    }
+  ]
+}
