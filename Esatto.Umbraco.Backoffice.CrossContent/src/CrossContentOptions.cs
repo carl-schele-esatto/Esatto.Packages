@@ -14,6 +14,12 @@ public sealed class CrossContentOptions
     /// <summary>Relative path (+ query) to list cases. Default = the target's Delivery API.</summary>
     public string CaseListPath { get; set; } = "umbraco/delivery/api/v2/content?filter=contentType:casePage&sort=name:asc&take=100";
 
+    /// <summary>Content types this site pulls. When non-empty, the list client queries one
+    /// Delivery-API request per type and tags each item with its type; the picker shows a
+    /// type-filter dropdown. When empty, falls back to the single <see cref="CaseListPath"/>
+    /// query (items tagged "casePage") — the pre-1.1 behaviour.</summary>
+    public IList<CrossContentContentTypeOption> ContentTypes { get; set; } = [];
+
     /// <summary>Base path of the target's teaser endpoint; the fetcher appends /{key}. Default = this
     /// package's producer route. Override to match a site still serving a legacy route.</summary>
     public string TeaserPath { get; set; } = "api/crosscontent/teaser";

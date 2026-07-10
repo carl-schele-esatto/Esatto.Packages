@@ -2,7 +2,13 @@
 
 Cross-site content teasers for Umbraco 17 & 18.
 
-> **Scope:** this package is oriented around a "case"-style content type. By default it lists `contentType:casePage` from the target's Delivery API and the picker stores `type: "casePage"`. For a differently-named content type, override `CrossContent:CaseListPath` with your own Delivery-API filter (the consumer only uses each item's `id`/`name`).
+> **Scope:** by default (no `ContentTypes` configured) this package lists `contentType:casePage`
+> from the target's Delivery API and stores `type: "casePage"`. To pull **multiple** content
+> types, set `CrossContent:ContentTypes` (see [Pulling multiple content types](#pulling-multiple-content-types))
+> — the picker then lists each type, tags every item with its type, and shows a type-filter
+> dropdown. For a single differently-named type, override `CrossContent:CaseListPath` with your own
+> Delivery-API filter instead (the consumer only uses each item's `id`/`name`). The consumer decides
+> how to render each type.
 
 ## Install
 
@@ -29,6 +35,33 @@ Cross-site content teasers for Umbraco 17 & 18.
    regardless of registration order, so no manual step is required to opt out of the default.
 
 The backoffice picker UI alias is `Esatto.Umbraco.Backoffice.CrossContent.CasePicker` (backed by `Umbraco.Plain.Json`).
+
+## Pulling multiple content types
+
+Set `CrossContent:ContentTypes` to the doc types you want pickable:
+
+```json
+"CrossContent": {
+  "BaseUrl": "https://othersite.example",
+  "ApiKey": "…",
+  "ContentTypes": [
+    { "Alias": "casePage",    "Label": "Cases" },
+    { "Alias": "articlePage", "Label": "Articles" }
+  ]
+}
+```
+
+- The list client issues one Delivery-API query per type and merges the results; each picker item
+  and stored value carries its own `type`.
+- The picker shows a type-filter dropdown (hidden when only one type is configured).
+- `Label` is the dropdown text; it falls back to `Alias` when omitted.
+- **Producer obligation:** the target site's `ICrossContentTeaserMapper` must handle **every** doc
+  type its consumers can pick (it maps by node, returning `null` for anything it doesn't recognise →
+  the teaser endpoint 404s).
+- **Rendering** each type's card is the consuming site's job — the package hands over `type` in both
+  the picker value and the `CrossContentTeaser`.
+- Leaving `ContentTypes` empty (or unset) keeps the pre-1.1 single-`CaseListPath` behaviour
+  (items tagged `casePage`), so existing installs are unaffected.
 
 ## Install (full — consumer + producer)
 
