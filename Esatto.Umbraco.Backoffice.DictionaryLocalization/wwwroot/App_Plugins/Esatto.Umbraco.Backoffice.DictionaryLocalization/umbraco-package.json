@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/umbraco-package-schema.json",
+  "id": "esatto-umbraco-backoffice-dictionary-localization",
+  "name": "Esatto Dictionary Localization",
+  "version": "0.1.0",
+  "extensions": [
+    {
+      "name": "Esatto Dictionary Localization Entry Point",
+      "alias": "Esatto.Umbraco.Backoffice.DictionaryLocalization.EntryPoint",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.DictionaryLocalization/esatto-umbraco-backoffice-dictionary-localization.js"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer.
+         Default Razor SDK behaviour would prefix everything with /_content/<PackageId>/,
+         which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+
+    <RootNamespace>Esatto.Umbraco.Backoffice.DictionaryLocalization</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.DictionaryLocalization</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.DictionaryLocalization</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Bridges Umbraco 17 content Dictionary items into the backoffice UI localization system. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section. Works for every existing and future dictionary key; no per-key manifest wiring.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;dictionary;localization;translation;i18n;labels</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.DictionaryLocalization</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.DictionaryLocalization.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ASP.NET Core framework — provides ApiController, Route, Authorize,
+         IActionResult, etc. Razor Class Library SDK does not include this
+         implicitly when there is no Razor content. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+
+    <!-- Management API surface: Api.Management -> ManagementApiControllerBase +
+         VersionedApiBackOfficeRoute; Web.Common -> AuthorizationPolicies;
+         Core -> IDictionaryItemService + dictionary notifications + IComposer. -->
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Patched floors for high-severity vulnerabilities (NU1903) that Umbraco 17
+         pulls in transitively. Drop each once Umbraco bumps its own dependency
+         past them. -->
+    <PackageReference Include="MessagePack" Version="3.1.7" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <!-- Keep umbraco-package.json visible in the solution (built copy ships under wwwroot) -->
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project.
+       Skipped during IDE design-time builds to avoid running npm on every keystroke. -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true'">
+    <Message Importance="high" Text="Installing backoffice client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building backoffice client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
