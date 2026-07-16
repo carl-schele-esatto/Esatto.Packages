@@ -25,16 +25,18 @@ describe("normalizeKeyForRegex", () => {
 });
 
 describe("mapResponseToLocalizationSets", () => {
-  it("emits one set per culture", () => {
+  it("emits one set per culture, plus a language alias for region cultures", () => {
     const sets = mapResponseToLocalizationSets({
       cultures: {
         "sv-se": { TestTag: "Testtag" },
         en: { TestTag: "Test tag" },
       },
     });
-    expect(sets).toHaveLength(2);
+    // sv-se (region) + en (explicit language) + synthesized sv (from sv-se) = 3
+    expect(sets).toHaveLength(3);
     expect(sets.find((s) => s.$code === "sv-se")).toBeDefined();
     expect(sets.find((s) => s.$code === "en")).toBeDefined();
+    expect(sets.find((s) => s.$code === "sv")).toBeDefined();
   });
 
   it("stamps $dir=ltr and the shared $weight", () => {
@@ -93,5 +95,57 @@ describe("mapResponseToLocalizationSets", () => {
     expect(mapResponseToLocalizationSets({ cultures: {} })).toEqual([]);
     // @ts-expect-error simulate a completely empty response
     expect(mapResponseToLocalizationSets({})).toEqual([]);
+  });
+});
+
+describe("mapResponseToLocalizationSets — language-only fallback", () => {
+  it("synthesizes a language bucket from a region culture so bare-language UI resolves", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { Greeting: "Hej" } },
+    });
+    const sv = sets.find((s) => s.$code === "sv");
+    expect(sv).toBeDefined();
+    expect(sv!.Greeting).toBe("Hej");
+  });
+
+  it("does not synthesize when an explicit language bucket already exists", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { A: "region" }, sv: { A: "language" } },
+    });
+    const svSets = sets.filter((s) => s.$code === "sv");
+    expect(svSets).toHaveLength(1);
+    expect(svSets[0]!.A).toBe("language"); // explicit value preserved, not overwritten
+  });
+
+  it("merges multiple regions of the same language (last region wins on conflict)", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { A: "se", Only: "seOnly" }, "sv-fi": { A: "fi" } },
+    });
+    const sv = sets.find((s) => s.$code === "sv");
+    expect(sv).toBeDefined();
+    expect(sv!.Only).toBe("seOnly"); // union of keys across regions
+    expect(sv!.A).toBe("fi"); // later region (sv-fi) wins the shared key
+  });
+
+  it("does not synthesize an alias for a language-only culture", () => {
+    const sets = mapResponseToLocalizationSets({ cultures: { en: { A: "B" } } });
+    expect(sets).toHaveLength(1);
+    expect(sets[0]!.$code).toBe("en");
+  });
+
+  it("carries dotted and underscore aliases into the synthesized bucket", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { "A.B": "v" } },
+    });
+    const sv = sets.find((s) => s.$code === "sv");
+    expect(sv!["A.B"]).toBe("v");
+    expect(sv!["A_B"]).toBe("v");
+  });
+
+  it("keeps the synthesized RTL direction from the region's language", () => {
+    const sets = mapResponseToLocalizationSets({ cultures: { "ar-eg": { Hi: "مرحبا" } } });
+    const ar = sets.find((s) => s.$code === "ar");
+    expect(ar).toBeDefined();
+    expect(ar!.$dir).toBe("rtl");
   });
 });

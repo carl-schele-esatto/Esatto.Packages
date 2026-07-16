@@ -27,14 +27,15 @@ const okResponse: FetchLocalizationsFn = () =>
 describe("fetchAndRegisterDictionaryLocalizations", () => {
   beforeEach(() => resetRegisteredStateForTest());
 
-  it("registers one set per culture on first call", async () => {
+  it("registers a set per culture plus a language alias on first call", async () => {
     const manager = new FakeManager();
     const registered = await fetchAndRegisterDictionaryLocalizations(manager, okResponse);
 
     expect(registered).toBe(true);
     expect(manager.received).toHaveLength(1);
     const sets = manager.received[0]!;
-    expect(sets.map((s) => s.$code).sort()).toEqual(["en", "sv-se"]);
+    // en (explicit), sv-se (region), and the synthesized sv language fallback.
+    expect(sets.map((s) => s.$code).sort()).toEqual(["en", "sv", "sv-se"]);
   });
 
   it("is a no-op on the second call within the same session", async () => {

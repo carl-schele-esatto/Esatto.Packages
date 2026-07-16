@@ -1,6 +1,6 @@
 # Esatto.Umbraco.Backoffice.DictionaryLocalization
 
-Bridges Umbraco 17 & 18 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring.
+Bridges Umbraco 17 & 18 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring. Property **descriptions** resolve the same bare `#Key` too, even though Umbraco renders them as markdown rather than through `localize.string()` (see [Property descriptions](#property-descriptions)).
 
 ## Why
 
@@ -32,6 +32,41 @@ The server endpoint reads from an in-memory cache of the whole dictionary, built
 Each key is still also registered under an underscore-normalized alias (e.g. `SEO_MetaKeywords_Description`) for backward compatibility, and the original dotted alias round-trips for front-end use, so existing `@Umbraco.GetDictionaryValue("SEO.MetaKeywords.Description")` is untouched.
 
 > The `string()` replacement is a strict superset of Umbraco's behaviour (flat keys and unknown tokens behave identically) and was verified against the byte-identical `string()`/`term()`/regex in both 17.3.0 and 18.0.0. A future major that changes that contract would need a revisit.
+
+## Property descriptions
+
+A content-type property has two localizable texts, and Umbraco renders them through **different pipelines**:
+
+| Field | Rendered by | Umbraco's native token |
+|-------|-------------|------------------------|
+| **Label** (property name) | `localize.string()` | `#Key` |
+| **Description** | `<umb-ufm-render>` — UFM (Umbraco Flavored Markdown) | `{#Key}` |
+
+Out of the box a description is **not** passed through `localize.string()`, so a bare `#Key` there is never resolved — it renders as literal markdown text. Umbraco's own UFM localize component needs the brace form `{#Key}` instead. So the same key an editor writes in a label (`#Key`) would silently fail in a description.
+
+This package removes that inconsistency: on backoffice load it wraps `<umb-ufm-render>` so that a **bare `#Key` in a description resolves too** — write it exactly as you would in a label:
+
+```
+#SEO.MetaKeywords.Description
+```
+
+How it works: the wrapper rewrites a bare `#Key` to the `{#Key}` UFM token **only when the key resolves to a real dictionary entry**, then lets Umbraco's built-in localize component render it (via `localize.term()`, an exact-key lookup — so dotted / hyphenated keys work verbatim). Guard rails keep it safe:
+
+- Literal `#` text that is **not** a dictionary key — `#123`, `#hashtag`, `C#` — is left untouched.
+- An existing `{#Key}` is never double-wrapped, and a Markdown heading (`# Heading`, with a space) is never treated as a token.
+
+> The result: **one syntax everywhere.** Write `#Key` in both labels and descriptions. (The explicit `{#Key}` form still works too, unchanged.)
+>
+> This wraps the `<umb-ufm-render>` element's `markdown` accessor; it degrades to a no-op (descriptions keep needing `{#Key}`) if a future Umbraco version changes that element's shape.
+
+## Culture fallback (language vs. region)
+
+Umbraco resolves a backoffice UI culture as **region → language → `en`**, never language → region. So a dictionary value stored under a *region* code (`sv-SE`) is invisible to a bare-*language* UI (`sv`), which only checks `sv` then `en` — even though the same user's `en-GB`/`en-US` UI happily resolves an `en` value (that's the language step working in your favour).
+
+To remove that asymmetry, when this package registers a region culture like `sv-SE` it **also registers a language-only `sv` alias** carrying the same entries. The result: a region-coded dictionary resolves for **both** `sv` and `sv-SE` UI users, matching how a language-coded `en` dictionary already resolves for `en`, `en-GB` and `en-US`. You don't have to make the content language's culture match each user's chosen UI variant.
+
+- An explicit language bucket in your dictionary (`sv`) is never overwritten by the alias.
+- If one language has several regions (`sv-SE` **and** `sv-FI`), their entries are merged into the single `sv` alias — last region wins on a shared key. Give a key an explicit `sv` value if you need to pin which one shows.
 
 ## Endpoint
 
