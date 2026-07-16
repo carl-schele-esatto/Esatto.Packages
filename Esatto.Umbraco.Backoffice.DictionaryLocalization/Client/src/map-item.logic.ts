@@ -151,3 +151,20 @@ export function mapResponseToLocalizationSets(
 
   return sets;
 }
+
+/**
+ * Collects every dictionary key (both dotted and underscore-normalized forms) across all
+ * sets, excluding the `$code`/`$dir`/`$weight` metadata fields. Used to tell OUR keys apart
+ * from Umbraco's built-in UI keys so surface-aware gating only affects ours.
+ */
+export function collectDictionaryKeys(sets: LocalizationSet[]): string[] {
+  const keys = new Set<string>();
+  for (const set of sets) {
+    for (const key of Object.keys(set)) {
+      if (!key.startsWith("$")) {
+        keys.add(key);
+      }
+    }
+  }
+  return [...keys];
+}

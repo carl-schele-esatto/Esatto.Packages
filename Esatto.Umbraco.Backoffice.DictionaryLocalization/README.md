@@ -1,6 +1,22 @@
 # Esatto.Umbraco.Backoffice.DictionaryLocalization
 
-Bridges Umbraco 17 & 18 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring. Property **descriptions** resolve the same bare `#Key` too, even though Umbraco renders them as markdown rather than through `localize.string()` (see [Property descriptions](#property-descriptions)).
+Bridges Umbraco 17 & 18 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label or description resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring.
+
+Resolution is **surface-aware** (see [Where tokens resolve](#where-tokens-resolve)): tokens translate in the **Content** section (where editors work) and show as the raw `#Label.Name` everywhere else (Settings, etc.), so admins configuring doctypes see the actual dictionary keys.
+
+## Screenshots
+
+**1. Define dictionary items** — one entry per key in the Translation section, translated per culture:
+
+![Dictionary items with Swedish and English translations in the Translation section](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.DictionaryLocalization/docs/01-dictionary-setup.png)
+
+**2. Content section (Innehåll)** — property labels and descriptions resolve to the translated value:
+
+![Content editor showing a translated property label and description](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.DictionaryLocalization/docs/02-content-translated.png)
+
+**3. Settings section (Inställningar)** — the same properties show the raw `#Key` tokens, so admins see exactly which dictionary keys are wired up:
+
+![Document-type design editor showing raw hash-key tokens](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.DictionaryLocalization/docs/03-settings-tokens.png)
 
 ## Why
 
@@ -23,7 +39,7 @@ Restart the site / hard-refresh the backoffice. It activates automatically — n
 
 ## How it works
 
-On backoffice load, a small entry point calls a single authenticated Management API endpoint that returns the whole content Dictionary grouped by culture. It transforms the payload into `UmbLocalizationSetBase` objects (one per culture) and calls `umbLocalizationManager.registerManyLocalizations(sets)`. From then on, `localize.string("#Key")` and `localize.term("Key")` both find your dictionary value in the current backoffice user's culture — with the manager's built-in region → language → `en` fallback.
+On backoffice load, a small entry point calls a single authenticated Management API endpoint that returns the whole content Dictionary grouped by culture. It transforms the payload into `UmbLocalizationSetBase` objects (one per culture) and calls `umbLocalizationManager.registerManyLocalizations(sets)`. From then on, `localize.string("#Key")` and `localize.term("Key")` find your dictionary value in the current backoffice user's culture — with the manager's built-in region → language → `en` fallback, and gated to the Content section (see [Where tokens resolve](#where-tokens-resolve)).
 
 The server endpoint reads from an in-memory cache of the whole dictionary, built once via a single bulk `IDictionaryItemService.GetDescendantsAsync(null)` call. The cache invalidates automatically on `DictionaryItemSavedNotification` / `DictionaryItemDeletedNotification`, so edits show up after a browser reload.
 
@@ -57,7 +73,20 @@ How it works: the wrapper rewrites a bare `#Key` to the `{#Key}` UFM token **onl
 
 > The result: **one syntax everywhere.** Write `#Key` in both labels and descriptions. (The explicit `{#Key}` form still works too, unchanged.)
 >
-> This wraps the `<umb-ufm-render>` element's `markdown` accessor; it degrades to a no-op (descriptions keep needing `{#Key}`) if a future Umbraco version changes that element's shape.
+> This wraps the `<umb-ufm-render>` element's `markdown` accessor; it degrades to a no-op (descriptions keep needing `{#Key}`) if a future Umbraco version changes that element's shape. The bare-`#Key` rewrite is gated to the Content section (see below); the explicit `{#Key}` form is Umbraco-native and resolves wherever Umbraco renders UFM.
+
+## Where tokens resolve
+
+Umbraco resolves every `#token` through one global function that has no idea which screen called it — and the same function resolves Umbraco's own UI (`#buttons_save`, …). So the package gates **only the keys it registered**, by backoffice section:
+
+| Section | Your content-dictionary tokens | Umbraco's own UI tokens |
+|---------|-------------------------------|-------------------------|
+| **Content** (Innehåll) | translated | translated |
+| **Everything else** (Settings, Media, Members, …) | shown raw as `#Label.Name` | translated |
+
+Rationale: editors work in **Content** and want to read the translated labels/descriptions; admins and developers work in **Settings** (document types, data types) and want to see the actual dictionary keys they're wiring up. Umbraco's own chrome is never shown raw, because keys this package did not register always resolve.
+
+Detection is by route (`/umbraco/section/content/…`); if a future Umbraco changes section routing, it degrades to showing the raw token rather than breaking. To translate additional sections (e.g. Media, Members), widen the check in `surface.logic.ts`.
 
 ## Culture fallback (language vs. region)
 

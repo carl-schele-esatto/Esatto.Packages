@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { installDottedTokenSupport } from "./install-string-patch.js";
+import { installDottedTokenSupport, type StringPatchDeps } from "./install-string-patch.js";
 
 /**
  * Mirrors the slice of Umbraco's UmbLocalizationController the patch relies on:
@@ -25,18 +25,45 @@ function makeFakeControllerClass() {
   };
 }
 
+// Default deps: everything is "ours" and the surface translates → resolve normally.
+const translatingDeps = (ourKeys: string[]): StringPatchDeps => ({
+  isOurKey: (k) => ourKeys.includes(k),
+  isTranslatingSurface: () => true,
+});
+const nonTranslatingDeps = (ourKeys: string[]): StringPatchDeps => ({
+  isOurKey: (k) => ourKeys.includes(k),
+  isTranslatingSurface: () => false,
+});
+
 describe("installDottedTokenSupport", () => {
-  it("replaces string() so a dotted token resolves as one key", () => {
+  it("resolves a dotted token as one key on a translating surface", () => {
     const Ctrl = makeFakeControllerClass();
-    installDottedTokenSupport(Ctrl);
+    installDottedTokenSupport(Ctrl, translatingDeps(["SEO.MetaKeywords.Description"]));
 
     const ctrl = new Ctrl({ "SEO.MetaKeywords.Description": "Meta beskrivning" });
     expect(ctrl.string("#SEO.MetaKeywords.Description")).toBe("Meta beskrivning");
   });
 
-  it("leaves unknown tokens untouched (via term's key-when-unknown contract)", () => {
+  it("shows OUR key raw on a non-translating surface", () => {
     const Ctrl = makeFakeControllerClass();
-    installDottedTokenSupport(Ctrl);
+    installDottedTokenSupport(Ctrl, nonTranslatingDeps(["SEO.MetaKeywords.Description"]));
+
+    const ctrl = new Ctrl({ "SEO.MetaKeywords.Description": "Meta beskrivning" });
+    expect(ctrl.string("#SEO.MetaKeywords.Description")).toBe("#SEO.MetaKeywords.Description");
+  });
+
+  it("still resolves an Umbraco (non-our) key on a non-translating surface", () => {
+    const Ctrl = makeFakeControllerClass();
+    // isOurKey false for everything → Umbraco chrome keys always resolve.
+    installDottedTokenSupport(Ctrl, nonTranslatingDeps([]));
+
+    const ctrl = new Ctrl({ buttons_save: "Spara" });
+    expect(ctrl.string("#buttons_save")).toBe("Spara");
+  });
+
+  it("leaves unknown tokens untouched", () => {
+    const Ctrl = makeFakeControllerClass();
+    installDottedTokenSupport(Ctrl, translatingDeps([]));
 
     const ctrl = new Ctrl({});
     expect(ctrl.string("#Unknown.Key")).toBe("#Unknown.Key");
@@ -44,9 +71,9 @@ describe("installDottedTokenSupport", () => {
 
   it("is idempotent — installing twice does not re-wrap the method", () => {
     const Ctrl = makeFakeControllerClass();
-    installDottedTokenSupport(Ctrl);
+    installDottedTokenSupport(Ctrl, translatingDeps(["A.B"]));
     const afterFirst = Ctrl.prototype.string;
-    installDottedTokenSupport(Ctrl);
+    installDottedTokenSupport(Ctrl, translatingDeps(["A.B"]));
 
     expect(Ctrl.prototype.string).toBe(afterFirst);
     const ctrl = new Ctrl({ "A.B": "ok" });

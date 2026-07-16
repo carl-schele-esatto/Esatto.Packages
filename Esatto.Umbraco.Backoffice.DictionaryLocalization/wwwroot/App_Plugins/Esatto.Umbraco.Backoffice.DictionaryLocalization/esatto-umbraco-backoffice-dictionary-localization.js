@@ -1,145 +1,177 @@
-import { UmbLocalizationController as T, umbLocalizationManager as L } from "@umbraco-cms/backoffice/localization-api";
-import { umbHttpClient as O } from "@umbraco-cms/backoffice/http-client";
-const f = 100, z = /* @__PURE__ */ new Set(["ar", "he", "fa", "ur", "ps", "syr", "dv"]);
-function _(e) {
-  return /[.\-]/.test(e) ? e.replace(/[.\-]/g, "_") : null;
+import { UmbLocalizationController as L, umbLocalizationManager as S } from "@umbraco-cms/backoffice/localization-api";
+import { umbHttpClient as K } from "@umbraco-cms/backoffice/http-client";
+const f = 100, k = /* @__PURE__ */ new Set(["ar", "he", "fa", "ur", "ps", "syr", "dv"]);
+function z(t) {
+  return /[.\-]/.test(t) ? t.replace(/[.\-]/g, "_") : null;
 }
-function p(e) {
-  return z.has(b(e)) ? "rtl" : "ltr";
+function g(t) {
+  return k.has(b(t)) ? "rtl" : "ltr";
 }
-function g(e) {
-  return /[-_]/.test(e);
+function p(t) {
+  return /[-_]/.test(t);
 }
-function b(e) {
-  return e.split(/[-_]/)[0]?.toLowerCase() ?? "";
+function b(t) {
+  return t.split(/[-_]/)[0]?.toLowerCase() ?? "";
 }
-function h(e, o) {
-  for (const [t, r] of Object.entries(o ?? {})) {
-    if (typeof r != "string" || r.length === 0)
+function y(t, o) {
+  for (const [e, n] of Object.entries(o ?? {})) {
+    if (typeof n != "string" || n.length === 0)
       continue;
-    e[t] = r;
-    const s = _(t);
-    s && s !== t && (e[s] = r);
+    t[e] = n;
+    const s = z(e);
+    s && s !== e && (t[s] = n);
   }
 }
-function A(e) {
-  const o = e.cultures ?? {}, t = [], r = new Set(
-    Object.keys(o).filter((n) => !g(n)).map((n) => n.toLowerCase())
+function _(t) {
+  const o = t.cultures ?? {}, e = [], n = new Set(
+    Object.keys(o).filter((r) => !p(r)).map((r) => r.toLowerCase())
   ), s = /* @__PURE__ */ new Map();
-  for (const [n, c] of Object.entries(o)) {
-    const i = {
-      $code: n,
-      $dir: p(n),
+  for (const [r, i] of Object.entries(o)) {
+    const c = {
+      $code: r,
+      $dir: g(r),
       $weight: f
     };
-    h(i, c), t.push(i);
-    const a = b(n);
-    if (g(n) && !r.has(a)) {
-      const u = s.get(a) ?? {};
-      for (const [w, l] of Object.entries(c ?? {}))
-        typeof l != "string" || l.length === 0 || (u[w] = l);
-      s.set(a, u);
+    y(c, i), e.push(c);
+    const a = b(r);
+    if (p(r) && !n.has(a)) {
+      const l = s.get(a) ?? {};
+      for (const [O, u] of Object.entries(i ?? {}))
+        typeof u != "string" || u.length === 0 || (l[O] = u);
+      s.set(a, l);
     }
   }
-  for (const [n, c] of s) {
-    const i = {
-      $code: n,
-      $dir: p(n),
+  for (const [r, i] of s) {
+    const c = {
+      $code: r,
+      $dir: g(r),
       $weight: f
     };
-    h(i, c), t.push(i);
+    y(c, i), e.push(c);
   }
-  return t;
+  return e;
 }
-let d = !1;
-async function D(e, o) {
-  if (d)
+function A(t) {
+  const o = /* @__PURE__ */ new Set();
+  for (const e of t)
+    for (const n of Object.keys(e))
+      n.startsWith("$") || o.add(n);
+  return [...o];
+}
+const T = /* @__PURE__ */ new Set();
+function D(t) {
+  for (const o of t)
+    T.add(o);
+}
+function C(t) {
+  return T.has(t);
+}
+let h = !1;
+async function $(t, o) {
+  if (h)
     return !1;
-  const { data: t, error: r } = await o();
-  if (r || !t)
-    return console.warn("[Esatto.DictionaryLocalization] fetch failed; #Key labels will not resolve until next reload.", r), !1;
-  const n = A(t);
-  return e.registerManyLocalizations(n), d = !0, !0;
+  const { data: e, error: n } = await o();
+  if (n || !e)
+    return console.warn("[Esatto.DictionaryLocalization] fetch failed; #Key labels will not resolve until next reload.", n), !1;
+  const r = _(e);
+  return t.registerManyLocalizations(r), D(A(r)), h = !0, !0;
 }
-const $ = "/umbraco/management/api/v1/backoffice/dictionary-localization/all";
-function k() {
-  return O.get({
+const I = "/umbraco/management/api/v1/backoffice/dictionary-localization/all";
+function E() {
+  return K.get({
     security: [{ scheme: "bearer", type: "http" }],
-    url: $
+    url: I
   });
 }
-const C = /#\w[\w.-]*/g;
-function E(e) {
+const P = /#\w[\w.-]*/g;
+function R(t) {
   const o = [];
-  let t = e;
-  for (; t.length > 0; ) {
-    o.push(t);
-    const r = Math.max(t.lastIndexOf("."), t.lastIndexOf("-"));
-    if (r <= 0) break;
-    t = t.slice(0, r);
+  let e = t;
+  for (; e.length > 0; ) {
+    o.push(e);
+    const n = Math.max(e.lastIndexOf("."), e.lastIndexOf("-"));
+    if (n <= 0) break;
+    e = e.slice(0, n);
   }
   return o;
 }
-function I(e, o) {
-  return typeof e != "string" ? "" : e.replace(C, (t) => {
-    const r = t.slice(1);
-    for (const s of E(r)) {
-      const n = o(s);
-      if (n !== null)
-        return n + r.slice(s.length);
+function x(t, o) {
+  return typeof t != "string" ? "" : t.replace(P, (e) => {
+    const n = e.slice(1);
+    for (const s of R(n)) {
+      const r = o(s);
+      if (r !== null)
+        return r + n.slice(s.length);
     }
-    return t;
+    return e;
   });
 }
-const y = "__esattoDottedTokenPatch";
-function P(e) {
-  const o = e.prototype;
-  o[y] || (o.string = function(t, ...r) {
-    return I(t, (s) => {
-      const n = this.term(s, ...r);
-      return n === s ? null : n;
+const d = "__esattoDottedTokenPatch";
+function j(t, o) {
+  const e = t.prototype;
+  e[d] || (e.string = function(n, ...s) {
+    return x(n, (r) => {
+      if (o.isOurKey(r) && !o.isTranslatingSurface())
+        return null;
+      const i = this.term(r, ...s);
+      return i === r ? null : i;
     });
-  }, o[y] = !0);
+  }, e[d] = !0);
 }
-const R = new RegExp("(?<![\\w{#])#(\\w[\\w.-]*)", "g");
-function x(e, o) {
-  return typeof e != "string" ? e : e.replace(R, (t, r) => {
-    const s = r.replace(/[.-]+$/, ""), n = r.slice(s.length);
-    return o(s) ? `{#${s}}${n}` : t;
+const v = new RegExp("(?<![\\w{#])#(\\w[\\w.-]*)", "g");
+function N(t, o) {
+  return typeof t != "string" ? t : t.replace(v, (e, n) => {
+    const s = n.replace(/[.-]+$/, ""), r = n.slice(s.length);
+    return o(s) ? `{#${s}}${r}` : e;
   });
 }
 const m = "__esattoUfmHashPatch";
-function v(e) {
-  const o = e.prototype;
-  if (o[m])
+function H(t, o) {
+  const e = t.prototype;
+  if (e[m])
     return;
-  const t = Object.getOwnPropertyDescriptor(o, "markdown");
-  if (!t || typeof t.get != "function" || typeof t.set != "function")
+  const n = Object.getOwnPropertyDescriptor(e, "markdown");
+  if (!n || typeof n.get != "function" || typeof n.set != "function")
     return;
-  const r = t.get, s = t.set;
-  Object.defineProperty(o, "markdown", {
+  const s = n.get, r = n.set;
+  Object.defineProperty(e, "markdown", {
     configurable: !0,
-    enumerable: t.enumerable,
+    enumerable: n.enumerable,
     get() {
-      const n = r.call(this);
-      if (typeof n != "string")
-        return n;
+      const i = s.call(this);
+      if (typeof i != "string")
+        return i;
       const c = this.localize;
-      return c ? x(n, (i) => c.term(i) !== i) : n;
+      return !c || !o.isTranslatingSurface() ? i : N(i, (a) => c.term(a) !== a);
     },
-    set(n) {
-      s.call(this, n);
+    set(i) {
+      r.call(this, i);
     }
-  }), o[m] = !0;
+  }), e[m] = !0;
 }
-const j = async () => {
-  P(T), customElements.whenDefined("umb-ufm-render").then((e) => v(e)).catch(() => {
-  }), await D(
-    L,
-    k
+function M(t) {
+  return /\/section\/content(?![\w-])/i.test(t);
+}
+function w() {
+  try {
+    return M(globalThis.location?.href ?? "");
+  } catch {
+    return !1;
+  }
+}
+const B = async () => {
+  j(L, {
+    isOurKey: C,
+    isTranslatingSurface: w
+  }), customElements.whenDefined("umb-ufm-render").then(
+    (t) => H(t, { isTranslatingSurface: w })
+  ).catch(() => {
+  }), await $(
+    S,
+    E
   );
 };
 export {
-  j as onInit
+  B as onInit
 };
 //# sourceMappingURL=esatto-umbraco-backoffice-dictionary-localization.js.map

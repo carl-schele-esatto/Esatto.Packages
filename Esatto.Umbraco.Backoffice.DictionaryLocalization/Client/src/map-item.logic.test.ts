@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   mapResponseToLocalizationSets,
+  collectDictionaryKeys,
   normalizeKeyForRegex,
   DICTIONARY_LOCALIZATION_WEIGHT,
 } from "./map-item.logic.js";
@@ -147,5 +148,25 @@ describe("mapResponseToLocalizationSets — language-only fallback", () => {
     const ar = sets.find((s) => s.$code === "ar");
     expect(ar).toBeDefined();
     expect(ar!.$dir).toBe("rtl");
+  });
+});
+
+describe("collectDictionaryKeys", () => {
+  it("returns dictionary keys (dotted + normalized) and excludes $ metadata", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { "SEO.MetaKeywords.Description": "v", TestTag: "t" } },
+    });
+    const keys = collectDictionaryKeys(sets);
+    expect(keys).toContain("SEO.MetaKeywords.Description");
+    expect(keys).toContain("SEO_MetaKeywords_Description"); // normalized alias
+    expect(keys).toContain("TestTag");
+    expect(keys.some((k) => k.startsWith("$"))).toBe(false);
+  });
+
+  it("de-duplicates keys shared across cultures", () => {
+    const sets = mapResponseToLocalizationSets({
+      cultures: { "sv-se": { A: "a" }, en: { A: "b" } },
+    });
+    expect(collectDictionaryKeys(sets).filter((k) => k === "A")).toHaveLength(1);
   });
 });

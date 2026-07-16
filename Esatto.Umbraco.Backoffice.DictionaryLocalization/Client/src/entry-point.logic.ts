@@ -7,9 +7,11 @@
 
 import {
   mapResponseToLocalizationSets,
+  collectDictionaryKeys,
   type DictionaryLocalizationResponse,
   type LocalizationSet,
 } from "./map-item.logic.js";
+import { registerKnownKeys } from "./dictionary-keys.js";
 
 /** The slice of umbLocalizationManager we call. Matches the 17.3.0 surface. */
 export interface LocalizationManagerLike {
@@ -53,6 +55,10 @@ export async function fetchAndRegisterDictionaryLocalizations(
   const response = data as DictionaryLocalizationResponse;
   const sets = mapResponseToLocalizationSets(response);
   manager.registerManyLocalizations(sets);
+
+  // Record our keys so the surface-aware patches can tell them apart from Umbraco's own UI
+  // keys (which must always resolve). Includes dotted and underscore-normalized forms.
+  registerKnownKeys(collectDictionaryKeys(sets));
 
   // Only flip the guard once we've committed a successful registration, so a partial
   // failure earlier in this function doesn't lock us out of retrying.

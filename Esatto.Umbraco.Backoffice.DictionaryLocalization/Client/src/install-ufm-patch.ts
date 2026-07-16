@@ -18,15 +18,24 @@ export interface UfmRenderInstance {
   localize?: { term(key: string): string };
 }
 
+/** Surface predicate deciding when a bare `#Key` should be rewritten (translated). */
+export interface UfmPatchDeps {
+  /** True when the current surface should translate (the Content section). */
+  isTranslatingSurface(): boolean;
+}
+
 // Marker stored on the patched prototype so a repeat install is a no-op.
 const PATCH_MARK = "__esattoUfmHashPatch";
 
 /**
- * Wraps `markdown` on the given `<umb-ufm-render>` class so bare `#Key` tokens resolve.
- * Idempotent. No-ops safely if the class does not expose a `markdown` get/set accessor
- * (e.g. a future Umbraco refactor) — the feature simply stays inert rather than throwing.
+ * Wraps `markdown` on the given `<umb-ufm-render>` class so bare `#Key` tokens resolve on a
+ * translating surface (the Content section). Idempotent. No-ops safely if the class does not
+ * expose a `markdown` get/set accessor (e.g. a future Umbraco refactor).
  */
-export function installUfmHashTokenSupport(renderClass: { prototype: object }): void {
+export function installUfmHashTokenSupport(
+  renderClass: { prototype: object },
+  deps: UfmPatchDeps,
+): void {
   const proto = renderClass.prototype as Record<string, unknown> & { [PATCH_MARK]?: boolean };
   if (proto[PATCH_MARK]) {
     return;
@@ -49,7 +58,8 @@ export function installUfmHashTokenSupport(renderClass: { prototype: object }): 
         return raw;
       }
       const localize = this.localize;
-      if (!localize) {
+      if (!localize || !deps.isTranslatingSurface()) {
+        // Off the Content section we leave bare `#Key` raw, matching the label-side patch.
         return raw;
       }
       // A key is "known" when term() returns something other than the key itself
