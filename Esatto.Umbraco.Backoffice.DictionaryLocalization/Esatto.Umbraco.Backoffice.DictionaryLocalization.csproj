@@ -21,7 +21,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.DictionaryLocalization</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Bridges Umbraco 17 content Dictionary items into the backoffice UI localization system. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section. Works for every existing and future dictionary key; no per-key manifest wiring.</Description>
+    <Description>Bridges Umbraco 17 and 18 content Dictionary items into the backoffice UI localization system. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section. Works for every existing and future dictionary key; no per-key manifest wiring.</Description>
     <PackageTags>umbraco;umbraco-marketplace;backoffice;dictionary;localization;translation;i18n;labels</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -1,56 +1,89 @@
-import { umbLocalizationManager as l } from "@umbraco-cms/backoffice/localization-api";
-import { umbHttpClient as u } from "@umbraco-cms/backoffice/http-client";
-const f = 100, p = /* @__PURE__ */ new Set(["ar", "he", "fa", "ur", "ps", "syr", "dv"]);
-function g(t) {
-  return /[.\-]/.test(t) ? t.replace(/[.\-]/g, "_") : null;
+import { UmbLocalizationController as u, umbLocalizationManager as f } from "@umbraco-cms/backoffice/localization-api";
+import { umbHttpClient as p } from "@umbraco-cms/backoffice/http-client";
+const d = 100, g = /* @__PURE__ */ new Set(["ar", "he", "fa", "ur", "ps", "syr", "dv"]);
+function h(e) {
+  return /[.\-]/.test(e) ? e.replace(/[.\-]/g, "_") : null;
 }
-function m(t) {
-  const e = t.split(/[-_]/)[0]?.toLowerCase() ?? "";
-  return p.has(e) ? "rtl" : "ltr";
+function m(e) {
+  const n = e.split(/[-_]/)[0]?.toLowerCase() ?? "";
+  return g.has(n) ? "rtl" : "ltr";
 }
-function y(t) {
-  const e = [];
-  for (const [n, r] of Object.entries(t.cultures ?? {})) {
+function y(e) {
+  const n = [];
+  for (const [t, o] of Object.entries(e.cultures ?? {})) {
     const i = {
-      $code: n,
-      $dir: m(n),
-      $weight: f
+      $code: t,
+      $dir: m(t),
+      $weight: d
     };
-    for (const [o, a] of Object.entries(r ?? {})) {
-      if (typeof a != "string" || a.length === 0)
+    for (const [r, s] of Object.entries(o ?? {})) {
+      if (typeof s != "string" || s.length === 0)
         continue;
-      i[o] = a;
-      const s = g(o);
-      s && s !== o && (i[s] = a);
+      i[r] = s;
+      const a = h(r);
+      a && a !== r && (i[a] = s);
     }
-    e.push(i);
+    n.push(i);
   }
-  return e;
+  return n;
 }
 let c = !1;
-async function d(t, e) {
+async function L(e, n) {
   if (c)
     return !1;
-  const { data: n, error: r } = await e();
-  if (r || !n)
-    return console.warn("[Esatto.DictionaryLocalization] fetch failed; #Key labels will not resolve until next reload.", r), !1;
-  const o = y(n);
-  return t.registerManyLocalizations(o), c = !0, !0;
+  const { data: t, error: o } = await n();
+  if (o || !t)
+    return console.warn("[Esatto.DictionaryLocalization] fetch failed; #Key labels will not resolve until next reload.", o), !1;
+  const r = y(t);
+  return e.registerManyLocalizations(r), c = !0, !0;
 }
-const L = "/umbraco/management/api/v1/backoffice/dictionary-localization/all";
-function h() {
-  return u.get({
+const b = "/umbraco/management/api/v1/backoffice/dictionary-localization/all";
+function T() {
+  return p.get({
     security: [{ scheme: "bearer", type: "http" }],
-    url: L
+    url: b
   });
 }
-const w = async () => {
-  await d(
-    l,
-    h
+const w = /#\w[\w.-]*/g;
+function z(e) {
+  const n = [];
+  let t = e;
+  for (; t.length > 0; ) {
+    n.push(t);
+    const o = Math.max(t.lastIndexOf("."), t.lastIndexOf("-"));
+    if (o <= 0) break;
+    t = t.slice(0, o);
+  }
+  return n;
+}
+function A(e, n) {
+  return typeof e != "string" ? "" : e.replace(w, (t) => {
+    const o = t.slice(1);
+    for (const i of z(o)) {
+      const r = n(i);
+      if (r !== null)
+        return r + o.slice(i.length);
+    }
+    return t;
+  });
+}
+const l = "__esattoDottedTokenPatch";
+function I(e) {
+  const n = e.prototype;
+  n[l] || (n.string = function(t, ...o) {
+    return A(t, (i) => {
+      const r = this.term(i, ...o);
+      return r === i ? null : r;
+    });
+  }, n[l] = !0);
+}
+const _ = async () => {
+  I(u), await L(
+    f,
+    T
   );
 };
 export {
-  w as onInit
+  _ as onInit
 };
 //# sourceMappingURL=esatto-umbraco-backoffice-dictionary-localization.js.map

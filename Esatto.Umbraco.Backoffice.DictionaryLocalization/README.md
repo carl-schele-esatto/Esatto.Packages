@@ -1,6 +1,6 @@
 # Esatto.Umbraco.Backoffice.DictionaryLocalization
 
-Bridges Umbraco 17 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring.
+Bridges Umbraco 17 & 18 **content Dictionary items** into the **backoffice UI localization system**. After install, any `#Key` in a content-type property label (or anywhere `localize.string()` is called) resolves to the current backoffice user's culture value from the Dictionary section — for every existing and future dictionary key, with no per-key manifest wiring.
 
 ## Why
 
@@ -27,12 +27,11 @@ On backoffice load, a small entry point calls a single authenticated Management 
 
 The server endpoint reads from an in-memory cache of the whole dictionary, built once via a single bulk `IDictionaryItemService.GetDescendantsAsync(null)` call. The cache invalidates automatically on `DictionaryItemSavedNotification` / `DictionaryItemDeletedNotification`, so edits show up after a browser reload.
 
-**Key naming.** The backoffice's `#`-token regex is `/#\w+/g`, which stops at `.` and `-`. To keep both existing dictionary usage and new backoffice labels working, each dictionary key is registered under **two** aliases:
+**Dotted / hyphenated keys.** Umbraco's built-in `localize.string()` tokenizes with `/#\w+/g`, which stops at the first `.` or `-` — so out of the box `#SEO.MetaKeywords.Description` would only ever capture `#SEO`. On backoffice load this package replaces `UmbLocalizationController.prototype.string` with a resolver that captures the whole dotted/hyphenated run and resolves the **longest** matching key, keeping any unconsumed remainder as literal text. Unknown tokens are left untouched, exactly like Umbraco's own fallback. The result: **you write labels with your dictionary key verbatim** — `#SEO.MetaKeywords.Description` — no underscores, no renaming.
 
-- The original alias (e.g. `ContactForm.Company`) — so front-end / programmatic lookups round-trip.
-- An underscore-normalized alias (e.g. `ContactForm_Company`) — so `#ContactForm_Company` in a property label captures cleanly.
+Each key is still also registered under an underscore-normalized alias (e.g. `SEO_MetaKeywords_Description`) for backward compatibility, and the original dotted alias round-trips for front-end use, so existing `@Umbraco.GetDictionaryValue("SEO.MetaKeywords.Description")` is untouched.
 
-Both point to the same string. Existing `@Umbraco.GetDictionaryValue("ContactForm.Company")` on the front end is untouched.
+> The `string()` replacement is a strict superset of Umbraco's behaviour (flat keys and unknown tokens behave identically) and was verified against the byte-identical `string()`/`term()`/regex in both 17.3.0 and 18.0.0. A future major that changes that contract would need a revisit.
 
 ## Endpoint
 
@@ -45,8 +44,9 @@ Both point to the same string. Existing `@Umbraco.GetDictionaryValue("ContactFor
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Verified |
+| 18.x    | Verified |
 
-The `umbLocalizationManager` API and Management API auth model are specific to the Umbraco 17 (Bellissima) backoffice; earlier majors are not supported.
+The `umbLocalizationManager` API and Management API auth model are specific to the Umbraco (Bellissima) backoffice; majors before 17 are not supported. A single build serves both 17 and 18: they both target `net10.0`, the backoffice localization contract (`localize.string()`, the `#\w+` token regex, `umbLocalizationManager.registerManyLocalizations`) is identical across them, and the shared `umbHttpClient` supplies the `credentials: 'include'` that 18's Management API requires.
 
 ## Trade-offs
 
