@@ -1,14 +1,15 @@
-// Backoffice.MediaTreeDnd — Media tree drag-and-drop for Umbraco 17.
+// Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop — Media tree drag-and-drop
+// for Umbraco 17/18.
 //
-// Adds native HTML5 drag-and-drop to the Umbraco 17 backoffice Media tree.
+// Adds native HTML5 drag-and-drop to the Umbraco 17/18 backoffice Media tree.
 // Supports reorder (within one parent) and reparent (drop onto a different
 // parent), with three-zone drop targets per row: above sibling / into as
 // child / below sibling.
 //
-// This is the media-tree variant of Backoffice.ContentTreeDnd (which handles the
-// Content tree). Architecture is identical; differences are entity type
-// 'media' (vs 'document'), MediaService APIs (vs DocumentService), and the
-// inner kind-element <umb-media-tree-item> (vs <umb-document-tree-item>).
+// This is the media-tree variant of Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop
+// (which handles the Content tree). Architecture is identical; differences are
+// entity type 'media' (vs 'document'), MediaService APIs (vs DocumentService),
+// and the inner kind-element <umb-media-tree-item> (vs <umb-document-tree-item>).
 
 import { LitElement } from '@umbraco-cms/backoffice/external/lit';
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
@@ -306,7 +307,7 @@ function observeRoot(root) {
 
 // Guard against re-evaluation.
 //
-// Cross-shim note: Backoffice.ContentTreeDnd performs the equivalent attachShadow
+// Cross-shim note: Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop performs the equivalent attachShadow
 // patch. The first one to load wins; the second wraps it. Both wrappers
 // eventually call origAttachShadow and observe the resulting root, so the
 // chain is benign across shims.

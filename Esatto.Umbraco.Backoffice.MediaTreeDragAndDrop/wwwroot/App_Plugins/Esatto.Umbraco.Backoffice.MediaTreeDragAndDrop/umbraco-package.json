@@ -1,0 +1,15 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop",
+  "name": "Esatto Umbraco Backoffice Media Tree Drag and Drop",
+  "version": "1.0.0",
+  "extensions": [
+    {
+      "name": "Media Tree Drag and Drop",
+      "alias": "Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop.MediaTreeDragDrop",
+      "type": "backofficeEntryPoint",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop/media-tree-drag-drop.js",
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Media" }]
+    }
+  ]
+}

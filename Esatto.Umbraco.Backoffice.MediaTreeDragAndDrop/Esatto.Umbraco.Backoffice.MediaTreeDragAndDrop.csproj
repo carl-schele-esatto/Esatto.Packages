@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- net10.0 to match Umbraco 17/18's TFM and allow the Umbraco.Cms.Core 17.0.0
+         reference below (which is net10.0-only). No managed code ships, so this is
+         a build-target change only. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer.
+         Default Razor SDK behaviour would prefix everything with /_content/<PackageId>/,
+         which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Native HTML5 drag-and-drop for the Umbraco 17/18 backoffice Media tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;media;tree;drag-and-drop</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- This is a pure App_Plugins package with no C# code, so it needs no Umbraco
+         assembly to build. But the Umbraco Marketplace derives a package's supported
+         version range from its Umbraco.Cms.* dependency range and only lists packages
+         that meet the minimum Umbraco version — with no such dependency the sync can't
+         place this package and skips it. Declaring a min-only (>=17.0.0) dependency on
+         the lightest Umbraco package makes it discoverable and badges it as v17+. -->
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Defaults: every `dotnet pack` auto-pushes to the esatto-packages feed.
+         Override with `dotnet pack -p:AutoPushToFeed=false` to pack-without-push. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">true</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
