@@ -2,7 +2,7 @@
   "$schema": "../umbraco-package-schema.json",
   "id": "Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop",
   "name": "Esatto Umbraco Backoffice Media Tree Drag and Drop",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "extensions": [
     {
       "name": "Media Tree Drag and Drop",

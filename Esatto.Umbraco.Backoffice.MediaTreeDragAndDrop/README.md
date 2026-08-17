@@ -12,6 +12,10 @@ Media-tree counterpart to [Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop](htt
 
 Pure App_Plugins package — no C# code, no `Startup` configuration. Drops in via NuGet and lights up the moment the assembly is referenced.
 
+## Demo
+
+![Drag-and-drop reordering in the Umbraco media tree with three-zone drop targets](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop/docs/images/media-tree-dnd-demo.gif)
+
 ## Install
 
 ```bash
@@ -29,7 +33,7 @@ The two packages are independent — installing one does not require the other. 
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Verified |
-| 18.x    | Supported |
+| 18.x    | Verified |
 
 Earlier versions of Umbraco use a different tree-item DOM shape and Management API surface — not supported.
 
