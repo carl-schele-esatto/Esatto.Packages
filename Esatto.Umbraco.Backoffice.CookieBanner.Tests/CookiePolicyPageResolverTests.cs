@@ -205,4 +205,46 @@ public class CookiePolicyPageResolverTests
         contentService.ReceivedWithAnyArgs(2).GetPagedOfType(default, default, default, out _, default, default);
 #pragma warning restore CS8625
     }
+
+    [Fact]
+    public void The_by_type_scan_cache_entry_carries_a_bounded_expiry()
+    {
+        // Pins R26: CookiePolicyPageCacheInvalidator's publish/unpublish/delete notifications only
+        // fire on the Umbraco server instance that performed the edit, so a load-balanced replica
+        // that did not handle it never gets the clear - without a bounded expiry it would hold a
+        // stale (or "no policy page yet") cached key for the rest of the process's life. This
+        // substitutes IAppPolicyCache directly, rather than the real ObjectCacheAppCache the other
+        // tests in this file use, because that is the only way to observe what timeout the resolver
+        // actually passes down through the GetCacheItem extension method to IAppPolicyCache.Get -
+        // an untimed cache entry and a bounded one look identical from the outside otherwise.
+        var (cache, contentTypeService, contentService, _) = SetUpOnePublishedPage();
+
+        var policyCache = Substitute.For<IAppPolicyCache>();
+        TimeSpan? capturedTimeout = null;
+        policyCache
+            .Get(Arg.Any<string>(), Arg.Any<Func<object?>>(), Arg.Any<TimeSpan?>(), Arg.Any<bool>())
+            .Returns(callInfo =>
+            {
+                capturedTimeout = callInfo.ArgAt<TimeSpan?>(2);
+                return callInfo.ArgAt<Func<object?>>(1)();
+            });
+
+        var appCaches = new AppCaches(policyCache, NoAppCache.Instance, new IsolatedCaches(_ => new ObjectCacheAppCache()));
+
+        ICookiePolicyPageResolver resolver =
+            CreateSut(cache, contentTypeService, contentService, null, appCaches);
+        resolver.Resolve();
+
+        Assert.True(
+            capturedTimeout.HasValue,
+            "Expected the cached policy-page key to carry an expiry (the untimed overload leaves a "
+                + "stale/absent entry cached for the whole process lifetime on a replica that missed "
+                + "the invalidating notification).");
+        Assert.True(capturedTimeout!.Value > TimeSpan.Zero, "Expected a positive expiry, not an immediate one.");
+        // A generous upper bound, not the exact configured value: this pins "bounded", not a
+        // specific number of minutes that would make the test brittle against retuning.
+        Assert.True(
+            capturedTimeout.Value <= TimeSpan.FromMinutes(30),
+            $"Expected a short backstop window (this is a rarely-changing lookup), got {capturedTimeout.Value}.");
+    }
 }

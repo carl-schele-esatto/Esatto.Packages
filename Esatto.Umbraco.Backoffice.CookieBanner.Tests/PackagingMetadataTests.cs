@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Esatto.Umbraco.Backoffice.CookieBanner.TagHelpers;
 using Xunit;
 
 namespace Esatto.Umbraco.Backoffice.CookieBanner.Tests;
@@ -51,6 +52,59 @@ public sealed class PackagingMetadataTests
         {
             Assert.Contains($"`{property.Name}`", readme, StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Readme_install_section_names_every_namespace_a_consumer_must_import()
+    {
+        // Pins: the install steps once omitted `using Esatto.Umbraco.Backoffice.CookieBanner;`, so a
+        // consumer following them verbatim hit `CS1061: 'WebApplication' does not contain a
+        // definition for 'UseCookieConsent'` - an extension method is invisible without its
+        // declaring type's namespace in scope, and the compiler error names neither the missing
+        // namespace nor the word "using".
+        //
+        // Namespaces are derived from the real public extension/tag-helper types rather than
+        // hardcoded, so a future move (either type relocating) keeps this test honest instead of
+        // re-asserting a string that could go stale right along with the README:
+        // - CookieBannerApplicationBuilderExtensions declares UseCookieConsent() -> its namespace is
+        //   the Program.cs import.
+        // - ConsentBannerTagHelper is one of the tag helpers registered by the `@addTagHelper` line
+        //   -> its namespace is the _ViewImports.cshtml `@using` import.
+        string rootNamespace = typeof(CookieBannerApplicationBuilderExtensions).Namespace!;
+        string tagHelpersNamespace = typeof(ConsentBannerTagHelper).Namespace!;
+
+        var readme = File.ReadAllText(ReadmePath);
+        var installSection = ExtractSection(readme, "## Install", "\n## ");
+
+        AssertImportsNamespace(installSection, rootNamespace);
+        AssertImportsNamespace(installSection, tagHelpersNamespace);
+    }
+
+    private static string ExtractSection(string readme, string heading, string nextHeadingPrefix)
+    {
+        var start = readme.IndexOf(heading, StringComparison.Ordinal);
+        Assert.True(start >= 0, $"README does not contain a \"{heading}\" heading.");
+
+        var contentStart = start + heading.Length;
+        var nextHeadingIndex = readme.IndexOf(nextHeadingPrefix, contentStart, StringComparison.Ordinal);
+        return nextHeadingIndex < 0 ? readme[contentStart..] : readme[contentStart..nextHeadingIndex];
+    }
+
+    /// <summary>
+    /// Matches a genuine <c>using X;</c> (C#) or <c>@using X</c> (Razor) directive naming exactly
+    /// <paramref name="namespaceName"/> - not merely a longer namespace that happens to start with
+    /// it, such as the <c>.TagHelpers</c> sub-namespace containing the root namespace as a prefix.
+    /// A plain substring search would pass even with the root namespace's own import missing,
+    /// because the root namespace's text is already present inside the (unrelated) TagHelpers
+    /// import line.
+    /// </summary>
+    private static void AssertImportsNamespace(string section, string namespaceName)
+    {
+        var pattern = $@"@?using\s+{Regex.Escape(namespaceName)}(?![\w.])";
+        Assert.True(
+            Regex.IsMatch(section, pattern),
+            $"Expected the README's Install section to import `{namespaceName}` via a `using` or "
+                + "`@using` directive naming exactly that namespace.");
     }
 
     [Fact]

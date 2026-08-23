@@ -23,6 +23,10 @@
          built package DLL, reproducing what the consumer's own recompiled Views/CookiePolicy.cshtml
          does at install time (see the C2 fix wave notes). -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <!-- Used only by ConsentJsDoubleInitGuardTests to actually EXECUTE wwwroot/esatto-cookiebanner/
+         consent.js (twice, in one shared global scope, the way two <script src="consent.js"> tags on
+         one page would) rather than merely asserting the guard's source text is present. -->
+    <PackageReference Include="Jint" Version="4.16.1" />
   </ItemGroup>
 
   <ItemGroup>

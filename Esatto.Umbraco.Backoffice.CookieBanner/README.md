@@ -26,9 +26,15 @@ Editors declare the site's cookies in a Block List on the installed cookie polic
 dotnet add package Esatto.Umbraco.Backoffice.CookieBanner
 ```
 
-Installing the package registers the services and installs the schema on first start via its composer — nothing else to configure. Wiring the rendering is the five lines below: one in `Program.cs`, two in your layout, and two registering the tag helpers.
+Installing the package registers the services and installs the schema on first start via its composer — nothing else to configure. Wiring the rendering is the six lines below: two in `Program.cs`, two in your layout, and two registering the tag helpers.
 
-In `Program.cs`, after `BootUmbracoAsync()` and **before** `UseUmbraco()`:
+In `Program.cs`, add the namespace import (the Umbraco template's implicit usings do not cover it, and without it you get `CS1061: 'WebApplication' does not contain a definition for 'UseCookieConsent'`):
+
+```csharp
+using Esatto.Umbraco.Backoffice.CookieBanner;
+```
+
+then, after `BootUmbracoAsync()` and **before** `UseUmbraco()`:
 
 ```csharp
 app.UseCookieConsent();
@@ -40,6 +46,15 @@ In your layout — `<consent-head />` goes in `<head>` **after** your own styles
 <consent-head />
 <consent-banner />
 ```
+
+> **Put these in the layout that *every* front-end page uses, not just your home page.** `<consent-banner />`
+> is what loads `consent.js`, and that script powers every `data-consent-*` control on the site. The installed
+> cookie policy page is self-sufficient — it renders its own copy of `consent.js` with the same configuration,
+> so its reopen and withdraw buttons work even from a layout that omits `<consent-banner />` — but any footer
+> link you add yourself is not: it depends on whichever page it renders on loading `consent.js`, which for
+> most sites means every layout. On a page whose layout omits the tag, such a link renders and looks correct
+> but does nothing at all, with no error anywhere. Once a visitor has decided, the dialog itself renders
+> hidden, so a missing tag is invisible until someone clicks a control that depends on it.
 
 `_ViewImports.cshtml` needs the tag helpers registered once:
 
@@ -157,6 +172,21 @@ The package does **not** touch document types it does not own. The policy page i
 <a href="#" class="consent-btn consent-btn--link" data-consent-open>@Umbraco.GetDictionaryValue("Cookies.Footer.Link")</a>
 ```
 
+A `<button>` works just as well, and the class is entirely optional — the behaviour comes from the
+`data-consent-open` attribute, not from the styling, so your own classes are fine:
+
+```cshtml
+<button type="button" class="btn-link" data-consent-open>@Umbraco.GetDictionaryValue("Cookies.Footer.Link")</button>
+```
+
+Reaching for your own class is the usual choice when the link sits in a footer your design system already
+styles — the package's `.consent-btn--link` exists so you *can* stay consistent with the dialog, not because
+anything depends on it.
+
+**Whichever element you use, it needs `consent.js` on the page**, which means the layout rendering it must
+also render `<consent-banner />`. Without that the control is inert and silent — see the note in
+[Install](#install).
+
 ## Theming
 
 `consent.css` is self-sufficient: it declares its own `--consent-*` tokens on `:root` with neutral defaults and ships its own `.consent-btn` / `.consent-btn--primary` / `.consent-btn--secondary` / `.consent-btn--link` classes. It depends on no class from your design system, and it deliberately styles nothing outside the dialog, the embed placeholder and the policy tables — no global `footer`, `a` or `button` rules.
@@ -219,6 +249,46 @@ Declarative hooks, no JavaScript required: `data-consent-open` on any element op
 
 Category names in the JS API are the lowercase **wire** names (`necessary`, `preferences`, `statistics`, `marketing`) — the same strings that appear in the cookie. They are a stable contract: renaming a C# enum member must never invalidate cookies already in the wild.
 
+## Troubleshooting
+
+Every failure below is silent — nothing throws and nothing is logged — so they are listed by symptom.
+
+**`CS1061: 'WebApplication' does not contain a definition for 'UseCookieConsent'`**
+The namespace import is missing. Add `using Esatto.Umbraco.Backoffice.CookieBanner;` to `Program.cs`. The
+extension is on `IApplicationBuilder`, which `WebApplication` implements, so nothing else is needed.
+
+**No banner appears at all, on any page.**
+View Source. If you can see a literal `<consent-banner />` in the HTML, the tag helpers are not registered —
+add the two `@addTagHelper` / `@using` lines to `Views/_ViewImports.cshtml`. An unregistered tag helper is
+emitted verbatim, and browsers silently ignore unknown elements.
+
+**The banner appears but Accept/Reject do nothing.**
+`app.UseCookieConsent()` is missing or is placed after `UseUmbraco()`. It registers the endpoint the dialog
+posts to; without it the request 404s.
+
+**A footer cookie-settings link does nothing.**
+The layout it renders on does not render `<consent-banner />`, so `consent.js` never loads there. Put
+`<consent-banner />` in the layout every front-end page uses. This is the most common setup mistake, because
+once a visitor has decided the dialog renders hidden — so on most pages a missing tag looks identical to a
+working install. The installed cookie policy page does not have this problem: it renders its own copy of
+`consent.js`, so its own reopen/withdraw buttons work regardless of the layout that hosts it.
+
+**The dialog appears unstyled.**
+`consent.css` is not being served. Confirm `/esatto-cookiebanner/consent.css` returns 200. The package ships
+it as a static web asset; if you have customised static-file handling, make sure static web assets are still
+mapped.
+
+**Nothing was installed into Umbraco — no document type, no dictionary items.**
+The installer runs on `UmbracoApplicationStartedNotification`, gated on `RuntimeLevel.Run`, and it
+deliberately logs and swallows failures rather than preventing your site from booting. Search your logs for
+`CookieBannerInstallHandler`: you will find either a message saying the runtime level was not `Run` (the site
+was installing or upgrading — restart once it is running), or the error that was swallowed.
+
+**Consent was granted but a gated `<consent-script>` still does not load.**
+Gating is server-side by design: a blocked script is never sent to the browser, so it can only appear on a
+subsequent request. `consent.js` reloads the page after a successful decision for exactly this reason. If you
+have suppressed that reload, the script will appear on the visitor's next navigation instead.
+
 ## Compatibility
 
 One `net10.0` assembly on the `Umbraco.Cms.Core` 17.0.0 floor with no upper bound. Umbraco 17 and 18 both ship only `lib/net10.0`, so there is no TFM to discriminate on and multi-targeting is not possible.
@@ -226,9 +296,19 @@ One `net10.0` assembly on the `Umbraco.Cms.Core` 17.0.0 floor with no upper boun
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Targeted (package floor) |
-| 18.x    | Targeted, not booted |
+| 18.x    | Targeted |
 
-No Umbraco site has actually been booted with this package installed on either major during development — the checks below are static: real assemblies for both majors decompiled/reflected over to confirm the API surface this package calls exists and resolves to the same declaring type on both, plus a full test suite against mocked Umbraco services. That is not the same as an end-to-end run. **Verify on your own major before shipping to production**, especially after upgrading Umbraco — a mismatch here throws at runtime (`MissingMethodException`), not at compile time.
+**What "Targeted" means today:** the package has now been installed and exercised end to end on a
+real Umbraco site — the schema installed cleanly, both dropdown data types (Cookie category,
+Storage type) confirmed as working editors in the backoffice, the cookie policy page rendered, and
+dictionary text resolved per culture. That install ran on one major, not both, and this README does
+not say which. So neither row above means "Verified": whichever major that real install did *not*
+run on still has only the static checks behind it — real assemblies for both majors
+decompiled/reflected over to confirm the API surface this package calls exists and resolves to the
+same declaring type on both, plus a full test suite against mocked Umbraco services — which is not
+the same as an end-to-end run. **Verify on your own major before shipping to production**, especially
+after upgrading Umbraco — a mismatch here throws at runtime (`MissingMethodException`), not at
+compile time.
 
 Nothing removed in Umbraco 18 is used: no `MigrationBase`/`PackageMigrationBase`, no `ILocalizationService` or `IFileService`, no `UmbracoApiController` or convention-based front-end API routing, no `IPublishedContent.Parent`/`.Children` properties. `GetById(Guid)` is never called on `IContentService`: 17.0.0 re-declares it there with `new` and 18 does not, so a 17.0.0-compiled call binds to a declaration site that vanishes at runtime on 18 (`MissingMethodException`, reproduced against real 17.0.0 and 18.1.1 binaries during development). Existence checks use `IEntityService.Exists(Guid, UmbracoObjectTypes)`, which is identical in both.
 

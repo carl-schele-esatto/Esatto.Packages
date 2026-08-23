@@ -1,5 +1,6 @@
 @using Esatto.Umbraco.Backoffice.CookieBanner
 @using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
 @using Umbraco.Cms.Core.Models.Blocks
 @using Umbraco.Cms.Core.Models.PublishedContent
 @using Umbraco.Cms.Core.Strings
@@ -7,6 +8,7 @@
 @using Umbraco.Extensions
 @inherits UmbracoViewPage
 @inject IConsentState Consent
+@inject IOptions<CookieBannerOptions> BannerOptions
 @{
     // This file is compiled twice: once as part of this RCL, and a second time from a physical
     // copy Umbraco writes to the consumer's own Views/CookiePolicy.cshtml at install time (see the
@@ -38,6 +40,20 @@
 
     var introduction = Model.Value<IHtmlEncodedString>(fallback, "introduction");
     var outro = Model.Value<IHtmlEncodedString>(fallback, "outro");
+
+    // This page renders its own copy of consent.js's <script> tag (see the bottom of this file) so
+    // its data-consent-open / data-consent-action="withdrawn" buttons above work even when the
+    // layout hosting this page omits <consent-banner />. consent.js reads its configuration off
+    // data- attributes on its OWN <script> element (document.currentScript), so this tag must carry
+    // exactly the configuration the banner's tag carries - sourced from the same options and text
+    // provider - or the script would initialise with the wrong policy version, endpoint, etc. If
+    // <consent-banner /> is ALSO on this page, the browser fetches consent.js once (same URL,
+    // identical config either way) and consent.js's own re-entrancy guard means only the first of
+    // the two <script> tags to execute actually runs; the second is a no-op.
+    var bannerSettings = BannerOptions.Value;
+    var consentModeEnabled = string.IsNullOrWhiteSpace(bannerSettings.GoogleMeasurementId) is false;
+    var errorMessage = text.Get("Cookies.Banner.Error");
+    var rateLimitedMessage = text.Get("Cookies.Banner.RateLimited");
 }
 
 <div class="consent-policy">
@@ -125,3 +141,16 @@
         </article>
     }
 </div>
+
+@* Root-relative rather than "~/": this view ships inside a Razor class library that registers no
+   _ViewImports, so the framework's UrlResolutionTagHelper is not in scope to expand a tilde. Kept
+   in lockstep with Views/Shared/Components/ConsentBanner/Default.cshtml's script tag - see the
+   comment above where bannerSettings/consentModeEnabled/errorMessage/rateLimitedMessage are built. *@
+<script src="/esatto-cookiebanner/consent.js" defer
+        data-consent-endpoint="@bannerSettings.EndpointPath"
+        data-consent-cookie="@bannerSettings.CookieName"
+        data-consent-version="@bannerSettings.PolicyVersion"
+        data-consent-mode="@(consentModeEnabled ? "on" : "off")"
+        data-consent-needs-decision="@(Consent.NeedsDecision ? "true" : "false")"
+        data-consent-error-message="@errorMessage"
+        data-consent-rate-limited-message="@rateLimitedMessage"></script>

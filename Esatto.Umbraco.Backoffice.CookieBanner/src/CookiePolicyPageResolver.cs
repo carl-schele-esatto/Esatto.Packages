@@ -49,6 +49,21 @@ internal sealed class CookiePolicyPageResolver(
     /// </summary>
     private const int ScanPageSize = 100;
 
+    /// <summary>
+    /// Backstop expiry for the cached policy-page key (see <see cref="RuntimeCacheKey"/> and
+    /// <see cref="ResolveCore"/>). <see cref="CookiePolicyPageCacheInvalidator"/>'s
+    /// publish/unpublish/delete notifications are the fast path, but Umbraco only raises them on the
+    /// server instance that actually performed the edit - so on a load-balanced install a front-end
+    /// replica that did not handle it never gets the clear, and without a bounded expiry it would
+    /// hold a stale key (or a cached "no policy page yet") for the whole process lifetime: publish
+    /// the first cookiePolicy page after boot and that replica shows no policy link until it
+    /// restarts. A resolved key is cheap to recompute (one bounded content query) and this is a
+    /// rarely-changing lookup, so a few minutes is ample headroom - short enough that a stale
+    /// replica self-heals long before anyone would notice, long enough that the scan still only runs
+    /// occasionally rather than on every request.
+    /// </summary>
+    private static readonly TimeSpan PolicyPageKeyCacheDuration = TimeSpan.FromMinutes(5);
+
     // Registered scoped, so this memoises for the lifetime of one request: <consent-banner /> and
     // the policy template can both ask without paying for a second database round trip.
     private bool _resolved;
@@ -101,9 +116,14 @@ internal sealed class CookiePolicyPageResolver(
         // reflects the current publish state, so a stale cache entry can at worst trigger one extra
         // scan - it can never serve stale content. Guid.Empty stands in for "scanned, found
         // nothing", so a site with no policy page does not re-scan on every request either.
-        // Invalidated by CookiePolicyPageCacheInvalidator on publish/unpublish/delete.
+        // Invalidated by CookiePolicyPageCacheInvalidator on publish/unpublish/delete - belt and
+        // braces, not a replacement for it: see PolicyPageKeyCacheDuration for why an expiry is
+        // needed too. The 4-arg overload used here (TimeSpan? timeout) is confirmed identical on
+        // IAppPolicyCache in both Umbraco 17.0.0 and 18.1.1 by decompiling the real assemblies.
         Guid cachedKey = appCaches.RuntimeCache.GetCacheItem(
-            RuntimeCacheKey, () => ScanForPolicyPageKey(contentType) ?? Guid.Empty);
+            RuntimeCacheKey,
+            () => ScanForPolicyPageKey(contentType) ?? Guid.Empty,
+            PolicyPageKeyCacheDuration);
 
         return cachedKey == Guid.Empty ? null : contentCache.GetById(cachedKey);
     }

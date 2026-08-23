@@ -10,6 +10,15 @@
 (function () {
     'use strict';
 
+    // consent.js can now be referenced by more than one <script> tag on the same page: the
+    // <consent-banner /> tag helper's script tag, and the one Views/CookiePolicy.cshtml renders for
+    // itself so its own data-consent-* buttons work even when the layout hosting the policy page
+    // omits <consent-banner />. Two <script src> tags pointing at the same URL are fetched once by
+    // the browser, but each tag is still its own script inclusion and runs the whole file again, so
+    // without this guard the document-level click listener and everything else below would be
+    // registered twice, double-firing every click. Bail out on the second run.
+    if (window.cookieConsent) { return; }
+
     var script = document.currentScript;
     var endpoint = script.getAttribute('data-consent-endpoint') || '/api/cookie-consent';
     var cookieName = script.getAttribute('data-consent-cookie') || 'cookie-consent';
