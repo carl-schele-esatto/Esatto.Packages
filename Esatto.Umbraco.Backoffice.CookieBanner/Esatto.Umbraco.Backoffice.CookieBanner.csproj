@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Esatto.Umbraco.Backoffice.CookieBanner</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.CookieBanner</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.CookieBanner</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Turnkey GDPR/ePrivacy cookie consent for Umbraco 17 &amp; 18. A blocking consent dialog, per-category gating of scripts and embeds through the &lt;consent-script&gt; and &lt;consent-embed&gt; tag helpers, Google Consent Mode v2 signalling, an editor-managed cookie registry (cookieDefinition element type plus a cookieRegistry block list) and a rendered cookie policy page. Wiring is two lines of Razor and one app.UseCookieConsent() call.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;cookie-banner;cookie-consent;gdpr;eprivacy;consent-mode</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.CookieBanner</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\**\*.png" Pack="true" PackagePath="docs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.CookieBanner.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- No Umbraco.Cms.Api.Management: 1.0.0 ships no backoffice dashboard. Umbraco.Cms.Core
+         alone is what the Marketplace reads to detect a supported version. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Umbraco.Cms.Core" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="17.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Pins a patched floor for a high-severity vulnerability (NU1903) that Umbraco 17 pulls in
+         transitively: Umbraco.Cms.Web.Common -> Umbraco.Cms.PublishedCache.HybridCache ->
+         MessagePack 3.1.4, LZ4 decompression OOB read (GHSA-hv8m-jj95-wg3x), fixed in 3.1.7.
+         Drop it once Umbraco bumps its own dependency past it.
+         The sibling packages also pin Microsoft.OpenApi; that one arrives only through
+         Umbraco.Cms.Api.Management -> Swashbuckle, which this package does not reference. -->
+    <PackageReference Include="MessagePack" Version="3.1.7" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
