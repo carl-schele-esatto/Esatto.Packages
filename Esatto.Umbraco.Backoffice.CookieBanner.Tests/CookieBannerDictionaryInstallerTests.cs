@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Resources;
 using System.Threading.Tasks;
 using Esatto.Umbraco.Backoffice.CookieBanner;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -132,5 +133,30 @@ public class CookieBannerDictionaryInstallerTests
         Assert.DoesNotContain("Cookies.Banner.Heading", SeededKeys(created));
         Assert.Equal(31, SeededKeys(created).Count());
         _ = items.DidNotReceiveWithAnyArgs().MoveAsync(null!, null, default);
+    }
+
+    [Fact]
+    public void TextFor_falls_back_to_the_neutral_value_when_a_shipped_cultures_resx_omits_the_key()
+    {
+        // Pins the "must not seed an empty translation" rule: the shipped resx are always 32/32
+        // parity (Task 8), so this can't be reproduced with the real ConsentText resx - it uses a
+        // small test-only resx pair (Resources/DictionaryFallbackSample.resx + .de.resx) where the
+        // "de" satellite deliberately omits a key the neutral resx has.
+        var resources = new ResourceManager(
+            "Esatto.Umbraco.Backoffice.CookieBanner.Tests.Resources.DictionaryFallbackSample",
+            typeof(CookieBannerDictionaryInstallerTests).Assembly);
+
+        // The key exists in both: the culture-specific text wins over the neutral one.
+        Assert.Equal(
+            "Deutsch shared value",
+            CookieBannerDictionaryInstaller.TextFor(resources, "de", "Shared"));
+
+        // The key exists only in the neutral resx: falls back to it instead of an empty string.
+        Assert.Equal(
+            "Neutral only value",
+            CookieBannerDictionaryInstaller.TextFor(resources, "de", "OnlyNeutral"));
+
+        // A key absent everywhere seeds nothing rather than an empty translation.
+        Assert.Null(CookieBannerDictionaryInstaller.TextFor(resources, "de", "Nowhere"));
     }
 }

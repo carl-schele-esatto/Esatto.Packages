@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Resources;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Umbraco.Cms.Core;
@@ -27,6 +30,13 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner;
 /// global rather than path-based, so the nesting is presentation only - it keeps 32 items from
 /// sitting loose at the root of the Dictionary tree without changing a single lookup.
 /// </para>
+/// <para>
+/// Text comes from the same embedded resx <see cref="ConsentTextProvider" /> reads
+/// (<c>Resources/ConsentText.resx</c> / <c>ConsentText.sv.resx</c>), not a second hand-maintained
+/// table: the key list and every translation are read out of the resx at class-load time, so
+/// there is exactly one place - Task 8's resx files - where consent copy is authored. That is also
+/// why this file contains no Swedish literals: Swedish lives only in <c>ConsentText.sv.resx</c>.
+/// </para>
 /// </remarks>
 internal sealed class CookieBannerDictionaryInstaller(
     IDictionaryItemService dictionaryItemService,
@@ -38,70 +48,52 @@ internal sealed class CookieBannerDictionaryInstaller(
     /// <summary>Parent node for every item below. Holds no translations: it is a folder, not a label.</summary>
     internal const string ParentKey = "Cookie.Banner";
 
+    /// <summary>Same resx family <see cref="ConsentTextProvider" /> reads - see that type for why.</summary>
+    private static readonly ResourceManager Resources = new(
+        "Esatto.Umbraco.Backoffice.CookieBanner.Resources.ConsentText",
+        typeof(CookieBannerDictionaryInstaller).Assembly);
+
     /// <summary>
     /// Two-letter language codes the package ships text for. A site language matches when its
     /// primary subtag is in here, so en-GB, en-US and a bare en all resolve to the English set.
     /// </summary>
+    /// <remarks>
+    /// Kept as an explicit list rather than derived from the satellite assemblies actually shipped:
+    /// .NET has no supported API to enumerate which culture satellites exist for an assembly at
+    /// runtime without probing the filesystem for "xx/AssemblyName.resources.dll" next to the main
+    /// assembly, which is brittle under single-file publish and trimmed deployments and is exactly
+    /// the kind of thing an Umbraco host's own publish settings could quietly break. This list is a
+    /// fact about which culture folders ship, not a copy of the translated text, so it does not
+    /// carry the same drift risk decision #4 is about.
+    /// </remarks>
     private static readonly string[] ShippedLanguages = ["en", "sv"];
 
     /// <summary>
-    /// Key, English, Swedish. English first: it is the package's neutral fallback culture, not a
-    /// site's default language.
+    /// Every key this installer seeds, for the resx parity check in the text provider. Read from
+    /// the neutral (English) resource set rather than hand-listed, so the key list can never drift
+    /// from what <see cref="ConsentTextProvider" /> actually ships.
     /// </summary>
-    private static readonly (string Key, string En, string Sv)[] Items =
-    [
-        ("Cookies.Banner.Heading", "We use cookies", "Vi använder kakor"),
-        ("Cookies.Banner.Body",
-            "We use necessary cookies to make the site work. We would also like to use cookies for statistics and content from other services.",
-            "Vi använder nödvändiga kakor för att sajten ska fungera. Vi vill också gärna använda kakor för statistik och innehåll från andra tjänster."),
-        ("Cookies.Banner.AcceptAll", "Accept all", "Godkänn alla"),
-        ("Cookies.Banner.RejectAll", "Reject all", "Neka alla"),
-        ("Cookies.Banner.Customise", "Customise", "Anpassa"),
-        ("Cookies.Banner.Save", "Save choices", "Spara val"),
-        ("Cookies.Banner.Cancel", "Cancel", "Avbryt"),
-        ("Cookies.Banner.Error", "Something went wrong. Please try again.", "Något gick fel. Försök igen."),
-        ("Cookies.Banner.RateLimited",
-            "You've tried too many times. Please wait a moment and try again.",
-            "Du har försökt för många gånger. Vänta en stund och försök igen."),
-        ("Cookies.Category.Necessary.Name", "Necessary", "Nödvändiga"),
-        ("Cookies.Category.Necessary.Description",
-            "Required for the site to work, for example logging in. Cannot be turned off.",
-            "Krävs för att sajten ska fungera, till exempel inloggning. Kan inte stängas av."),
-        ("Cookies.Category.Preferences.Name", "Preferences", "Funktionella"),
-        ("Cookies.Category.Preferences.Description",
-            "Remembers your choices, such as language.",
-            "Sparar dina val, till exempel språk."),
-        ("Cookies.Category.Statistics.Name", "Statistics", "Statistik"),
-        ("Cookies.Category.Statistics.Description",
-            "Helps us understand how the site is used. Fully anonymous.",
-            "Hjälper oss förstå hur sajten används. Helt anonymt."),
-        ("Cookies.Category.Marketing.Name", "Marketing", "Marknadsföring"),
-        ("Cookies.Category.Marketing.Description",
-            "Used by embedded content, such as YouTube videos.",
-            "Används av inbäddat innehåll, till exempel filmer från YouTube."),
-        ("Cookies.Category.Cookies", "Cookies in this category", "Kakor i den här kategorin"),
-        ("Cookies.Embed.Blocked.Body",
-            "This content comes from another service and needs your consent.",
-            "Det här innehållet kommer från en annan tjänst och kräver ditt samtycke."),
-        ("Cookies.Embed.Blocked.Button", "Show content", "Visa innehåll"),
-        ("Cookies.Policy.CurrentChoice", "Your current choice", "Ditt nuvarande val"),
-        ("Cookies.Policy.NoChoice", "You have not made a choice yet.", "Du har inte gjort något val än."),
-        // On/Off exist because CookiePolicy.cshtml used to render a hardcoded "på"/"av", making
-        // the policy page Swedish in every language including English.
-        ("Cookies.Policy.On", "on", "på"),
-        ("Cookies.Policy.Off", "off", "av"),
-        ("Cookies.Policy.Reopen", "Change settings", "Ändra inställningar"),
-        ("Cookies.Policy.Withdraw", "Withdraw consent", "Återkalla samtycke"),
-        ("Cookies.Footer.Link", "Cookie settings", "Cookieinställningar"),
-        ("Cookies.Table.Name", "Name", "Namn"),
-        ("Cookies.Table.Provider", "Provider", "Leverantör"),
-        ("Cookies.Table.Purpose", "Purpose", "Syfte"),
-        ("Cookies.Table.Duration", "Duration", "Lagringstid"),
-        ("Cookies.Table.Type", "Type", "Typ"),
-    ];
+    internal static IReadOnlyList<string> Keys { get; } = LoadKeys();
 
-    /// <summary>Every key this installer seeds, for the resx parity check in the text provider.</summary>
-    internal static IReadOnlyList<string> Keys { get; } = [.. Items.Select(item => item.Key)];
+    private static IReadOnlyList<string> LoadKeys()
+    {
+        ResourceSet? neutral = Resources.GetResourceSet(CultureInfo.InvariantCulture, true, true);
+        if (neutral is null)
+        {
+            return [];
+        }
+
+        var keys = new List<string>();
+        foreach (DictionaryEntry entry in neutral)
+        {
+            if (entry.Key is string key)
+            {
+                keys.Add(key);
+            }
+        }
+
+        return keys;
+    }
 
     public async Task InstallAsync()
     {
@@ -126,9 +118,9 @@ internal sealed class CookieBannerDictionaryInstaller(
 
         var created = 0;
         var adopted = 0;
-        foreach ((string key, string en, string sv) item in Items)
+        foreach (string key in Keys)
         {
-            IDictionaryItem? existing = await dictionaryItemService.GetAsync(item.key);
+            IDictionaryItem? existing = await dictionaryItemService.GetAsync(key);
             if (existing is not null)
             {
                 if (await TryAdoptAsync(existing, parentId))
@@ -142,15 +134,24 @@ internal sealed class CookieBannerDictionaryInstaller(
             var translations = new List<IDictionaryTranslation>();
             foreach ((ILanguage language, string code) in targets)
             {
-                translations.Add(new DictionaryTranslation(language, TextFor(code, item)));
+                string? text = TextFor(Resources, code, key);
+                if (text is null)
+                {
+                    // Neither this culture's resx nor the neutral one has the key. Cannot happen
+                    // for a real shipped key (Keys is read from the same neutral set), but seeding
+                    // an empty translation would be worse than seeding none.
+                    continue;
+                }
+
+                translations.Add(new DictionaryTranslation(language, text));
             }
 
-            var dictionaryItem = new DictionaryItem(parentId, item.key) { Translations = translations };
+            var dictionaryItem = new DictionaryItem(parentId, key) { Translations = translations };
 
             var attempt = await dictionaryItemService.CreateAsync(dictionaryItem, UserKey);
             if (attempt.Success is false)
             {
-                logger.LogWarning("Could not create dictionary item {Key}: {Status}.", item.key, attempt.Status);
+                logger.LogWarning("Could not create dictionary item {Key}: {Status}.", key, attempt.Status);
                 continue;
             }
 
@@ -179,8 +180,24 @@ internal sealed class CookieBannerDictionaryInstaller(
         return (dash < 0 ? isoCode : isoCode[..dash]).ToLowerInvariant();
     }
 
-    private static string TextFor(string code, (string Key, string En, string Sv) item)
-        => code == "sv" ? item.Sv : item.En;
+    /// <summary>
+    /// The text for <paramref name="key" /> in <paramref name="cultureCode" />, falling back to the
+    /// neutral (English) resource set when that culture's resx omits the key, rather than seeding
+    /// an empty translation. Internal - and takes <paramref name="resources" /> as a parameter
+    /// rather than closing over the private static field - purely so a test can exercise the
+    /// fallback with a resx pair that actually has a gap; the shipped resx never does (Task 8 keeps
+    /// both cultures at 32/32 parity).
+    /// </summary>
+    internal static string? TextFor(ResourceManager resources, string cultureCode, string key)
+    {
+        string? value = resources.GetString(key, new CultureInfo(cultureCode));
+        if (string.IsNullOrEmpty(value))
+        {
+            value = resources.GetString(key, CultureInfo.InvariantCulture);
+        }
+
+        return string.IsNullOrEmpty(value) ? null : value;
+    }
 
     /// <summary>
     /// Returns the id of the parent node, creating it if absent. Returns null when it cannot be
