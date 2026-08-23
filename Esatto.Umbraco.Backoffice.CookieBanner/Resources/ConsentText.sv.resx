@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Cookies.Banner.Heading" xml:space="preserve">
+    <value>Vi använder kakor</value>
+  </data>
+  <data name="Cookies.Banner.Body" xml:space="preserve">
+    <value>Vi använder nödvändiga kakor för att sajten ska fungera. Vi vill också gärna använda kakor för statistik och innehåll från andra tjänster.</value>
+  </data>
+  <data name="Cookies.Banner.AcceptAll" xml:space="preserve">
+    <value>Godkänn alla</value>
+  </data>
+  <data name="Cookies.Banner.RejectAll" xml:space="preserve">
+    <value>Neka alla</value>
+  </data>
+  <data name="Cookies.Banner.Customise" xml:space="preserve">
+    <value>Anpassa</value>
+  </data>
+  <data name="Cookies.Banner.Save" xml:space="preserve">
+    <value>Spara val</value>
+  </data>
+  <data name="Cookies.Banner.Cancel" xml:space="preserve">
+    <value>Avbryt</value>
+  </data>
+  <data name="Cookies.Banner.Error" xml:space="preserve">
+    <value>Något gick fel. Försök igen.</value>
+  </data>
+  <data name="Cookies.Banner.RateLimited" xml:space="preserve">
+    <value>Du har försökt för många gånger. Vänta en stund och försök igen.</value>
+  </data>
+  <data name="Cookies.Category.Necessary.Name" xml:space="preserve">
+    <value>Nödvändiga</value>
+  </data>
+  <data name="Cookies.Category.Necessary.Description" xml:space="preserve">
+    <value>Krävs för att sajten ska fungera, till exempel inloggning. Kan inte stängas av.</value>
+  </data>
+  <data name="Cookies.Category.Preferences.Name" xml:space="preserve">
+    <value>Funktionella</value>
+  </data>
+  <data name="Cookies.Category.Preferences.Description" xml:space="preserve">
+    <value>Sparar dina val, till exempel språk.</value>
+  </data>
+  <data name="Cookies.Category.Statistics.Name" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Cookies.Category.Statistics.Description" xml:space="preserve">
+    <value>Hjälper oss förstå hur sajten används. Helt anonymt.</value>
+  </data>
+  <data name="Cookies.Category.Marketing.Name" xml:space="preserve">
+    <value>Marknadsföring</value>
+  </data>
+  <data name="Cookies.Category.Marketing.Description" xml:space="preserve">
+    <value>Används av inbäddat innehåll, till exempel filmer från YouTube.</value>
+  </data>
+  <data name="Cookies.Category.Cookies" xml:space="preserve">
+    <value>Kakor i den här kategorin</value>
+  </data>
+  <data name="Cookies.Embed.Blocked.Body" xml:space="preserve">
+    <value>Det här innehållet kommer från en annan tjänst och kräver ditt samtycke.</value>
+  </data>
+  <data name="Cookies.Embed.Blocked.Button" xml:space="preserve">
+    <value>Visa innehåll</value>
+  </data>
+  <data name="Cookies.Policy.CurrentChoice" xml:space="preserve">
+    <value>Ditt nuvarande val</value>
+  </data>
+  <data name="Cookies.Policy.NoChoice" xml:space="preserve">
+    <value>Du har inte gjort något val än.</value>
+  </data>
+  <data name="Cookies.Policy.On" xml:space="preserve">
+    <value>på</value>
+  </data>
+  <data name="Cookies.Policy.Off" xml:space="preserve">
+    <value>av</value>
+  </data>
+  <data name="Cookies.Policy.Reopen" xml:space="preserve">
+    <value>Ändra inställningar</value>
+  </data>
+  <data name="Cookies.Policy.Withdraw" xml:space="preserve">
+    <value>Återkalla samtycke</value>
+  </data>
+  <data name="Cookies.Footer.Link" xml:space="preserve">
+    <value>Cookieinställningar</value>
+  </data>
+  <data name="Cookies.Table.Name" xml:space="preserve">
+    <value>Namn</value>
+  </data>
+  <data name="Cookies.Table.Provider" xml:space="preserve">
+    <value>Leverantör</value>
+  </data>
+  <data name="Cookies.Table.Purpose" xml:space="preserve">
+    <value>Syfte</value>
+  </data>
+  <data name="Cookies.Table.Duration" xml:space="preserve">
+    <value>Lagringstid</value>
+  </data>
+  <data name="Cookies.Table.Type" xml:space="preserve">
+    <value>Typ</value>
+  </data>
+</root>

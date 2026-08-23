@@ -31,10 +31,12 @@ public static class CookieBannerServiceCollectionExtensions
 
         services.TryAddSingleton<ConsentEndpointHandler>();
 
-        // IConsentTextProvider and ICookiePolicyPageResolver are declared here but registered by
-        // the tasks that implement them (Task 8 and Task 17 respectively) - their concrete types
-        // do not exist yet, so registering them here would not compile. Both are scoped: each
-        // resolves against the current request's culture or published content.
+        // Scoped: resolves against the current request's culture via ICultureDictionaryFactory.
+        services.TryAddScoped<IConsentTextProvider, ConsentTextProvider>();
+
+        // ICookiePolicyPageResolver is declared here but registered by the task that implements it
+        // (Task 17) - its concrete type does not exist yet, so registering it here would not
+        // compile. It is scoped: it resolves against the current request's published content.
 
         return services;
     }

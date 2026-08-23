@@ -22,6 +22,22 @@ public class CookieBannerServiceCollectionExtensionsTests
         Assert.Equal(1, services.Count(d => d.ServiceType == typeof(ConsentCookieWriter)));
         Assert.Equal(1, services.Count(d => d.ServiceType == typeof(IConsentThrottle)));
         Assert.Equal(1, services.Count(d => d.ServiceType == typeof(ConsentEndpointHandler)));
+        Assert.Equal(1, services.Count(d => d.ServiceType == typeof(IConsentTextProvider)));
+    }
+
+    [Fact]
+    public void IConsentTextProvider_is_registered_scoped()
+    {
+        // Task 8's provider resolves against the current request's culture via
+        // ICultureDictionaryFactory, so a Singleton or Transient registration would be wrong even
+        // though both would still resolve here - only the lifetime on the descriptor pins it.
+        var services = new ServiceCollection();
+
+        services.AddCookieConsent();
+
+        ServiceDescriptor descriptor = services.Single(d => d.ServiceType == typeof(IConsentTextProvider));
+        Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
+        Assert.Equal(typeof(ConsentTextProvider), descriptor.ImplementationType);
     }
 
     [Fact]
