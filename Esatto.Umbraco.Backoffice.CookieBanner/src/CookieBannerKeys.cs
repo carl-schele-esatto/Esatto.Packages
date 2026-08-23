@@ -34,6 +34,16 @@ internal static class CookieBannerKeys
         internal static readonly Guid CookiePolicy = new("c00c1e00-0004-4000-8000-000000000001");
     }
 
+    /// <summary>
+    /// Content nodes the seeder creates. Continues the c00c1e00 series with the -0005- segment so
+    /// the whole package occupies one readable GUID namespace and a uSync export produces the
+    /// same key on every environment.
+    /// </summary>
+    internal static class Nodes
+    {
+        internal static readonly Guid CookiePolicy = new("c00c1e00-0005-4000-8000-000000000001");
+    }
+
     /// <summary>Umbraco's built-in data types, reused as-is.</summary>
     internal static class BuiltInDataTypes
     {
