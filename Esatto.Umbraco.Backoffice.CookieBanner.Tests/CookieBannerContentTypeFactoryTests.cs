@@ -42,6 +42,12 @@ public class CookieBannerContentTypeFactoryTests
         dataType.Key.Returns(key);
         dataType.EditorAlias.Returns("Umbraco.TextBox");
         dataType.EditorUiAlias.Returns("Umb.PropertyEditorUi.TextBox");
+
+        // A real IDataType from IDataTypeService.GetAsync() is persisted, so HasIdentity is true.
+        // PropertyType's constructor only copies DataTypeId/DataTypeKey across when it is —
+        // without this the double is unlike any data type the factory actually sees.
+        dataType.HasIdentity.Returns(true);
+
         return dataType;
     }
 
