@@ -1,0 +1,100 @@
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Esatto.Umbraco.Backoffice.CookieBanner;
+
+/// <summary>
+/// Serialises a <see cref="ConsentDecision"/> to and from the cookie's compact JSON form:
+/// <c>{"v":1,"t":"&lt;ISO-8601 offset&gt;","c":["marketing"],"id":"&lt;base64url&gt;"}</c>.
+/// </summary>
+/// <remarks>
+/// Decoding is deliberately total: any malformed, truncated or hand-edited value decodes to
+/// <c>null</c>, which the rest of the system treats as "no decision yet". The cookie is not a
+/// security boundary — the worst a visitor can do is forge their own consent — so it is not signed.
+/// </remarks>
+internal static class ConsentCookieCodec
+{
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    public static string Encode(ConsentDecision decision)
+    {
+        var dto = new ConsentCookieDto
+        {
+            Version = decision.PolicyVersion,
+            DecidedAt = decision.DecidedAt.ToUniversalTime(),
+            Categories = decision.Granted
+                .Where(category => category != ConsentCategory.Necessary)
+                .Select(ConsentCategories.ToWireName)
+                .Order(StringComparer.Ordinal)
+                .ToArray(),
+            ConsentId = decision.ConsentId,
+        };
+
+        // Plain JSON: Response.Cookies.Append already URL-encodes the cookie value once. Encoding
+        // here too would double-encode it, which the banner's single decodeURIComponent could not undo.
+        return JsonSerializer.Serialize(dto, SerializerOptions);
+    }
+
+    public static ConsentDecision? Decode(string? cookieValue)
+    {
+        if (string.IsNullOrWhiteSpace(cookieValue))
+        {
+            return null;
+        }
+
+        try
+        {
+            // Plain JSON in, plain JSON out: Request.Cookies already URL-decodes the raw header once,
+            // so unescaping here too would be a second decode. A value that has been through an extra
+            // round of percent-encoding (i.e. does not start with '{') is exactly the shape a
+            // double-encode bug would produce, and it must fail to parse rather than silently succeed.
+            ConsentCookieDto? dto = JsonSerializer.Deserialize<ConsentCookieDto>(cookieValue, SerializerOptions);
+
+            if (dto is null || dto.Version <= 0 || string.IsNullOrWhiteSpace(dto.ConsentId))
+            {
+                return null;
+            }
+
+            var granted = new HashSet<ConsentCategory>();
+            foreach (var name in dto.Categories ?? [])
+            {
+                if (ConsentCategories.TryParse(name, out ConsentCategory category)
+                    && category != ConsentCategory.Necessary)
+                {
+                    granted.Add(category);
+                }
+            }
+
+            return new ConsentDecision(dto.Version, dto.DecidedAt, dto.ConsentId, granted);
+        }
+        catch (Exception exception) when (exception is JsonException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// A random 128-bit, URL-safe id for the decision. It is carried in the cookie so one visitor's
+    /// consent can be correlated across requests without any further identifier.
+    /// </summary>
+    public static string NewConsentId()
+        => Convert.ToBase64String(RandomNumberGenerator.GetBytes(16))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+
+    private sealed class ConsentCookieDto
+    {
+        [JsonPropertyName("v")] public int Version { get; set; }
+
+        [JsonPropertyName("t")] public DateTimeOffset DecidedAt { get; set; }
+
+        [JsonPropertyName("c")] public string[]? Categories { get; set; }
+
+        [JsonPropertyName("id")] public string? ConsentId { get; set; }
+    }
+}
