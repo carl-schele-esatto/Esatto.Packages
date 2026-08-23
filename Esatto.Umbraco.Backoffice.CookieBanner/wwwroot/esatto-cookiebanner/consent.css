@@ -1,0 +1,283 @@
+/* Esatto.Umbraco.Backoffice.CookieBanner - consent dialog, blocked embeds and cookie policy tables.
+ *
+ * Self-sufficient by design. Every colour, radius and metric comes from a --consent-* token
+ * declared below, so the package renders correctly with no host stylesheet at all, and a consumer
+ * re-themes it by redeclaring the tokens on :root (or on any ancestor) - never by overriding rules.
+ *
+ * Token names are prefixed because generic names like --primary or --bg are too likely to already
+ * mean something else in the consumer's design system. Fonts are deliberately absent: every rule
+ * uses font-family: inherit, so the dialog picks up the host's type without a token.
+ */
+
+:root {
+    /* Surfaces and type */
+    --consent-surface: #ffffff;
+    --consent-surface-subtle: #f4f5f7;
+    --consent-text: #1f2328;
+    --consent-heading: #10141a;
+    --consent-muted: #5f6570;
+
+    /* Lines. --consent-rule is the 2px emphasis rule under headings and table headers. */
+    --consent-border: #d5d7db;
+    --consent-border-strong: #a8aeb8;
+    --consent-rule: #c9cdd4;
+
+    /* The modal scrim. A token because a hardcoded brand colour here means overriding the
+       button tokens still leaves the visitor looking at somebody else's brand behind the dialog. */
+    --consent-backdrop: rgba(16, 20, 26, 0.6);
+
+    /* Focus ring colour. See the :focus-visible rule - do not set this to the surface colour. */
+    --consent-focus: #10141a;
+
+    --consent-radius: 8px;
+    --consent-radius-md: 6px;
+    --consent-radius-sm: 4px;
+
+    /* Buttons. Primary is the filled affordance used for every decision in the dialog; secondary
+       is the quieter outlined variant used for withdrawal on the policy page. */
+    --consent-btn-primary-bg: #10141a;
+    --consent-btn-primary-fg: #ffffff;
+    --consent-btn-primary-border: #10141a;
+    --consent-btn-secondary-bg: #ffffff;
+    --consent-btn-secondary-fg: #10141a;
+    --consent-btn-secondary-border: #a8aeb8;
+    --consent-btn-link-fg: #10141a;
+}
+
+/* Buttons are fully self-contained: the package must not depend on a host button class, or it
+   renders as unstyled browser default buttons on every site but the one it grew up in.
+   The base carries a 1px transparent border so filled and outlined variants share box metrics
+   exactly - the filled variant must not be one pixel taller than the outlined one. */
+.consent-btn {
+    display: inline-block;
+    margin: 0;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid transparent;
+    border-radius: var(--consent-radius-sm);
+    background: none;
+    font-weight: bold;
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+    .consent-btn:hover {
+        text-decoration: underline;
+    }
+
+/* Accept and reject both use .consent-btn--primary, so they are genuinely identical and
+   distinguished only by their labels. An earlier version gave reject a differently coloured filled
+   variant: the box metrics matched, but equal size with unequal colour salience is not equal
+   weight - and the more salient button read as "already selected". */
+.consent-btn--primary {
+    background: var(--consent-btn-primary-bg);
+    border-color: var(--consent-btn-primary-border);
+    color: var(--consent-btn-primary-fg);
+}
+
+.consent-btn--secondary {
+    background: var(--consent-btn-secondary-bg);
+    border-color: var(--consent-btn-secondary-border);
+    color: var(--consent-btn-secondary-fg);
+}
+
+.consent-btn--link {
+    display: inline;
+    padding: 0.6rem 0.4rem;
+    border: none;
+    background: none;
+    color: var(--consent-btn-link-fg);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Failure feedback for a save/withdraw request. Not an error banner in its own right - same text
+   colour as the rest of the dialog - the message content is what signals "this went wrong". */
+.consent-status {
+    flex: 1 1 100%;
+    margin: 0;
+    font-weight: 700;
+    color: var(--consent-text);
+}
+
+.consent-status[hidden] {
+    display: none;
+}
+
+/* First-run and settings dialog - a single native <dialog>, so focus trap, Esc and the inert
+   backdrop come from the platform. */
+.consent-dialog {
+    border: none;
+    border-radius: var(--consent-radius);
+    padding: 0;
+    max-width: 34rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: calc(100% - 2rem);
+    color: var(--consent-text);
+    background: var(--consent-surface);
+}
+
+.consent-dialog::backdrop {
+    background: var(--consent-backdrop);
+}
+
+.consent-dialog__body {
+    padding: 1.5rem;
+}
+
+    .consent-dialog__body h2 {
+        color: var(--consent-heading);
+        margin: 0 0 1rem;
+        border-bottom: 2px solid var(--consent-rule);
+        padding-bottom: 0.5rem;
+    }
+
+    .consent-dialog__body > p {
+        margin: 0 0 1rem;
+    }
+
+.consent-category {
+    border: 1px solid var(--consent-border);
+    border-radius: var(--consent-radius-md);
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem 1rem;
+}
+
+    .consent-category legend {
+        color: var(--consent-heading);
+        font-weight: 700;
+        padding: 0 0.35rem;
+    }
+
+.consent-category__row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.95rem;
+}
+
+    .consent-category__row input {
+        margin-top: 0.2rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        flex: 0 0 auto;
+    }
+
+/* Per-category cookie facts - lets a visitor inspect what a category covers without leaving the
+   dialog. Collapsed by default (see the <details> in the markup) to keep the modal compact. */
+.consent-category__cookies {
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+}
+
+    .consent-category__cookies summary {
+        color: var(--consent-heading);
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+/* One definition list per cookie - stacked label/value pairs rather than a table, so the facts
+   stay readable at phone widths inside a modal a visitor cannot skip. */
+.consent-cookie {
+    margin: 0.6rem 0 0;
+    padding: 0.6rem 0.75rem;
+    background: var(--consent-surface-subtle);
+    border-radius: var(--consent-radius-sm);
+}
+
+    .consent-cookie dt {
+        margin: 0.5rem 0 0;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--consent-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .consent-cookie dt:first-child {
+        margin-top: 0;
+    }
+
+    .consent-cookie dd {
+        margin: 0.1rem 0 0;
+    }
+
+/* An author-origin `display` beats the user agent's `[hidden] { display: none }`, and
+   .consent-btn sets `display: inline-block` - so `hidden` alone would leave the Save button and the
+   category section on screen. Stated once for the whole dialog rather than per element. */
+.consent-dialog [hidden] {
+    display: none;
+}
+
+.consent-dialog__actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+}
+
+/* Visible focus everywhere - this is a keyboard-driven component by design. Do not remove: a
+   consent dialog that blocks the page and gives no focus indication is unusable by keyboard. */
+.consent-dialog :focus-visible,
+.consent-embed :focus-visible {
+    outline: 3px solid var(--consent-focus);
+    outline-offset: 2px;
+}
+
+/* The heading takes focus when the dialog opens, purely so focus starts inside the dialog. It is
+   not interactive and cannot be tabbed to, so a ring on it would signal a control that is not
+   there. Every actual control keeps its ring via the rule above. */
+#esatto-consent-dialog-heading:focus,
+#esatto-consent-dialog-heading:focus-visible {
+    outline: none;
+}
+
+/* Blocked embed placeholder */
+.consent-embed--blocked {
+    background: var(--consent-surface-subtle);
+    border: 1px dashed var(--consent-border-strong);
+    border-radius: var(--consent-radius-md);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.consent-embed iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: var(--consent-radius-md);
+}
+
+/* Cookie policy tables. Wide content scrolls inside its own container so the page body never does. */
+.cookie-table-wrapper {
+    overflow-x: auto;
+}
+
+.cookie-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+    .cookie-table th,
+    .cookie-table td {
+        text-align: left;
+        vertical-align: top;
+        padding: 0.5rem 0.65rem;
+        border-bottom: 1px solid var(--consent-border);
+    }
+
+    .cookie-table th {
+        color: var(--consent-heading);
+        border-bottom: 2px solid var(--consent-rule);
+        white-space: nowrap;
+    }
+
+    .cookie-table code {
+        word-break: break-all;
+    }
