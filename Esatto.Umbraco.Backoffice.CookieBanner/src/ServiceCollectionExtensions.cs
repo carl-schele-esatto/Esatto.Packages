@@ -34,9 +34,11 @@ public static class CookieBannerServiceCollectionExtensions
         // Scoped: resolves against the current request's culture via ICultureDictionaryFactory.
         services.TryAddScoped<IConsentTextProvider, ConsentTextProvider>();
 
-        // ICookiePolicyPageResolver is declared here but registered by the task that implements it
-        // (Task 17) - its concrete type does not exist yet, so registering it here would not
-        // compile. It is scoped: it resolves against the current request's published content.
+        // Scoped: resolves against the current request's published content, and memoises its
+        // answer for one request so <consent-banner /> and the policy template share a lookup.
+        // TryAdd keeps this idempotent alongside CookieBannerComposer, which registers the same
+        // pair for the auto-discovered install path.
+        services.TryAddScoped<ICookiePolicyPageResolver, CookiePolicyPageResolver>();
 
         return services;
     }

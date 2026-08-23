@@ -10,8 +10,15 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner;
 /// This logic used to exist twice - once in the consent dialog partial, once in the policy-page
 /// template - with a comment in each claiming the two agreed. They did not: only the banner dropped
 /// blocks with a blank cookie name. One function, one tested behaviour.
+/// <para>
+/// PUBLIC, deliberately. <c>Views/CookiePolicy.cshtml</c> calls this. Umbraco writes that same
+/// source file to the consumer's own <c>Views/CookiePolicy.cshtml</c> at install time, and with
+/// Razor runtime compilation on (the default scaffold) the disk copy shadows the compiled RCL view
+/// and is compiled in the consumer's assembly, where an internal type is inaccessible
+/// (CS0122). Every type the view touches must stay public for the same reason.
+/// </para>
 /// </remarks>
-internal static class CookieRegistry
+public static class CookieRegistry
 {
     /// <summary>
     /// Returns one bucket per <see cref="ConsentCategories.All"/> entry, in that order, so callers

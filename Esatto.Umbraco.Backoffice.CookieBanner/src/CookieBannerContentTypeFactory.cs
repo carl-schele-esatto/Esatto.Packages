@@ -165,33 +165,6 @@ internal sealed class CookieBannerContentTypeFactory(
                ?? throw new InvalidOperationException($"Content type '{alias}' was created but could not be read back.");
     }
 
-    /// <summary>
-    /// Applies the allowed-children list in a second pass, once every document type exists.
-    /// </summary>
-    public async Task SetAllowedChildrenAsync(Guid key, params (Guid Key, string Alias)[] children)
-    {
-        IContentType contentType = contentTypeService.Get(key)
-                                   ?? throw new InvalidOperationException($"Content type {key} was not found.");
-
-        ContentTypeSort[] desired = children
-            .Select((child, index) => new ContentTypeSort(child.Key, index, child.Alias))
-            .ToArray();
-
-        HashSet<Guid> current = contentType.AllowedContentTypes?.Select(x => x.Key).ToHashSet() ?? [];
-        if (current.SetEquals(desired.Select(x => x.Key)))
-        {
-            return;
-        }
-
-        contentType.AllowedContentTypes = desired;
-
-        var attempt = await contentTypeService.UpdateAsync(contentType, UserKey);
-        if (attempt.Success is false)
-        {
-            throw new InvalidOperationException($"Could not set allowed children on '{contentType.Alias}': {attempt.Result}.");
-        }
-    }
-
     public static void AddGroup(
         IContentType contentType,
         Guid key,

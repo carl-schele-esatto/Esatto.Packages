@@ -166,7 +166,7 @@ internal sealed class CookieBannerSchemaInstaller(
                 CookieBannerContentTypeFactory.AddGroup(
                     type, DeriveKey(DocumentTypes.CookiePolicy, 1), "content", "Content", 0,
                     factory.Property(BuiltInDataTypes.Textstring, "heading", "Heading",
-                        "Falls back to the node name.", 0),
+                        "Falls back to a default heading if left blank.", 0),
                     factory.Property(BuiltInDataTypes.RichtextEditor, "introduction", "Introduction",
                         sortOrder: 1),
                     factory.Property(DataTypes.CookieRegistry, "cookies", "Declared cookies",

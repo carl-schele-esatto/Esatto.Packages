@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.Cache;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Services;
+using Umbraco.Extensions;
 
 namespace Esatto.Umbraco.Backoffice.CookieBanner;
 
@@ -28,10 +30,18 @@ internal sealed class CookiePolicyPageResolver(
     IPublishedContentCache contentCache,
     IContentTypeService contentTypeService,
     IContentService contentService,
+    AppCaches appCaches,
     IOptions<CookieBannerOptions> options,
     ILogger<CookiePolicyPageResolver> logger) : ICookiePolicyPageResolver
 {
     internal const string ContentTypeAlias = "cookiePolicy";
+
+    /// <summary>
+    /// Runtime cache key for the by-type scan's result (see <see cref="ResolveCore"/>). Internal so
+    /// <see cref="CookiePolicyPageCacheInvalidator"/> and tests can share the exact same key.
+    /// </summary>
+    internal const string RuntimeCacheKey =
+        "Esatto.Umbraco.Backoffice.CookieBanner.CookiePolicyPageResolver.PolicyPageKey";
 
     /// <summary>
     /// A site with more policy pages than this has bigger problems than the banner. The cap keeps
@@ -78,9 +88,28 @@ internal sealed class CookiePolicyPageResolver(
         if (contentType is null)
         {
             // The schema installer has not run yet (first boot, or it failed and logged).
+            // Deliberately not cached: caching "none" here would keep answering that way even
+            // after the schema installs moments later, and this class has no notification that
+            // would tell it to stop.
             return null;
         }
 
+        // The scan below is a core scope, a content read lock and a paged database query - and
+        // <consent-banner /> is unconditional, so without this it ran once per visitor per page.
+        // Only the resolved KEY is cached, never the IPublishedContent itself: re-resolving through
+        // contentCache.GetById(...) below is a cheap in-memory published-cache lookup that always
+        // reflects the current publish state, so a stale cache entry can at worst trigger one extra
+        // scan - it can never serve stale content. Guid.Empty stands in for "scanned, found
+        // nothing", so a site with no policy page does not re-scan on every request either.
+        // Invalidated by CookiePolicyPageCacheInvalidator on publish/unpublish/delete.
+        Guid cachedKey = appCaches.RuntimeCache.GetCacheItem(
+            RuntimeCacheKey, () => ScanForPolicyPageKey(contentType) ?? Guid.Empty);
+
+        return cachedKey == Guid.Empty ? null : contentCache.GetById(cachedKey);
+    }
+
+    private Guid? ScanForPolicyPageKey(IContentType contentType)
+    {
         // IContentService.GetPagedOfType declares `filter` as non-nullable on the interface even
         // though passing null for "no filter" is the documented, supported usage - an annotation
         // mismatch in the shipped API, not a real nullability risk here.
@@ -96,7 +125,7 @@ internal sealed class CookiePolicyPageResolver(
             IPublishedContent? published = contentCache.GetById(candidate.Key);
             if (published is not null)
             {
-                return published;
+                return candidate.Key;
             }
         }
 

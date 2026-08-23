@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Esatto.Umbraco.Backoffice.CookieBanner;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Umbraco.Cms.Core.Events;
@@ -16,6 +16,24 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner.Tests;
 
 public class CookieBannerContentSeederTests
 {
+    /// <summary>Records every log call's level and rendered message; no assertion needs a mocking library.</summary>
+    private sealed class RecordingLogger<T> : ILogger<T>
+    {
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter) =>
+            Entries.Add((logLevel, formatter(state, exception)));
+    }
+
     private sealed class Harness
     {
         public IContentService ContentService { get; init; } = null!;
@@ -23,6 +41,7 @@ public class CookieBannerContentSeederTests
         public IEntityService EntityService { get; init; } = null!;
         public IContent Policy { get; init; } = null!;
         public Func<BlockListValue?> Registry { get; init; } = null!;
+        public RecordingLogger<CookieBannerContentSeeder> Logger { get; init; } = null!;
         public CookieBannerContentSeeder Seeder { get; init; } = null!;
     }
 
@@ -81,13 +100,14 @@ public class CookieBannerContentSeederTests
             .Exists(CookieBannerKeys.Nodes.CookiePolicy, UmbracoObjectTypes.Document)
             .Returns(alreadySeeded);
 
+        var logger = new RecordingLogger<CookieBannerContentSeeder>();
         var seeder = new CookieBannerContentSeeder(
             contentService,
             contentTypeService,
             entityService,
             jsonSerializer,
             Options.Create(new CookieBannerOptions { CookieName = cookieName, CookieLifetimeDays = 365 }),
-            NullLogger<CookieBannerContentSeeder>.Instance);
+            logger);
 
         return new Harness
         {
@@ -96,6 +116,7 @@ public class CookieBannerContentSeederTests
             EntityService = entityService,
             Policy = policy,
             Registry = () => registry,
+            Logger = logger,
             Seeder = seeder,
         };
     }
@@ -188,5 +209,24 @@ public class CookieBannerContentSeederTests
         harness.ContentService.DidNotReceiveWithAnyArgs().Create(default!, default(int), default(string)!, default(int));
         harness.ContentService.DidNotReceiveWithAnyArgs().Save(default!, default(int?), default);
         harness.ContentService.DidNotReceiveWithAnyArgs().Publish(default!, default!, default);
+    }
+
+    [Fact]
+    public void Logs_at_Error_when_the_created_page_cannot_be_published()
+    {
+        // Pins the fix: once Create/Save succeed, the node exists under the fixed key, so
+        // entityService.Exists(...) makes every LATER boot return before Publish is ever retried -
+        // a failed publish here otherwise strands the page as an invisible draft forever with only
+        // a log line. That demands an operator's attention, so it must be Error, not Warning.
+        Harness harness = CreateSut("site-consent");
+        harness.ContentService
+            .Publish(Arg.Any<IContent>(), Arg.Any<string[]>(), Arg.Any<int>())
+            .Returns(new PublishResult(PublishResultType.FailedPublish, new EventMessages(), harness.Policy));
+
+        harness.Seeder.EnsurePolicyPage();
+
+        (LogLevel Level, string Message) entry = Assert.Single(harness.Logger.Entries);
+        Assert.Equal(LogLevel.Error, entry.Level);
+        Assert.Contains("NOT be retried", entry.Message, StringComparison.Ordinal);
     }
 }

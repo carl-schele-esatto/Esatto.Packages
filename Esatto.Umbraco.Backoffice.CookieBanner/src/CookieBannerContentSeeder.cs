@@ -133,8 +133,18 @@ internal sealed class CookieBannerContentSeeder(
         PublishResult result = contentService.Publish(policy, AllCultures, UserId);
         if (result.Success is false)
         {
-            logger.LogWarning(
-                "Created the cookie policy page but could not publish it: {Status}.", result.Result);
+            // The node now exists under CookieBannerKeys.Nodes.CookiePolicy, so the entityService
+            // .Exists(...) guard at the top of this method makes every LATER boot return
+            // immediately - this publish is never retried. Left at Warning, the page stays an
+            // invisible, unpublished draft indefinitely with nothing but a log line nobody
+            // necessarily reads. Error, plus telling the operator exactly what to do about it.
+            logger.LogError(
+                "Created the cookie policy page but could not publish it: {Status}. It will NOT be "
+                    + "retried automatically on a later boot - it now exists as an unpublished "
+                    + "draft under key {Key}. Publish it manually in the backoffice, or delete it "
+                    + "so the next boot recreates and republishes it.",
+                result.Result,
+                CookieBannerKeys.Nodes.CookiePolicy);
             return;
         }
 

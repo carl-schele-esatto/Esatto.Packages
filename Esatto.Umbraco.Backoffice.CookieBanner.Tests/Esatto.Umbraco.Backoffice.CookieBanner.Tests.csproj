@@ -19,6 +19,10 @@
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <!-- Used only by CookiePolicyViewCompileProbeTests to compile a standalone probe against the
+         built package DLL, reproducing what the consumer's own recompiled Views/CookiePolicy.cshtml
+         does at install time (see the C2 fix wave notes). -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
   </ItemGroup>
 
   <ItemGroup>

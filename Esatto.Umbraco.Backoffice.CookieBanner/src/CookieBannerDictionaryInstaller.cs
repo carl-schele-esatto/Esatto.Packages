@@ -34,7 +34,7 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner;
 /// Text comes from the same embedded resx <see cref="ConsentTextProvider" /> reads
 /// (<c>Resources/ConsentText.resx</c> / <c>ConsentText.sv.resx</c>), not a second hand-maintained
 /// table: the key list and every translation are read out of the resx at class-load time, so
-/// there is exactly one place - Task 8's resx files - where consent copy is authored. That is also
+/// there is exactly one place - the resx files below - where consent copy is authored. That is also
 /// why this file contains no Swedish literals: Swedish lives only in <c>ConsentText.sv.resx</c>.
 /// </para>
 /// </remarks>
@@ -185,8 +185,8 @@ internal sealed class CookieBannerDictionaryInstaller(
     /// neutral (English) resource set when that culture's resx omits the key, rather than seeding
     /// an empty translation. Internal - and takes <paramref name="resources" /> as a parameter
     /// rather than closing over the private static field - purely so a test can exercise the
-    /// fallback with a resx pair that actually has a gap; the shipped resx never does (Task 8 keeps
-    /// both cultures at 32/32 parity).
+    /// fallback with a resx pair that actually has a gap; the shipped resx never does (both
+    /// cultures are kept at parity).
     /// </summary>
     internal static string? TextFor(ResourceManager resources, string cultureCode, string key)
     {

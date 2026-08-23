@@ -6,7 +6,7 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner;
 /// <remarks>
 /// PUBLIC, deliberately. <c>ConsentEmbedTagHelper</c> is <c>public sealed</c> with a DI-activated
 /// public constructor, and a public constructor cannot declare an internal parameter type
-/// (CS0051). The implementation (Task 8) stays internal.
+/// (CS0051). The implementation stays internal.
 /// </remarks>
 public interface IConsentTextProvider
 {

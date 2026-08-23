@@ -11,8 +11,13 @@ namespace Esatto.Umbraco.Backoffice.CookieBanner;
 /// <remarks>
 /// The only place in the package that touches <c>cookieDefinition</c> property aliases, so both the
 /// banner and the policy page read the same block the same way.
+/// <para>
+/// PUBLIC, deliberately - see <see cref="CookieRegistry"/>'s remarks. <c>Views/CookiePolicy.cshtml</c>
+/// calls this, and that file is compiled in the consumer's own assembly context once Umbraco writes
+/// it to their <c>Views/CookiePolicy.cshtml</c> at install time.
+/// </para>
 /// </remarks>
-internal static class CookieDeclarationMapper
+public static class CookieDeclarationMapper
 {
     /// <summary>
     /// Maps every block whose <c>category</c> parses to a known wire name. An unparsable or missing

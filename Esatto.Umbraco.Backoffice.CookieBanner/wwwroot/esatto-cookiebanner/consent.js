@@ -214,26 +214,6 @@
         });
     }
 
-    /** Turn inert type="text/plain" placeholders into live scripts for the granted categories. */
-    function activateScripts() {
-        var blocked = document.querySelectorAll('script[type="text/plain"][data-consent-category]');
-
-        Array.prototype.forEach.call(blocked, function (placeholder) {
-            if (!has(placeholder.getAttribute('data-consent-category'))) { return; }
-
-            var live = document.createElement('script');
-            var src = placeholder.getAttribute('data-src');
-
-            if (src) {
-                live.src = src;
-            } else {
-                live.text = placeholder.textContent;
-            }
-
-            placeholder.parentNode.replaceChild(live, placeholder);
-        });
-    }
-
     function updateConsentMode() {
         if (!consentModeEnabled || typeof window.gtag !== 'function') { return; }
 
@@ -327,9 +307,19 @@
 
             close();
             clearStatus();
-            activateScripts();
             updateConsentMode();
             announce();
+
+            // Reload rather than patch the page in place, for EVERY action, not only withdrawal:
+            // <consent-script> and <consent-embed> gate their output server-side and simply
+            // suppress it while consent is absent, so nothing on the current page becomes live
+            // just because the cookie changed - granting consent activated nothing here, the
+            // landing page's own analytics pageview was lost, and the dialog's checkboxes kept
+            // showing the pre-decision state, so reopening it and pressing Save again silently
+            // re-saved (and could revoke) what had just been granted. A reload re-renders every
+            // server-driven bit of that state from scratch, so the tag helpers, the dialog and the
+            // consent cookie all agree the moment the page comes back.
+            window.location.reload();
             return true;
         }).catch(function (error) {
             // Leave the dialog in place: a failed request must not read as a recorded choice.
@@ -343,19 +333,14 @@
         clearStatus();
         setActionButtonsDisabled(true);
 
+        // Every branch reloads on success now (see send()'s success handler) and leaves the page
+        // untouched on failure (`send` resolves false, never rejects), so there is nothing left to
+        // special-case here: withdrawn used to be the only action that reloaded.
         var result;
         if (action === 'accept-all') { result = send(action, ['preferences', 'statistics', 'marketing']); }
         else if (action === 'reject-all') { result = send(action, []); }
-        else if (action === 'withdrawn') {
-            // Reload only on success: `send` resolves false (never rejects) on a failed
-            // request, and a failed withdrawal must not look like a completed one.
-            result = send(action, []).then(function (succeeded) {
-                if (succeeded) { window.location.reload(); }
-                return succeeded;
-            });
-        } else {
-            result = send('custom', selectedCategories());
-        }
+        else if (action === 'withdrawn') { result = send(action, []); }
+        else { result = send('custom', selectedCategories()); }
 
         return result.then(function (succeeded) {
             setActionButtonsDisabled(false);
@@ -382,8 +367,9 @@
         if (actor) { event.preventDefault(); decide(actor.getAttribute('data-consent-action')); }
     });
 
-    // Anything already granted from a previous visit becomes live on this page load too.
-    activateScripts();
+    // Anything already granted from a previous visit is already live: <consent-script> and
+    // <consent-embed> render their real output server-side whenever consent.HasGranted() is true,
+    // so there is nothing left to activate client-side on load - only Consent Mode signalling.
     updateConsentMode();
 
     // No decision yet: block the site until one is made.

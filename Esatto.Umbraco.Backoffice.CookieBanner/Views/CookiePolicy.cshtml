@@ -8,6 +8,15 @@
 @inherits UmbracoViewPage
 @inject IConsentState Consent
 @{
+    // This file is compiled twice: once as part of this RCL, and a second time from a physical
+    // copy Umbraco writes to the consumer's own Views/CookiePolicy.cshtml at install time (see the
+    // csproj's "Template source" item group). With Razor runtime compilation on - the default
+    // `dotnet new umbraco` scaffold - that disk copy shadows the compiled view and is compiled in
+    // the CONSUMER's assembly, where an internal type is inaccessible (CS0122). Every type this
+    // view touches - CookieRegistry, CookieDeclarationMapper, CookieDeclaration, ConsentCategories,
+    // ConsentCategory, IConsentTextProvider and everything used through @inject - must therefore
+    // stay public, or a freshly-installed site fails to compile its own policy page.
+
     // No Layout assignment on purpose. The NDSTK original hardcoded its own site's root layout by
     // name, which only works on a site whose layout happens to carry that name; the consumer's
     // Views/_ViewStart.cshtml owns this.
@@ -33,7 +42,13 @@
 
 <div class="consent-policy">
     <article>
-        <h1>@(Model.Value<string>(fallback, "heading").IfNullOrWhiteSpace(Model.Name))</h1>
+        @* Model.Name (IPublishedContent) is not used as a fallback here: it is declared directly on
+           IPublishedContent in Umbraco 17.0.0 but moved to IPublishedElement in 18.1.1, so a 17-compiled
+           call to it binds to a declaring interface that no longer exists on 18 and throws
+           MissingMethodException at runtime. PublishedContentExtensions.Name(...) carries the identical
+           hazard: its first parameter itself changed from IPublishedContent (17) to IPublishedElement
+           (18). The heading already resolves through the text provider, so the fallback does too. *@
+        <h1>@(Model.Value<string>(fallback, "heading").IfNullOrWhiteSpace(text.Get("Cookies.Policy.Heading")))</h1>
         @introduction
     </article>
 

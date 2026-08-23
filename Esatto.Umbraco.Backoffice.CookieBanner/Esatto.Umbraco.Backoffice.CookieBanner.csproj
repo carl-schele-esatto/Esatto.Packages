@@ -42,8 +42,14 @@
     <!-- Views/CookiePolicy.cshtml ships twice on purpose: once compiled as an RCL view, once
          embedded so CookieBannerSchemaInstaller can hand its exact source to ITemplateService.
          The template service writes a physical Views/CookiePolicy.cshtml into the consumer app,
-         which shadows the compiled view under Razor runtime compilation - so the two must be the
-         same bytes, or a consumer would render the stub instead of the real page. -->
+         which shadows the compiled view under Razor runtime compilation - the default for
+         `dotnet new umbraco`. That disk copy is compiled in the CONSUMER's own assembly, not this
+         one, which is why CookieRegistry / CookieDeclarationMapper (the two internal-looking types
+         the view calls) must be public: an internal type there is inaccessible from that context
+         (CS0122). Note this does NOT require the embedded copy and Umbraco's on-disk copy to be
+         byte-identical - Umbraco's own template writer adds a UTF-8 BOM this source file does not
+         have, so a byte-for-byte match is never even possible. What matters is that the *content*
+         (and every type it references) stays in sync and public. -->
     <EmbeddedResource Include="Views\CookiePolicy.cshtml" LogicalName="Esatto.Umbraco.Backoffice.CookieBanner.Views.CookiePolicy.cshtml" />
   </ItemGroup>
 

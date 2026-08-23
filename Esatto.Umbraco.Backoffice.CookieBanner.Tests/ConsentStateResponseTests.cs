@@ -9,8 +9,10 @@ public class ConsentStateResponseTests
     [Fact]
     public void Serialises_to_the_camel_cased_shape_consent_js_reads()
     {
-        // Pins the response wire contract the banner uses to unblock scripts without a reload:
-        // renaming a member here silently breaks consent.js, which has no compiler to catch it.
+        // Pins the endpoint's public wire contract: consent.js parses this response to confirm the
+        // request succeeded before it reloads the page, and a consumer may call the endpoint
+        // directly from their own script, so renaming a member here is a silent breaking change
+        // nothing here has a compiler to catch.
         var json = JsonSerializer.Serialize(
             new ConsentStateResponse(
                 3,

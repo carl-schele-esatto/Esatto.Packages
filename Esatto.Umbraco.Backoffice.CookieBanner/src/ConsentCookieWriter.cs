@@ -60,7 +60,10 @@ internal sealed class ConsentCookieWriter(IOptions<CookieBannerOptions> options)
         {
             Path = "/",
             SameSite = SameSiteMode.Lax,
-            HttpOnly = false, // the banner must read this to unblock scripts without a reload
+            // consent.js reads this cookie via document.cookie on every page load - updateConsentMode()
+            // and the public window.cookieConsent.has()/get() API - not only right after a decision,
+            // so it cannot be HttpOnly even though the decision itself now takes effect via a reload.
+            HttpOnly = false,
             Secure = request.IsHttps,
             Expires = DateTimeOffset.UtcNow.AddDays(settings.CookieLifetimeDays),
             IsEssential = true,

@@ -118,6 +118,9 @@
   <data name="Cookies.Embed.Blocked.Button" xml:space="preserve">
     <value>Show content</value>
   </data>
+  <data name="Cookies.Policy.Heading" xml:space="preserve">
+    <value>Cookie policy</value>
+  </data>
   <data name="Cookies.Policy.CurrentChoice" xml:space="preserve">
     <value>Your current choice</value>
   </data>

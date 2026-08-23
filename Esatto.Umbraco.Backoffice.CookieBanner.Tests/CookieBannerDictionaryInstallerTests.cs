@@ -74,13 +74,13 @@ public class CookieBannerDictionaryInstallerTests
     [Fact]
     public async Task Seeds_English_only_for_an_English_only_site()
     {
-        // Pins culture-agnostic seeding: an en-GB-only site gets all 32 keys with exactly one
+        // Pins culture-agnostic seeding: an en-GB-only site gets all 33 keys with exactly one
         // translation each, and no 'sv' language is created to hang the Swedish text off.
         var (installer, _, created) = CreateSut(new Language("en-GB", "English (United Kingdom)"));
 
         await installer.InstallAsync();
 
-        Assert.Equal(32, SeededKeys(created).Count());
+        Assert.Equal(33, SeededKeys(created).Count());
         Assert.Contains(CookieBannerDictionaryInstaller.ParentKey, created.Select(item => item.ItemKey));
 
         IDictionaryItem heading = created.Single(item => item.ItemKey == "Cookies.Banner.Heading");
@@ -101,7 +101,7 @@ public class CookieBannerDictionaryInstallerTests
 
         await installer.InstallAsync();
 
-        Assert.Equal(32, SeededKeys(created).Count());
+        Assert.Equal(33, SeededKeys(created).Count());
         Assert.Contains("Cookies.Policy.On", SeededKeys(created));
         Assert.Contains("Cookies.Policy.Off", SeededKeys(created));
 
@@ -131,15 +131,15 @@ public class CookieBannerDictionaryInstallerTests
         await installer.InstallAsync();
 
         Assert.DoesNotContain("Cookies.Banner.Heading", SeededKeys(created));
-        Assert.Equal(31, SeededKeys(created).Count());
+        Assert.Equal(32, SeededKeys(created).Count());
         _ = items.DidNotReceiveWithAnyArgs().MoveAsync(null!, null, default);
     }
 
     [Fact]
     public void TextFor_falls_back_to_the_neutral_value_when_a_shipped_cultures_resx_omits_the_key()
     {
-        // Pins the "must not seed an empty translation" rule: the shipped resx are always 32/32
-        // parity (Task 8), so this can't be reproduced with the real ConsentText resx - it uses a
+        // Pins the "must not seed an empty translation" rule: the shipped resx are always kept at
+        // parity (currently 33/33), so this can't be reproduced with the real ConsentText resx - it uses a
         // small test-only resx pair (Resources/DictionaryFallbackSample.resx + .de.resx) where the
         // "de" satellite deliberately omits a key the neutral resx has.
         var resources = new ResourceManager(

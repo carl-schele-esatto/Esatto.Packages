@@ -45,5 +45,14 @@ public sealed class CookieBannerComposer : IComposer
         // handler drives are not usable during Starting.
         builder.AddNotificationAsyncHandler<
             UmbracoApplicationStartedNotification, CookieBannerInstallHandler>();
+
+        // Keeps CookiePolicyPageResolver's runtime-cached page key from outliving the content it
+        // describes - see that type's remarks.
+        builder.AddNotificationHandler<
+            ContentPublishedNotification, CookiePolicyPageCacheInvalidator>();
+        builder.AddNotificationHandler<
+            ContentUnpublishedNotification, CookiePolicyPageCacheInvalidator>();
+        builder.AddNotificationHandler<
+            ContentDeletedNotification, CookiePolicyPageCacheInvalidator>();
     }
 }
