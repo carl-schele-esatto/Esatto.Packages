@@ -22,7 +22,9 @@ public class VaryByConsentCookieMiddlewareTests
 
         public IHeaderDictionary Headers { get => inner.Headers; set => inner.Headers = value; }
 
+#pragma warning disable CS0618 // Required to implement IHttpResponseFeature; never invoked by these tests.
         public Stream Body { get => inner.Body; set => inner.Body = value; }
+#pragma warning restore CS0618
 
         public bool HasStarted => inner.HasStarted;
 
