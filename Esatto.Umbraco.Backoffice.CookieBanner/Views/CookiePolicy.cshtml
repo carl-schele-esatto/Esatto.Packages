@@ -8,8 +8,8 @@
 @inherits UmbracoViewPage
 @inject IConsentState Consent
 @{
-    // No Layout assignment on purpose. The NDSTK original hardcoded Layout = "Root.cshtml", which
-    // only works on a site whose layout happens to carry that name; the consumer's
+    // No Layout assignment on purpose. The NDSTK original hardcoded its own site's root layout by
+    // name, which only works on a site whose layout happens to carry that name; the consumer's
     // Views/_ViewStart.cshtml owns this.
 
     // Resolved as locals rather than with @inject: an @inject property is a member signature, and

@@ -38,6 +38,15 @@
     <None Include="docs\**\*.png" Pack="true" PackagePath="docs\" />
   </ItemGroup>
 
+  <ItemGroup Label="Template source">
+    <!-- Views/CookiePolicy.cshtml ships twice on purpose: once compiled as an RCL view, once
+         embedded so CookieBannerSchemaInstaller can hand its exact source to ITemplateService.
+         The template service writes a physical Views/CookiePolicy.cshtml into the consumer app,
+         which shadows the compiled view under Razor runtime compilation - so the two must be the
+         same bytes, or a consumer would render the stub instead of the real page. -->
+    <EmbeddedResource Include="Views\CookiePolicy.cshtml" LogicalName="Esatto.Umbraco.Backoffice.CookieBanner.Views.CookiePolicy.cshtml" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.CookieBanner.Tests" />
   </ItemGroup>
