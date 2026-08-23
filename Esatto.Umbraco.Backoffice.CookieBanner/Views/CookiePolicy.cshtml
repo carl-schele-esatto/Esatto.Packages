@@ -1,0 +1,112 @@
+@using Esatto.Umbraco.Backoffice.CookieBanner
+@using Microsoft.Extensions.DependencyInjection
+@using Umbraco.Cms.Core.Models.Blocks
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Strings
+@using Umbraco.Cms.Web.Common.Views
+@using Umbraco.Extensions
+@inherits UmbracoViewPage
+@inject IConsentState Consent
+@{
+    // No Layout assignment on purpose. The NDSTK original hardcoded Layout = "Root.cshtml", which
+    // only works on a site whose layout happens to carry that name; the consumer's
+    // Views/_ViewStart.cshtml owns this.
+
+    // Resolved as locals rather than with @inject: an @inject property is a member signature, and
+    // IConsentTextProvider is internal to this assembly. A local of an internal type is always legal.
+    var text = Context.RequestServices.GetRequiredService<IConsentTextProvider>();
+    var fallback = Context.RequestServices.GetRequiredService<IPublishedValueFallback>();
+
+    // One shared grouper, so the tables here and the <details> in the dialog cannot drift apart:
+    // unparsable categories and blank cookie names are dropped in both.
+    var byCategory = CookieRegistry.Group(
+        CookieDeclarationMapper.FromBlockList(Model.Value<BlockListModel>(fallback, "cookies"), fallback));
+
+    // NDSTK rendered these two words as Swedish string literals with no dictionary key, so "on"/"off"
+    // was Swedish in every language including English. They are real keys now.
+    var onLabel = text.Get("Cookies.Policy.On");
+    var offLabel = text.Get("Cookies.Policy.Off");
+
+    var introduction = Model.Value<IHtmlEncodedString>(fallback, "introduction");
+    var outro = Model.Value<IHtmlEncodedString>(fallback, "outro");
+}
+
+<div class="consent-policy">
+    <article>
+        <h1>@(Model.Value<string>(fallback, "heading").IfNullOrWhiteSpace(Model.Name))</h1>
+        @introduction
+    </article>
+
+    <article>
+        <h2>@(text.Get("Cookies.Policy.CurrentChoice"))</h2>
+        @if (Consent.NeedsDecision)
+        {
+            <p>@(text.Get("Cookies.Policy.NoChoice"))</p>
+        }
+        else
+        {
+            <ul>
+                @foreach (var category in ConsentCategories.All)
+                {
+                    @* HasGranted, not Decision.Granted: it already accounts for Necessary being
+                       implied and for a decision made against an older policy version. *@
+                    <li>@(text.Get($"Cookies.Category.{category}.Name")): <strong>@(Consent.HasGranted(category) ? onLabel : offLabel)</strong></li>
+                }
+            </ul>
+        }
+        <p>
+            <button type="button" class="consent-btn consent-btn--primary" data-consent-open>@(text.Get("Cookies.Policy.Reopen"))</button>
+            @if (Consent.NeedsDecision is false)
+            {
+                <button type="button" class="consent-btn consent-btn--secondary" data-consent-action="withdrawn">@(text.Get("Cookies.Policy.Withdraw"))</button>
+            }
+        </p>
+    </article>
+
+    @foreach (var category in ConsentCategories.All)
+    {
+        var cookies = byCategory[category];
+        if (cookies.Count == 0)
+        {
+            continue;
+        }
+
+        <article>
+            <h2>@(text.Get($"Cookies.Category.{category}.Name"))</h2>
+            <p>@(text.Get($"Cookies.Category.{category}.Description"))</p>
+
+            <div class="cookie-table-wrapper">
+                <table class="cookie-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">@(text.Get("Cookies.Table.Name"))</th>
+                            <th scope="col">@(text.Get("Cookies.Table.Provider"))</th>
+                            <th scope="col">@(text.Get("Cookies.Table.Purpose"))</th>
+                            <th scope="col">@(text.Get("Cookies.Table.Duration"))</th>
+                            <th scope="col">@(text.Get("Cookies.Table.Type"))</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cookie in cookies)
+                        {
+                            <tr>
+                                <td><code>@cookie.Name</code></td>
+                                <td>@cookie.Provider</td>
+                                <td>@cookie.Purpose</td>
+                                <td>@cookie.Duration</td>
+                                <td>@cookie.StorageType</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    }
+
+    @if (outro is not null)
+    {
+        <article>
+            @outro
+        </article>
+    }
+</div>
