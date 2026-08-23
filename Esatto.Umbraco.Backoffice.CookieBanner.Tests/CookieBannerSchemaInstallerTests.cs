@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace Esatto.Umbraco.Backoffice.CookieBanner.Tests;
@@ -55,14 +56,27 @@ public class CookieBannerSchemaInstallerTests
         Assert.True(markup.Length > 200, "the embedded view looks like a stub, not the real template");
     }
 
-    // Pins that the packaged template never hardcodes a host layout. NDSTK's original view set
-    // Layout = "Root.cshtml" at line 6; a package doing that breaks every other consumer.
+    // Pins that the packaged template never hardcodes a host layout: a package doing that breaks
+    // every consumer whose layout is not named the same. Comments are stripped first - an earlier
+    // version of this guard was a raw substring match over the whole file and false-positived on a
+    // comment that merely explained why no Layout is set, rather than one that actually sets it.
     [Fact]
     public void Packaged_cookie_policy_template_leaves_the_layout_to_the_consumer()
     {
-        string markup = CookieBannerSchemaInstaller.ReadPackagedTemplate();
+        string code = StripComments(CookieBannerSchemaInstaller.ReadPackagedTemplate());
 
-        Assert.DoesNotContain("Root.cshtml", markup);
-        Assert.DoesNotContain("Layout =", markup);
+        Assert.DoesNotMatch(@"(?m)^\s*Layout\s*=", code);
+    }
+
+    /// <summary>
+    /// Strips Razor block comments (<c>@* ... *@</c>) and C#-style line comments so the layout
+    /// guard above is asserted against markup and code only, never against prose that happens to
+    /// mention "Layout =" or a layout file name. Deliberately not a full Razor parser - a couple
+    /// of regex passes are enough for a test helper.
+    /// </summary>
+    private static string StripComments(string razor)
+    {
+        string withoutBlockComments = Regex.Replace(razor, @"@\*.*?\*@", string.Empty, RegexOptions.Singleline);
+        return Regex.Replace(withoutBlockComments, "//[^\n]*", string.Empty);
     }
 }
