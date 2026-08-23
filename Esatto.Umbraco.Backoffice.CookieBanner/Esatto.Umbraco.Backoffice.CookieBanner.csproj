@@ -11,6 +11,11 @@
     <RootNamespace>Esatto.Umbraco.Backoffice.CookieBanner</RootNamespace>
     <AssemblyName>Esatto.Umbraco.Backoffice.CookieBanner</AssemblyName>
 
+    <!-- Compile our MVC Razor views (view component view, CookiePolicy.cshtml) into the assembly.
+         Razor SDK's default mode is Razor Components (Blazor); this flips on classic MVC view
+         compilation. Without it Razor emits RAZORSDK1004 and the views never reach the consumer. -->
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
     <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
   </PropertyGroup>
 

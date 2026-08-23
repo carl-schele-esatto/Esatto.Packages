@@ -1,0 +1,115 @@
+@using Esatto.Umbraco.Backoffice.CookieBanner
+@model ConsentBannerViewModel
+@{
+    // Attribute values are hoisted into locals: Razor cannot parse a double-quoted C# string nested
+    // inside a double-quoted HTML attribute value.
+    var heading = Model.Text("Cookies.Banner.Heading");
+    var errorMessage = Model.Text("Cookies.Banner.Error");
+    var rateLimitedMessage = Model.Text("Cookies.Banner.RateLimited");
+}
+
+<dialog id="esatto-consent-dialog" class="consent-dialog" aria-labelledby="esatto-consent-dialog-heading">
+    <div class="consent-dialog__body">
+        @* showModal() always moves focus, to the first autofocus element or else the first focusable
+           one. Without this it landed on the first <summary> and drew a focus ring, which read as a
+           control being pre-selected. Focusing the heading instead keeps focus inside the dialog -
+           so screen readers announce it and the focus trap holds - while no control looks chosen.
+           tabindex="-1" makes a non-interactive element focusable without adding it to the tab order. *@
+        <h2 id="esatto-consent-dialog-heading" tabindex="-1" autofocus>@heading</h2>
+        <p>@(Model.Text("Cookies.Banner.Body"))</p>
+
+        @* First run shows only the two symmetric all-or-nothing choices, so a modal the visitor
+           cannot dismiss stays short. Per-category choice sits behind the settings affordance:
+           revealed by the Customise button on first run, and already open whenever the dialog is
+           reopened from the footer link. Server-rendered, so there is no flash of the wrong state. *@
+        <div class="consent-dialog__categories" data-consent-categories hidden="@Model.NeedsDecision">
+            @foreach (var category in ConsentCategories.All)
+            {
+                var wire = ConsentCategories.ToWireName(category);
+                var isNecessary = category == ConsentCategory.Necessary;
+                var inputId = $"esatto-consent-cat-{wire}";
+                var categoryCookies = Model.CookiesByCategory[category];
+                <fieldset class="consent-category">
+                    <legend>@(Model.Text($"Cookies.Category.{category}.Name"))</legend>
+                    <div class="consent-category__row">
+                        <input type="checkbox"
+                               id="@inputId"
+                               value="@wire"
+                               data-consent-category-input
+                               checked="@(isNecessary || Model.Granted.Contains(category))"
+                               disabled="@isNecessary" />
+                        <label for="@inputId">
+                            @(Model.Text($"Cookies.Category.{category}.Description"))
+                        </label>
+                    </div>
+                    @if (categoryCookies.Count > 0)
+                    {
+                        <details class="consent-category__cookies">
+                            <summary>@(Model.Text("Cookies.Category.Cookies"))</summary>
+                            @foreach (var cookie in categoryCookies)
+                            {
+                                <dl class="consent-cookie">
+                                    <dt>@(Model.Text("Cookies.Table.Name"))</dt>
+                                    <dd>@cookie.Name</dd>
+                                    @if (string.IsNullOrWhiteSpace(cookie.Provider) is false)
+                                    {
+                                        <dt>@(Model.Text("Cookies.Table.Provider"))</dt>
+                                        <dd>@cookie.Provider</dd>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(cookie.Purpose) is false)
+                                    {
+                                        <dt>@(Model.Text("Cookies.Table.Purpose"))</dt>
+                                        <dd>@cookie.Purpose</dd>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(cookie.Duration) is false)
+                                    {
+                                        <dt>@(Model.Text("Cookies.Table.Duration"))</dt>
+                                        <dd>@cookie.Duration</dd>
+                                    }
+                                    @if (string.IsNullOrWhiteSpace(cookie.StorageType) is false)
+                                    {
+                                        <dt>@(Model.Text("Cookies.Table.Type"))</dt>
+                                        <dd>@cookie.StorageType</dd>
+                                    }
+                                </dl>
+                            }
+                        </details>
+                    }
+                </fieldset>
+            }
+        </div>
+
+        <p class="consent-status" role="status" aria-live="polite" hidden data-consent-status></p>
+
+        <div class="consent-dialog__actions">
+            <button type="button" class="consent-btn consent-btn--primary" data-consent-action="accept-all">@(Model.Text("Cookies.Banner.AcceptAll"))</button>
+            @* Reject shares accept's class deliberately: identical treatment, distinguished only by
+               label, so neither option is nudged. *@
+            <button type="button" class="consent-btn consent-btn--primary" data-consent-action="reject-all">@(Model.Text("Cookies.Banner.RejectAll"))</button>
+            @* First run: reveals the category section and swaps itself for Save. On a reopen the
+               categories are already on screen, so there is nothing to reveal and it is not rendered. *@
+            @if (Model.NeedsDecision)
+            {
+                <button type="button" class="consent-btn consent-btn--primary" data-consent-customise>@(Model.Text("Cookies.Banner.Customise"))</button>
+            }
+            @* Saving a partial selection only means something once the categories are visible, so on
+               first run this stays hidden until Customise is pressed. *@
+            <button type="button" class="consent-btn consent-btn--primary" data-consent-action="custom" hidden="@Model.NeedsDecision">@(Model.Text("Cookies.Banner.Save"))</button>
+            @if (Model.NeedsDecision is false)
+            {
+                <button type="button" class="consent-btn consent-btn--primary" data-consent-close>@(Model.Text("Cookies.Banner.Cancel"))</button>
+            }
+        </div>
+    </div>
+</dialog>
+
+@* Root-relative rather than "~/": this view ships inside a Razor class library that registers no
+   _ViewImports, so the framework's UrlResolutionTagHelper is not in scope to expand a tilde. *@
+<script src="/esatto-cookiebanner/consent.js" defer
+        data-consent-endpoint="@Model.EndpointPath"
+        data-consent-cookie="@Model.CookieName"
+        data-consent-version="@Model.PolicyVersion"
+        data-consent-mode="@(Model.ConsentModeEnabled ? "on" : "off")"
+        data-consent-needs-decision="@(Model.NeedsDecision ? "true" : "false")"
+        data-consent-error-message="@errorMessage"
+        data-consent-rate-limited-message="@rateLimitedMessage"></script>
