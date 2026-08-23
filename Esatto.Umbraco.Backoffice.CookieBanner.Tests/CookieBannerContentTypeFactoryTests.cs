@@ -3,6 +3,7 @@ using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Serialization;
 using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Strings;
+using Umbraco.Cms.Core.Strings.Css;
 using Xunit;
 
 namespace Esatto.Umbraco.Backoffice.CookieBanner.Tests;
@@ -22,7 +23,12 @@ public class CookieBannerContentTypeFactoryTests
 
     private CookieBannerContentTypeFactory CreateFactory()
     {
-        _shortStrings.CleanStringForSafeAlias(Arg.Any<string>()).Returns(call => call.Arg<string>());
+        // PropertyType.Alias runs the alias through IShortStringHelper.CleanString(string, CleanStringType)
+        // (via SanitizeAlias -> ToCleanString). Stub it as identity: it is a pure string function, so this
+        // keeps the alias assertions meaningful without a real Umbraco instance.
+        _shortStrings
+            .CleanString(Arg.Any<string>(), Arg.Any<CleanStringType>())
+            .Returns(call => call.Arg<string>());
 
         // propertyEditors is read only by EnsureDataTypeAsync, which needs a booted Umbraco and is
         // covered by the Task 17 integration check; null! keeps these tests off that object graph.
@@ -52,10 +58,26 @@ public class CookieBannerContentTypeFactoryTests
         Assert.Contains("was not preloaded", error.Message);
     }
 
-    // NOT UNIT TESTED: Property() creates PropertyType instances with correct aliases.
-    // PropertyType.Alias goes through IShortStringHelper.CleanStringForSafeAlias(), which cannot
-    // be reliably mocked in unit tests without a real Umbraco instance. This behavior is verified
-    // in Task 17's integration check against an actual Umbraco site.
+    // Pins that PreloadDataTypesAsync fills the cache and that Property() copies every declared
+    // field through, including Variations.Nothing (an invariant property on an invariant type).
+    [Fact]
+    public async Task Property_returns_a_property_type_bound_to_the_preloaded_data_type()
+    {
+        var fakeDataType = FakeDataType(TextstringKey);
+        _dataTypes.GetAsync(TextstringKey).Returns(fakeDataType);
+        CookieBannerContentTypeFactory factory = CreateFactory();
+
+        await factory.PreloadDataTypesAsync(TextstringKey);
+        IPropertyType property = factory.Property(
+            TextstringKey, "cookieName", "Name", "Literal name or pattern, e.g. _ga_*", 4);
+
+        Assert.Equal("cookieName", property.Alias);
+        Assert.Equal("Name", property.Name);
+        Assert.Equal("Literal name or pattern, e.g. _ga_*", property.Description);
+        Assert.Equal(4, property.SortOrder);
+        Assert.Equal(ContentVariation.Nothing, property.Variations);
+        Assert.Equal(TextstringKey, property.DataTypeKey);
+    }
 
     // Pins the fail-fast: a missing built-in data type must abort the install with the key in the
     // message, not silently produce an element type with no properties.
@@ -87,10 +109,35 @@ public class CookieBannerContentTypeFactoryTests
         await _templates.DidNotReceive().CreateAsync(Arg.Any<ITemplate>(), Arg.Any<Guid>());
     }
 
-    // NOT UNIT TESTED: AddGroup() with PropertyType instances created by Property().
-    // The test depends on Property() creating PropertyType instances with correct aliases,
-    // which requires IShortStringHelper.CleanStringForSafeAlias() to work (see comment above).
-    // Group structure and collection handling are verified in Task 17's integration check.
+    // Pins that a group is added as a Tab with the caption and sort order given, and that the
+    // property list is carried into it in declaration order.
+    [Fact]
+    public async Task AddGroup_adds_one_tab_carrying_the_declared_properties()
+    {
+        var fakeDataType = FakeDataType(TextstringKey);
+        _dataTypes.GetAsync(TextstringKey).Returns(fakeDataType);
+        CookieBannerContentTypeFactory factory = CreateFactory();
+        await factory.PreloadDataTypesAsync(TextstringKey);
+
+        var contentType = Substitute.For<IContentType>();
+        contentType.PropertyGroups.Returns(new PropertyGroupCollection());
+        Guid groupKey = new("c00c1e00-0002-4000-8000-000000000081");
+
+        CookieBannerContentTypeFactory.AddGroup(
+            contentType, groupKey, "content", "Content", 0,
+            factory.Property(TextstringKey, "cookieName", "Name", sortOrder: 0),
+            factory.Property(TextstringKey, "provider", "Provider", sortOrder: 1));
+
+        PropertyGroup group = Assert.Single(contentType.PropertyGroups);
+        Assert.Equal(groupKey, group.Key);
+        Assert.Equal("content", group.Alias);
+        Assert.Equal("Content", group.Name);
+        Assert.Equal(PropertyGroupType.Tab, group.Type);
+        Assert.Equal(0, group.SortOrder);
+        Assert.Equal(
+            new[] { "cookieName", "provider" },
+            group.PropertyTypes!.Select(property => property.Alias));
+    }
 
     // Pins that UseTemplate does BOTH halves: allowing a template without setting it as the
     // default leaves the cookie policy page rendering the host's fallback view.

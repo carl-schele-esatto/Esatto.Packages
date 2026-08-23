@@ -124,6 +124,7 @@ internal sealed class CookieBannerContentTypeFactory(
             Description = description,
             SortOrder = sortOrder,
             Variations = ContentVariation.Nothing,
+            DataTypeKey = dataType.Key,
         };
     }
 
