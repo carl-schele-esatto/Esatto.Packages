@@ -71,6 +71,25 @@ and loses on load order. Token overrides belong in a stylesheet loaded after it 
 
 **Put step 4 in the layout that *every* front-end page uses, not just your home page.** `<consent-banner />` renders the dialog element and loads `consent.js`, and together those power every `data-consent-*` control on the site — including the reopen button on the installed cookie policy page and any footer cookie-settings link you add yourself. On a page whose layout omits the tag, those controls render, look correct, and do nothing, with no error anywhere. Once a visitor has decided the dialog renders hidden, so a missing tag looks identical to a working install until someone clicks one of them.
 
+**The installed policy page takes its layout from your site.** The package writes a physical
+`Views/CookiePolicy.cshtml` on first start and deliberately sets no `Layout` — it cannot know what
+yours is called. That relies on your site having a `Views/_ViewStart.cshtml`, which is the ASP.NET
+Core convention. If your views each assign `Layout` inline instead, add one:
+
+```cshtml
+@* Views/_ViewStart.cshtml *@
+@{
+    Layout = "YourLayout.cshtml";
+}
+```
+
+Without a layout the policy page renders with no `<html>`, no stylesheet and no site chrome — and
+because your layout is what carries `<consent-banner />`, no dialog either, which leaves the policy
+page's own reopen button a dead control. Check first that adding `_ViewStart` cannot recurse: if a
+document type renders your layout file directly as a view, it would then set itself as its own
+layout. The alternative is to add the `Layout` line to the installed view after first start — the
+installer looks its template up by key and will not overwrite your edit.
+
 That is the whole setup. The schema, the dictionary items and the policy page appear on first start.
 
 `builder.CreateUmbracoBuilder().AddCookieConsent()` and `builder.Services.AddCookieConsent()` are also available if you prefer registering explicitly; both are idempotent and both are already done for you by the composer.
@@ -299,6 +318,12 @@ The override stylesheet is linked before `<consent-head />`. Both declare the to
 tie breaks on load order and the package's defaults win. Move the link below `<consent-head />`, or
 out-specify with `html:root { … }`. Nothing appears broken in this state — the dialog simply stays in the
 package's neutral palette.
+
+**The cookie policy page has no styling or site chrome, and its "change settings" button does nothing.**
+The installed `Views/CookiePolicy.cshtml` carries no `Layout` and your site has no
+`Views/_ViewStart.cshtml` to supply one — see install step 4. With no layout there is no
+`<consent-banner />` on that page, so there is no dialog for the button to open: `consent.js` returns
+early on a missing dialog rather than erroring, which is why nothing appears in the console.
 
 **The dialog appears unstyled.**
 `consent.css` is not being served. Confirm `/esatto-cookiebanner/consent.css` returns 200. The package ships
