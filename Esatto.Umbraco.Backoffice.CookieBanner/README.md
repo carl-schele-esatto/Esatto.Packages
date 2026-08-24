@@ -26,42 +26,45 @@ Editors declare the site's cookies in a Block List on the installed cookie polic
 dotnet add package Esatto.Umbraco.Backoffice.CookieBanner
 ```
 
-Installing the package registers the services and installs the schema on first start via its composer — nothing else to configure. Wiring the rendering is the six lines below: two in `Program.cs`, two in your layout, and two registering the tag helpers.
+Installing the package registers the services and installs the schema on first start via its composer. Wiring the rendering takes six lines, in three files. Do all four steps — each one fails silently on its own.
 
-In `Program.cs`, add the namespace import (the Umbraco template's implicit usings do not cover it, and without it you get `CS1061: 'WebApplication' does not contain a definition for 'UseCookieConsent'`):
+### 1. Import the namespace in `Program.cs`
 
 ```csharp
 using Esatto.Umbraco.Backoffice.CookieBanner;
 ```
 
-then, after `BootUmbracoAsync()` and **before** `UseUmbraco()`:
+The Umbraco template's implicit usings do not cover it. Without this you get `CS1061: 'WebApplication' does not contain a definition for 'UseCookieConsent'`.
+
+### 2. Add one line to `Program.cs`, after `BootUmbracoAsync()` and before `UseUmbraco()`
 
 ```csharp
 app.UseCookieConsent();
 ```
 
-In your layout — `<consent-head />` goes in `<head>` **after** your own stylesheet so your token overrides win, and `<consent-banner />` goes first in `<body>`, before `<header>`, so the dialog is reachable in DOM tab order:
+This maps the endpoint the dialog posts decisions to. Without it the dialog renders but Accept and Reject do nothing.
 
-```cshtml
-<consent-head />
-<consent-banner />
-```
-
-> **Put these in the layout that *every* front-end page uses, not just your home page.** `<consent-banner />`
-> is what loads `consent.js`, and that script powers every `data-consent-*` control on the site. The installed
-> cookie policy page is self-sufficient — it renders its own copy of `consent.js` with the same configuration,
-> so its reopen and withdraw buttons work even from a layout that omits `<consent-banner />` — but any footer
-> link you add yourself is not: it depends on whichever page it renders on loading `consent.js`, which for
-> most sites means every layout. On a page whose layout omits the tag, such a link renders and looks correct
-> but does nothing at all, with no error anywhere. Once a visitor has decided, the dialog itself renders
-> hidden, so a missing tag is invisible until someone clicks a control that depends on it.
-
-`_ViewImports.cshtml` needs the tag helpers registered once:
+### 3. Register the tag helpers in `Views/_ViewImports.cshtml`
 
 ```cshtml
 @using Esatto.Umbraco.Backoffice.CookieBanner.TagHelpers
 @addTagHelper *, Esatto.Umbraco.Backoffice.CookieBanner
 ```
+
+Without this, Razor emits `<consent-banner />` as literal markup and the browser ignores it — no banner, no error. If nothing appears at all, check View Source for that literal tag first.
+
+### 4. Add two tags to your layout
+
+```cshtml
+<consent-head />     @* in <head>, after your own stylesheet *@
+<consent-banner />   @* first in <body>, before <header> *@
+```
+
+`<consent-head />` goes after your stylesheet so your token overrides win. `<consent-banner />` goes first in `<body>` so the dialog is reachable in DOM tab order.
+
+**Put step 4 in the layout that *every* front-end page uses, not just your home page.** `<consent-banner />` renders the dialog element and loads `consent.js`, and together those power every `data-consent-*` control on the site — including the reopen button on the installed cookie policy page and any footer cookie-settings link you add yourself. On a page whose layout omits the tag, those controls render, look correct, and do nothing, with no error anywhere. Once a visitor has decided the dialog renders hidden, so a missing tag looks identical to a working install until someone clicks one of them.
+
+That is the whole setup. The schema, the dictionary items and the policy page appear on first start.
 
 `builder.CreateUmbracoBuilder().AddCookieConsent()` and `builder.Services.AddCookieConsent()` are also available if you prefer registering explicitly; both are idempotent and both are already done for you by the composer.
 
@@ -266,12 +269,15 @@ emitted verbatim, and browsers silently ignore unknown elements.
 `app.UseCookieConsent()` is missing or is placed after `UseUmbraco()`. It registers the endpoint the dialog
 posts to; without it the request 404s.
 
-**A footer cookie-settings link does nothing.**
-The layout it renders on does not render `<consent-banner />`, so `consent.js` never loads there. Put
+**A footer cookie-settings link, or the policy page's reopen button, does nothing.**
+The layout it renders on does not render `<consent-banner />` (install step 4). That tag renders the dialog
+element *and* loads `consent.js`; a reopen control needs both, since it has to have a dialog to open. Put
 `<consent-banner />` in the layout every front-end page uses. This is the most common setup mistake, because
 once a visitor has decided the dialog renders hidden — so on most pages a missing tag looks identical to a
-working install. The installed cookie policy page does not have this problem: it renders its own copy of
-`consent.js`, so its own reopen/withdraw buttons work regardless of the layout that hosts it.
+working install.
+
+The policy page's **withdraw** button is the exception: it posts a decision rather than opening the dialog, so
+it works from any layout, because the policy page loads its own copy of `consent.js`.
 
 **The dialog appears unstyled.**
 `consent.css` is not being served. Confirm `/esatto-cookiebanner/consent.css` returns 200. The package ships
