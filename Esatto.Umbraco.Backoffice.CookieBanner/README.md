@@ -60,7 +60,14 @@ Without this, Razor emits `<consent-banner />` as literal markup and the browser
 <consent-banner />   @* first in <body>, before <header> *@
 ```
 
-`<consent-head />` goes after your stylesheet so your token overrides win. `<consent-banner />` goes first in `<body>` so the dialog is reachable in DOM tab order.
+`<consent-head />` goes after your own stylesheet so the package's rules are not outranked by broad
+selectors from your design system. `<consent-banner />` goes first in `<body>` so the dialog is
+reachable in DOM tab order.
+
+That order has one consequence worth knowing before you re-theme: `consent.css` declares its tokens
+on `:root`, so a `:root` block in a stylesheet linked *above* `<consent-head />` ties on specificity
+and loses on load order. Token overrides belong in a stylesheet loaded after it — see
+[Theming](#theming).
 
 **Put step 4 in the layout that *every* front-end page uses, not just your home page.** `<consent-banner />` renders the dialog element and loads `consent.js`, and together those power every `data-consent-*` control on the site — including the reopen button on the installed cookie policy page and any footer cookie-settings link you add yourself. On a page whose layout omits the tag, those controls render, look correct, and do nothing, with no error anywhere. Once a visitor has decided the dialog renders hidden, so a missing tag looks identical to a working install until someone clicks one of them.
 
@@ -194,7 +201,14 @@ also render `<consent-banner />`. Without that the control is inert and silent �
 
 `consent.css` is self-sufficient: it declares its own `--consent-*` tokens on `:root` with neutral defaults and ships its own `.consent-btn` / `.consent-btn--primary` / `.consent-btn--secondary` / `.consent-btn--link` classes. It depends on no class from your design system, and it deliberately styles nothing outside the dialog, the embed placeholder and the policy tables — no global `footer`, `a` or `button` rules.
 
-Re-theme by overriding the tokens after `<consent-head />`:
+Re-theme by redeclaring the tokens in a stylesheet loaded **after** `<consent-head />` — not before
+it. Both blocks declare on `:root`, so specificity ties and load order decides which wins. An
+override stylesheet that loads first is silently overwritten by the defaults below, and nothing
+about the result looks broken: the dialog renders correctly in the package's neutral palette, which
+is why this presents as "the tokens do not work" rather than as a mistake in the ordering.
+
+If you must theme from a stylesheet that loads earlier, out-specify `:root` instead of reordering —
+`html:root { … }` scores one element higher and wins regardless of position.
 
 | Token | Default | Used for |
 |---|---|---|
@@ -220,6 +234,7 @@ Re-theme by overriding the tokens after `<consent-head />`:
 | `--consent-btn-link-fg` | `#10141a` | `.consent-btn--link` text |
 
 ```css
+/* in a stylesheet linked after <consent-head /> */
 :root {
     --consent-heading: #001f54;
     --consent-btn-primary-bg: #001f54;
@@ -278,6 +293,12 @@ working install.
 
 The policy page's **withdraw** button is the exception: it posts a decision rather than opening the dialog, so
 it works from any layout, because the policy page loads its own copy of `consent.js`.
+
+**The dialog is styled, but my `--consent-*` overrides are ignored.**
+The override stylesheet is linked before `<consent-head />`. Both declare the tokens on `:root`, so the
+tie breaks on load order and the package's defaults win. Move the link below `<consent-head />`, or
+out-specify with `html:root { … }`. Nothing appears broken in this state — the dialog simply stays in the
+package's neutral palette.
 
 **The dialog appears unstyled.**
 `consent.css` is not being served. Confirm `/esatto-cookiebanner/consent.css` returns 200. The package ships
