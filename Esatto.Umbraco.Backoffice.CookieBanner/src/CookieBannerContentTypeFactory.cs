@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Umbraco.Cms.Core;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.PropertyEditors;
@@ -29,6 +30,12 @@ internal sealed class CookieBannerContentTypeFactory(
     IShortStringHelper shortStringHelper)
 {
     private const int RootParentId = -1;
+
+    /// <summary>The Block List configuration keys <see cref="ReplaceBlockLabelAsync"/> reads.</summary>
+    private const string BlocksField = "blocks";
+    private const string BlockElementField = "contentElementTypeKey";
+    private const string LabelField = "label";
+
     private static readonly Guid UserKey = Constants.Security.SuperUserKey;
 
     private readonly Dictionary<Guid, IDataType> _dataTypes = [];
@@ -186,5 +193,82 @@ internal sealed class CookieBannerContentTypeFactory(
     {
         contentType.AllowedTemplates = [template];
         contentType.SetDefaultTemplate(template);
+    }
+
+    /// <summary>
+    /// Changes the label of one block in a Block List data type, but only where that label still
+    /// reads as the value this package originally shipped.
+    /// </summary>
+    /// <remarks>
+    /// The one method here that is not create-if-missing, and the guard is what makes that safe.
+    /// <see cref="EnsureDataTypeAsync"/> returns an existing data type untouched, so a label improved
+    /// in a later version of this package would otherwise reach new installs only, and every site
+    /// already running it would keep the old one for ever.
+    ///
+    /// Matching on <paramref name="from"/> instead of overwriting outright is the whole design. A
+    /// block label is editable in the backoffice, so a site that has chosen its own wording keeps it
+    /// and a site still on the shipped default is upgraded. Naturally idempotent: after the first run
+    /// the label no longer equals <paramref name="from"/>, so there is nothing left to do and the
+    /// call can sit in the install path on every boot.
+    ///
+    /// The configuration is carried through the serializer Umbraco stores it with rather than
+    /// through <c>BlockListConfiguration</c>, so every setting this method knows nothing about -
+    /// editorSize, a settings element type, the validation limits - crosses untouched. Assigned
+    /// through the <c>ConfigurationData</c> property rather than <c>SetConfigurationData</c>: that
+    /// method is documented as being for building entities out of the database and deliberately
+    /// leaves the entity clean, which would hand UpdateAsync nothing to save.
+    /// </remarks>
+    /// <returns>True when the label was the old default and has been replaced.</returns>
+    public async Task<bool> ReplaceBlockLabelAsync(Guid dataTypeKey, Guid elementTypeKey, string from, string to)
+    {
+        IDataType? dataType = await dataTypeService.GetAsync(dataTypeKey);
+        if (dataType is null)
+        {
+            return false;
+        }
+
+        JsonObject? configuration =
+            JsonNode.Parse(configurationSerializer.Serialize(dataType.ConfigurationData))?.AsObject();
+
+        JsonArray? blocks = configuration?[BlocksField] as JsonArray;
+        if (blocks is null)
+        {
+            return false;
+        }
+
+        var changed = false;
+
+        foreach (JsonNode? block in blocks)
+        {
+            if (block is null
+                || Guid.TryParse(block[BlockElementField]?.GetValue<string>(), out Guid key) is false
+                || key != elementTypeKey
+                || block[LabelField]?.GetValue<string>() != from)
+            {
+                continue;
+            }
+
+            block[LabelField] = to;
+            changed = true;
+        }
+
+        if (changed is false)
+        {
+            return false;
+        }
+
+        dataType.ConfigurationData =
+            configurationSerializer.Deserialize<Dictionary<string, object>>(configuration!.ToJsonString())
+            ?? throw new InvalidOperationException(
+                $"Could not rebuild the configuration of data type {dataTypeKey}.");
+
+        var attempt = await dataTypeService.UpdateAsync(dataType, UserKey);
+        if (attempt.Success is false)
+        {
+            throw new InvalidOperationException(
+                $"Could not relabel the blocks on data type '{dataType.Name}': {attempt.Status}.");
+        }
+
+        return true;
     }
 }

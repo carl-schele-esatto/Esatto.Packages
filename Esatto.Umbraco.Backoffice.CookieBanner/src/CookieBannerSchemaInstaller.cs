@@ -70,6 +70,18 @@ internal sealed class CookieBannerSchemaInstaller(
 
         await InstallCookiePolicyAsync(template);
 
+        // Step 5. The one upgrade this installer performs. Everything above is create-if-missing, so
+        // a site that already has the Block List would otherwise keep the label it was created with
+        // for ever - and until this version that label was the bare word "Cookie" on every row.
+        if (await factory.ReplaceBlockLabelAsync(
+                DataTypes.CookieRegistry,
+                ElementTypes.CookieDefinition,
+                LegacyCookieDefinitionLabel,
+                CookieDefinitionLabel))
+        {
+            logger.LogInformation("Declared cookies now show their name in the editor.");
+        }
+
         logger.LogInformation("Cookie banner schema is up to date.");
     }
 
@@ -136,10 +148,30 @@ internal sealed class CookieBannerSchemaInstaller(
             "Umb.PropertyEditorUi.BlockList",
             CookieRegistryConfiguration());
 
+    /// <summary>
+    /// The label every cookie block carries in the editor, as Umbraco Flavored Markdown: the
+    /// <c>=</c> marker interpolates a property off the block, so each row reads as the cookie it
+    /// actually declares - <c>_ga</c>, <c>UMB_MEMBER</c> - and updates as the name is typed.
+    /// </summary>
+    /// <remarks>
+    /// The name alone, not the provider beside it. The name is what an editor scans a list of twenty
+    /// cookies for, and it is also the field this package requires: CookieDeclarationMapper drops a
+    /// declaration with a blank name, so a row that renders empty is telling the truth about a block
+    /// that will not appear on the policy page.
+    /// </remarks>
+    internal const string CookieDefinitionLabel = "{=cookieName}";
+
+    /// <summary>
+    /// What <see cref="CookieDefinitionLabel"/> replaces. Every block list created before that label
+    /// existed carries this, which made three declared cookies read as three identical rows saying
+    /// "Cookie".
+    /// </summary>
+    internal const string LegacyCookieDefinitionLabel = "Cookie";
+
     /// <summary>The Block List configuration: cookie definitions and nothing else.</summary>
     internal static Dictionary<string, object> CookieRegistryConfiguration() => new()
     {
-        ["blocks"] = new object[] { Block(ElementTypes.CookieDefinition, "Cookie") },
+        ["blocks"] = new object[] { Block(ElementTypes.CookieDefinition, CookieDefinitionLabel) },
     };
 
     private static Dictionary<string, object> Block(Guid elementTypeKey, string label) => new()

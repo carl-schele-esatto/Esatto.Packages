@@ -40,7 +40,22 @@ public class CookieBannerSchemaInstallerTests
         Dictionary<string, object> block = Assert.IsType<Dictionary<string, object>>(Assert.Single(blocks));
 
         Assert.Equal(CookieBannerKeys.ElementTypes.CookieDefinition, block["contentElementTypeKey"]);
-        Assert.Equal("Cookie", block["label"]);
+        Assert.Equal(CookieBannerSchemaInstaller.CookieDefinitionLabel, block["label"]);
+    }
+
+    // Pins the label as Umbraco Flavored Markdown rather than as a literal, because the two are
+    // indistinguishable to the naked eye in a config dictionary and only one of them makes the rows
+    // legible. "{=cookieName}" resolves through ufm-label-value against the block's own properties,
+    // so the alias has to be a real property on cookieDefinition - hence the second assertion.
+    [Fact]
+    public void Cookie_definition_label_interpolates_the_cookie_name()
+    {
+        Assert.Equal("{=cookieName}", CookieBannerSchemaInstaller.CookieDefinitionLabel);
+
+        // The label an older install carries, and therefore the only value the upgrade replaces. A
+        // typo here would make the upgrade match nothing and silently leave every existing site on
+        // the old label - the exact failure it exists to fix.
+        Assert.Equal("Cookie", CookieBannerSchemaInstaller.LegacyCookieDefinitionLabel);
     }
 
     // Pins that the template row is seeded with the packaged view's real markup. ITemplateService
