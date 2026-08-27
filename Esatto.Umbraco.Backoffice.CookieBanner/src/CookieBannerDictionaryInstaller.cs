@@ -118,6 +118,7 @@ internal sealed class CookieBannerDictionaryInstaller(
 
         var created = 0;
         var adopted = 0;
+        var filled = 0;
         foreach (string key in Keys)
         {
             IDictionaryItem? existing = await dictionaryItemService.GetAsync(key);
@@ -126,6 +127,14 @@ internal sealed class CookieBannerDictionaryInstaller(
                 if (await TryAdoptAsync(existing, parentId))
                 {
                     adopted++;
+                }
+
+                // Before this, an existing item was only ever re-filed and never looked at again,
+                // so text was written once at creation and could not survive the site's languages
+                // changing underneath it. See the remarks on the method.
+                if (await TryFillMissingTranslationsAsync(existing, key, targets))
+                {
+                    filled++;
                 }
 
                 continue;
@@ -170,6 +179,14 @@ internal sealed class CookieBannerDictionaryInstaller(
         {
             logger.LogInformation(
                 "Filed {Count} existing cookie dictionary items under '{Parent}'.", adopted, ParentKey);
+        }
+
+        if (filled > 0)
+        {
+            logger.LogInformation(
+                "Filled in the missing {Languages} text on {Count} existing cookie dictionary items.",
+                string.Join(", ", targets.Select(target => target.Language.IsoCode)),
+                filled);
         }
     }
 
@@ -226,6 +243,75 @@ internal sealed class CookieBannerDictionaryInstaller(
         }
 
         return attempt.Result?.Key;
+    }
+
+    /// <summary>
+    /// Adds text for any target language this item has no translation for at all.
+    /// </summary>
+    /// <remarks>
+    /// Without this an item's text is written once, when it is created, and never again - so an
+    /// item outlives the languages it was seeded for. That is not hypothetical: a site installed
+    /// while Umbraco's default en-US was still the only language gets all 33 items in en-US, and
+    /// when the site then settles on its real languages and removes en-US, deleting that language
+    /// takes its dictionary text with it. Every item is left present and empty, and every boot after
+    /// that saw them as existing and moved on. The same gap swallows a language added later: a site
+    /// that adds a third one would get empty slots for it for ever.
+    ///
+    /// Only languages with no translation at all. A translation that exists is an editor's to own,
+    /// even where it matches the shipped text, because this cannot tell the two apart - and a seeder
+    /// that rewrites text somebody typed is worse than one that misses a language. Blank is left
+    /// alone for the same reason: emptying a value is something only a person does.
+    /// </remarks>
+    /// <returns>True when at least one translation was added.</returns>
+    private async Task<bool> TryFillMissingTranslationsAsync(
+        IDictionaryItem item,
+        string key,
+        IReadOnlyList<(ILanguage Language, string Code)> targets)
+    {
+        List<IDictionaryTranslation> translations = item.Translations.ToList();
+
+        HashSet<string> present = translations
+            .Select(translation => translation.LanguageIsoCode)
+            .Where(isoCode => string.IsNullOrWhiteSpace(isoCode) is false)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var added = false;
+
+        foreach ((ILanguage language, string code) in targets)
+        {
+            if (present.Contains(language.IsoCode))
+            {
+                continue;
+            }
+
+            string? text = TextFor(Resources, code, key);
+            if (text is null)
+            {
+                continue;
+            }
+
+            translations.Add(new DictionaryTranslation(language, text));
+            added = true;
+        }
+
+        if (added is false)
+        {
+            return false;
+        }
+
+        item.Translations = translations;
+
+        var attempt = await dictionaryItemService.UpdateAsync(item, UserKey);
+        if (attempt.Success)
+        {
+            return true;
+        }
+
+        logger.LogWarning(
+            "Could not add the missing translations to dictionary item {Key}: {Status}.",
+            key,
+            attempt.Status);
+        return false;
     }
 
     /// <summary>

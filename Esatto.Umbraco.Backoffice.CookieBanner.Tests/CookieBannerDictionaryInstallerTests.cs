@@ -118,9 +118,12 @@ public class CookieBannerDictionaryInstallerTests
     [Fact]
     public async Task Skips_an_existing_key_and_leaves_an_item_an_editor_moved_where_it_is()
     {
-        // Pins create-if-missing only (a re-boot must not overwrite an editor's reworded copy)
-        // and pins the TryAdopt guard: an item whose ParentId is already set was deliberately
-        // filed somewhere, so the seeder must not re-parent it under Cookie.Banner.
+        // Pins that an existing key is never re-created (a re-boot must not overwrite an editor's
+        // reworded copy) and pins the TryAdopt guard: an item whose ParentId is already set was
+        // deliberately filed somewhere, so the seeder must not re-parent it under Cookie.Banner.
+        //
+        // "Never re-created" is not "never touched": missing translations are filled in on an
+        // existing item, which the three tests at the bottom of this file cover.
         var existing = Substitute.For<IDictionaryItem>();
         existing.ItemKey.Returns("Cookies.Banner.Heading");
         existing.ParentId.Returns((Guid?)Guid.NewGuid());
@@ -158,5 +161,120 @@ public class CookieBannerDictionaryInstallerTests
 
         // A key absent everywhere seeds nothing rather than an empty translation.
         Assert.Null(CookieBannerDictionaryInstaller.TextFor(resources, "de", "Nowhere"));
+    }
+
+    /// <summary>An existing item carrying the translations given, already filed under a parent.</summary>
+    private static IDictionaryItem ExistingItem(string key, params (string IsoCode, string Value)[] translations)
+    {
+        var item = Substitute.For<IDictionaryItem>();
+        item.ItemKey.Returns(key);
+
+        // Filed already, so TryAdoptAsync leaves it alone and these tests are only about text.
+        item.ParentId.Returns((Guid?)Guid.NewGuid());
+
+        // Built into a local before Returns() sees it. Creating substitutes inside a Returns()
+        // argument configures them while NSubstitute is still resolving the outer call, and it
+        // throws CouldNotSetReturnDueToNoLastCallException.
+        var stored = new List<IDictionaryTranslation>();
+        foreach ((string isoCode, string value) in translations)
+        {
+            var translation = Substitute.For<IDictionaryTranslation>();
+            translation.LanguageIsoCode.Returns(isoCode);
+            translation.Value.Returns(value);
+            stored.Add(translation);
+        }
+
+        item.Translations.Returns(stored);
+
+        return item;
+    }
+
+    // The bug this fixes, as it actually happened: a site seeded while Umbraco's default en-US was
+    // its only language, which then settled on its real languages and removed en-US. Deleting a
+    // language takes its dictionary text with it, so every item was left present and empty, and
+    // every boot after that saw "existing" and moved on. Text is filled in for the languages the
+    // site has now.
+    [Fact]
+    public async Task Fills_in_the_text_for_a_language_an_existing_item_has_none_for()
+    {
+        IDictionaryItem existing = ExistingItem("Cookies.Banner.Heading");
+
+        var (installer, items, _) = CreateSut(
+            new Language("sv", "Swedish"),
+            new Language("en-GB", "English (United Kingdom)"));
+        items.GetAsync("Cookies.Banner.Heading").Returns(existing);
+
+        IDictionaryItem? updated = null;
+        items
+            .UpdateAsync(Arg.Any<IDictionaryItem>(), Arg.Any<Guid>())
+            .Returns(call =>
+            {
+                updated = call.Arg<IDictionaryItem>();
+                return Attempt.SucceedWithStatus<IDictionaryItem, DictionaryItemOperationStatus>(
+                    DictionaryItemOperationStatus.Success, updated);
+            });
+
+        await installer.InstallAsync();
+
+        Assert.NotNull(updated);
+
+        List<IDictionaryTranslation> written = updated.Translations.ToList();
+        Assert.Equal(2, written.Count);
+
+        // Swedish comes from the sv resx, English from the neutral one - so this also pins that
+        // both cultures resolve, not just whichever the test process happens to run under.
+        Assert.Equal("Vi använder kakor", written.Single(t => t.LanguageIsoCode == "sv").Value);
+        Assert.Equal("We use cookies", written.Single(t => t.LanguageIsoCode == "en-GB").Value);
+    }
+
+    // The guard that keeps this a seeder rather than an enforcer. A translation that is already
+    // there belongs to whoever typed it - this cannot tell shipped text from reworded text, so it
+    // adds only what is absent and never rewrites.
+    [Fact]
+    public async Task Leaves_an_existing_translation_alone_and_adds_only_the_missing_one()
+    {
+        IDictionaryItem existing = ExistingItem(
+            "Cookies.Banner.Heading", ("en-GB", "Our own wording"));
+
+        var (installer, items, _) = CreateSut(
+            new Language("sv", "Swedish"),
+            new Language("en-GB", "English (United Kingdom)"));
+        items.GetAsync("Cookies.Banner.Heading").Returns(existing);
+
+        IDictionaryItem? updated = null;
+        items
+            .UpdateAsync(Arg.Any<IDictionaryItem>(), Arg.Any<Guid>())
+            .Returns(call =>
+            {
+                updated = call.Arg<IDictionaryItem>();
+                return Attempt.SucceedWithStatus<IDictionaryItem, DictionaryItemOperationStatus>(
+                    DictionaryItemOperationStatus.Success, updated);
+            });
+
+        await installer.InstallAsync();
+
+        Assert.NotNull(updated);
+
+        List<IDictionaryTranslation> written = updated.Translations.ToList();
+        Assert.Equal("Our own wording", written.Single(t => t.LanguageIsoCode == "en-GB").Value);
+        Assert.Equal("Vi använder kakor", written.Single(t => t.LanguageIsoCode == "sv").Value);
+    }
+
+    // Idempotence: an item that already has text for every language the site has is not written to
+    // at all, so this can run on every boot without touching the database.
+    [Fact]
+    public async Task Does_not_write_when_an_existing_item_already_has_every_language()
+    {
+        IDictionaryItem existing = ExistingItem(
+            "Cookies.Banner.Heading", ("sv", "Vi använder kakor"), ("en-GB", "We use cookies"));
+
+        var (installer, items, _) = CreateSut(
+            new Language("sv", "Swedish"),
+            new Language("en-GB", "English (United Kingdom)"));
+        items.GetAsync("Cookies.Banner.Heading").Returns(existing);
+
+        await installer.InstallAsync();
+
+        _ = items.DidNotReceiveWithAnyArgs().UpdateAsync(null!, default);
     }
 }
