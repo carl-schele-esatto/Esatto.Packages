@@ -2,6 +2,10 @@
 [Bb]in/
 [Oo]bj/
 
+## Published exes. Esatto.CookieScan.Cli and .Desktop publish self-contained single files here,
+## which is ~160MB of build output that must never reach a commit.
+dist/
+
 ## Node / Vite (client builds)
 **/node_modules/
 **/.vite/

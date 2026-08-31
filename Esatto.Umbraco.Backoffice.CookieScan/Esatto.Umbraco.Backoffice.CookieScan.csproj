@@ -1,0 +1,94 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <RootNamespace>Esatto.Umbraco.Backoffice.CookieScan</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.CookieScan</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.CookieScan</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>The site-side half of the Esatto cookie scanner. Adds one management-API endpoint that appends a scan's findings to the cookie policy page as a draft - append-only, never publishing, never rewriting an editor's legal wording - plus the API user and client credentials that authenticate the post. Companion to Esatto.Umbraco.Backoffice.CookieBanner, whose cookieDefinition element type and cookiePolicy page it writes into. Run the scan itself with the Esatto.CookieScan.Cli tool. Wiring is one AddCookieScan() call and one SeedCookieScanApiUserAsync() on start.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;cookie-banner;cookie-consent;gdpr;eprivacy;cookie-scanner;cookie-audit</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.CookieScan</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!--
+      Umbraco 18 rather than the 17.0.0 floor the sibling packages take. CookieScanApiUserSeeder is
+      built on decompiled Umbraco 18.1.1 internals - ClientCredentialsManagerBase.SafeClientId's
+      "umbraco-back-office-" prefix, and BackOfficeController.Token()'s lookup path through
+      IBackOfficeUserClientCredentialsManager - and those are exactly the kind of members whose
+      declaration site moves between majors and then throws only at run time. A 17.0.0 floor would
+      be claiming a compatibility nobody has verified. Lower it when someone actually runs the
+      seeder against 17 and reads the token endpoint's answer.
+    -->
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Core" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="18.0.0" />
+    <!--
+      A real dependency, not a neighbour. CookieScanWriter reads CookieBannerOptions to learn which
+      categories exist and what the consent cookie is called, and it writes into that package's
+      cookieDefinition element type and cookiePolicy page. Installing this one without the banner
+      would give a site an endpoint with nothing to write to.
+    -->
+    <PackageReference Include="Esatto.Umbraco.Backoffice.CookieBanner" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Patched floor for a high-severity vulnerability (NU1903) Umbraco pulls in transitively:
+         Microsoft.OpenApi via Api.Management -> Swashbuckle, circular-ref stack overflow
+         (GHSA-v5pm-xwqc-g5wc), fixed 2.7.5. Drop it once Umbraco bumps its own dependency past it.
+         MessagePack needs no pin here the way the Umbraco 17 siblings do - 18's HybridCache already
+         resolves past the vulnerable 3.1.4. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The merge rules - which candidates are new, how a duration reads in Swedish, what category an
+      unrecognised name gets - are the scanner's own, and are shared with it rather than reimplemented
+      here. A site that declared a cookie differently from the way the tool proposed it would be the
+      one bug this whole endpoint exists to prevent.
+    -->
+    <ProjectReference Include="..\Esatto.CookieScan.Core\Esatto.CookieScan.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.CookieScan.Tests" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
