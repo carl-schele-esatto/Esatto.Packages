@@ -44,7 +44,18 @@ public sealed record SiteProfile(
     // banner's consent cookie on this site - CookieBannerOptions.CookieName, when a site changed it
     // from the cookie-consent default - so it is stored in clear like the URL, not encrypted like
     // the four above. Empty means the default.
-    string ConsentCookie = "");
+    string ConsentCookie = "",
+    // The email trio, appended last for the same reason as everything above it. They say who hears
+    // about a scan of THIS site; the server the mail leaves through is one per machine and lives on
+    // DashboardSettings.Email instead - see EmailAccount for why the two are split.
+    //
+    // All three are stored in clear, credentials being the only thing in this file that is not. A
+    // recipient list is not a secret, and a wrong address is exactly the mistake somebody has to be
+    // able to find by opening the file: encrypted, the only symptom would be a report quietly
+    // arriving at the wrong mailbox. The same argument as ConsentCookie above.
+    bool EmailEnabled = false,
+    string EmailTo = "",
+    string EmailCc = "");
 
 /// <summary>
 /// What the window remembers between runs: the saved sites, and which one is showing.
@@ -84,7 +95,14 @@ public sealed record SiteProfile(
 /// anything here is ever touched from a scan's own thread, that stops being true.
 /// </para>
 /// </remarks>
-public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string? SelectedUrl)
+public sealed record DashboardSettings(
+    IReadOnlyList<SiteProfile> Sites,
+    string? SelectedUrl,
+    // Appended, and nullable rather than defaulted to an empty account: null means "never set up",
+    // which is a different thing from "set up and then cleared" and is what every settings file
+    // written before this build says. The page reads the difference to decide whether to say
+    // anything about email at all.
+    EmailAccount? Email = null)
 {
     // Declared rather than left to the positional parameters, so the one instance the window shares
     // can be edited in place - see the class remark. A record's value equality still covers both,
@@ -92,6 +110,13 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
     public IReadOnlyList<SiteProfile> Sites { get; set; } = Sites ?? [];
 
     public string? SelectedUrl { get; set; } = SelectedUrl;
+
+    /// <summary>The one mailbox this machine sends scan reports from, or null if none is set up.</summary>
+    /// <remarks>
+    /// Settable for the same reason <see cref="Sites"/> is: <see cref="DashboardForm"/> holds one
+    /// instance and edits it in place when the Email page saves.
+    /// </remarks>
+    public EmailAccount? Email { get; set; } = Email;
 
     /// <summary>
     /// One line per credential that could not be decrypted, for the page to show in its log.
@@ -193,7 +218,8 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
             // is the one the form and the running scan are both reading from, and swapping its
             // fields for ciphertext for the length of a write would be a race with the next reader
             // rather than a saving.
-            DashboardSettings written = new([.. Sites.Select(Protected)], SelectedUrl);
+            DashboardSettings written = new(
+                [.. Sites.Select(Protected)], SelectedUrl, Email is null ? null : Protected(Email));
 
             File.WriteAllText(path, JsonSerializer.Serialize(written, Options));
         }
@@ -239,6 +265,8 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
             ClientId = Trimmed(profile.ClientId),
             ClientSecret = Trimmed(profile.ClientSecret),
             ConsentCookie = Trimmed(profile.ConsentCookie),
+            EmailTo = Trimmed(profile.EmailTo),
+            EmailCc = Trimmed(profile.EmailCc),
         };
 
         List<SiteProfile> next = [.. Sites];
@@ -314,6 +342,18 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
             }),
         ];
 
+        // The mail account's two credentials, through the same decrypt and the same warning list.
+        // Null stays null: a file that never had an account must not load as a blank one, or the
+        // Email page would open claiming to be set up and failing on the first send.
+        if (stored.Email is not null)
+        {
+            stored.Email = stored.Email with
+            {
+                Username = Revealed("the mail account", "SMTP username", stored.Email.Username, warnings),
+                Password = Revealed("the mail account", "SMTP password", stored.Email.Password, warnings),
+            };
+        }
+
         stored.Warnings = warnings;
 
         return stored;
@@ -324,8 +364,13 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
     /// Never a throw and never a dropped profile. The URL, the page count, the locale and the dry-run
     /// flag in a profile whose password will not open are all still exactly right, and they are most
     /// of what the profile is for.
+    /// <para>
+    /// <paramref name="owner"/> is a site's URL for the four profile credentials and the words "the
+    /// mail account" for the two on <see cref="Email"/> - the warning has to name which of the six a
+    /// retype belongs to, and the machine has exactly one mail account to be unambiguous about.
+    /// </para>
     /// </remarks>
-    private static string Revealed(string url, string field, string stored, List<string> warnings)
+    private static string Revealed(string owner, string field, string stored, List<string> warnings)
     {
         if (ProtectedText.TryUnprotect(stored, out string value))
         {
@@ -333,8 +378,8 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
         }
 
         warnings.Add(
-            $"The saved {field} for {url} could not be read on this machine, so that field is empty. " +
-            "Settings are encrypted for one Windows user on one machine; type it again and save the site.");
+            $"The saved {field} for {owner} could not be read on this machine, so that field is empty. " +
+            "Settings are encrypted for one Windows user on one machine; type it again and save.");
 
         return "";
     }
@@ -394,6 +439,20 @@ public sealed record DashboardSettings(IReadOnlyList<SiteProfile> Sites, string?
         MemberPassword = ProtectedText.Protect(profile.MemberPassword),
         ClientId = ProtectedText.Protect(profile.ClientId),
         ClientSecret = ProtectedText.Protect(profile.ClientSecret),
+    };
+
+    /// <summary>
+    /// A copy of the mail account with its two credentials turned into blobs.
+    /// </summary>
+    /// <remarks>
+    /// Two of seven fields, and the other five stay readable on purpose. The host, the port, the
+    /// security mode and the from address are configuration rather than credentials, and this file is
+    /// one people open: a wrong port is worth being able to see. See <see cref="EmailAccount"/>.
+    /// </remarks>
+    private static EmailAccount Protected(EmailAccount account) => account with
+    {
+        Username = ProtectedText.Protect(account.Username),
+        Password = ProtectedText.Protect(account.Password),
     };
 
     /// <summary>

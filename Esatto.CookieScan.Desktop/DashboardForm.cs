@@ -252,6 +252,11 @@ public sealed class DashboardForm : Form
                     secretVariable = ScanOptions.SecretVariable,
                     sites = settings.Sites,
                     selectedUrl = settings.SelectedUrl,
+                    // The mail account goes out on the same message and for the same reason as the
+                    // sites: the Email page fills its own fields from it, password included. Null
+                    // when none has ever been saved, which is what the page reads to decide whether
+                    // to offer to email a report at all.
+                    email = settings.Email,
                     // Load's decrypt failures, carried on the one message that is guaranteed to
                     // arrive after the log panel exists. The page prints them as warnings; there is
                     // nothing for it to do about them beyond telling the operator which field to
@@ -309,11 +314,110 @@ public sealed class DashboardForm : Form
 
                 break;
 
+            case SaveEmailCommand saveEmail:
+                SaveEmail(saveEmail.Account);
+
+                break;
+
+            case TestEmailCommand test:
+                // Not awaited, for the same reason a run is not: this handler is on the message loop,
+                // and an SMTP conversation with a server that is not answering holds it for up to a
+                // minute. SendTestAsync throws nothing.
+                _ = TestEmailAsync(test);
+
+                break;
+
+            case SendEmailCommand send:
+                _ = SendEmailAsync(send);
+
+                break;
+
             case CancelCommand:
                 session?.Cancel();
 
                 break;
         }
+    }
+
+    /// <summary>Stores the machine's one mail account, and answers with what was stored.</summary>
+    /// <remarks>
+    /// Answered as well as written for the same reason <see cref="SaveSite"/> is: the two can
+    /// disagree. Nothing is trimmed on the way in - <see cref="EmailSender"/> trims what it connects
+    /// and signs in with - but the page should still be showing the record the file now holds rather
+    /// than the one it posted.
+    /// </remarks>
+    private void SaveEmail(EmailAccount account)
+    {
+        settings.Email = account;
+        settings.Save();
+
+        bridge?.Post(DashboardAnswer.Email(settings));
+    }
+
+    /// <summary>Sends the test message, from the account the page currently shows.</summary>
+    /// <remarks>
+    /// The account on the message wins over the stored one, and falls back to it when the page sends
+    /// none. Testing what is stored would make "change the port, press Test" report on the old port,
+    /// which is the one question the button exists to answer.
+    /// </remarks>
+    private async Task TestEmailAsync(TestEmailCommand command)
+    {
+        EmailAccount? account = command.Account ?? settings.Email;
+
+        if (account is null)
+        {
+            bridge?.Post(new { type = "emailTested", sent = false, message = "Fill in the server and the from address first." });
+
+            return;
+        }
+
+        EmailOutcome outcome = await EmailSender.SendTestAsync(account, EmailRecipients.Parse(command.To));
+
+        bridge?.Post(new { type = "emailTested", sent = outcome.Sent, message = outcome.Message });
+    }
+
+    /// <summary>Mails one scan on demand: the one just run, or one picked out of the history.</summary>
+    /// <remarks>
+    /// A null path means the run this session last completed, which the session holds itself - see
+    /// <see cref="ScanSession.LastResult"/> for why that is not the same as looking it up by path. A
+    /// path is resolved exactly as <see cref="PostScan"/> resolves one, through a fresh listing, so
+    /// the only files this can open are ones the window itself reported.
+    /// </remarks>
+    private async Task SendEmailAsync(SendEmailCommand command)
+    {
+        if (session is null)
+        {
+            return;
+        }
+
+        ScanResult? result;
+
+        if (command.Path is null)
+        {
+            result = session.LastResult;
+        }
+        else
+        {
+            ScanHistory history = ScanHistory.Default();
+
+            result = LoadResult(history, ListScans(history), command.Path);
+        }
+
+        if (result is null)
+        {
+            // On the same envelope the history page already listens to, so a send from a row whose
+            // file has since been deleted lands beside the row rather than in the scan page's log.
+            bridge?.Post(new
+            {
+                type = "error",
+                path = command.Path,
+                message = "That scan could not be read, so nothing was sent.",
+            });
+
+            return;
+        }
+
+        await session.SendAsync(command, result);
     }
 
     /// <summary>Saves the run card's current values as the profile for the URL they name.</summary>

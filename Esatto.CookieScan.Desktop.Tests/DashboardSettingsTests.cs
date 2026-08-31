@@ -528,4 +528,190 @@ public class DashboardSettingsTests
 
         Assert.Equal(2, settings.Sites.Count);
     }
+
+    /// <remarks>
+    /// The username is deliberately NOT the from address, though on a real server it usually is: the
+    /// two are stored differently - one encrypted, one in clear - and a fixture that used one string
+    /// for both could not tell the two rules apart.
+    /// </remarks>
+    private static EmailAccount Account() => new(
+        Host: "smtp.example.com",
+        Port: 465,
+        Security: EmailSecurity.SslOnConnect,
+        Username: "smtp-user-alpha-1",
+        Password: "smtp-password-alpha-1",
+        FromAddress: "scanner@example.com",
+        FromName: "Esatto cookie scanner");
+
+    [Fact]
+    public void The_mail_account_survives_a_round_trip()
+    {
+        using TempSettings file = new();
+
+        DashboardSettings saved = new([Profile("https://example.com")], "https://example.com", Account());
+
+        saved.Save(file.Path);
+
+        DashboardSettings loaded = DashboardSettings.Load(file.Path);
+
+        Assert.Empty(loaded.Warnings);
+
+        // Record equality, member by member, so a field added to EmailAccount later is covered here
+        // without this test having to be told about it. Compared as the account rather than as the
+        // whole settings, exactly as the profiles round-trip is: the two collections on the settings
+        // are reference-compared by the synthesised equality and would never match across a load.
+        Assert.Equal(saved.Email, loaded.Email);
+    }
+
+    /// <summary>
+    /// Credentials encrypted, addressing readable - the line this file draws, drawn once more.
+    /// </summary>
+    /// <remarks>
+    /// The five clear fields are asserted as well as the two encrypted ones, and that is the point of
+    /// the test rather than an aside: a wrong port or a wrong from address is exactly the mistake
+    /// somebody has to be able to find by opening this file, and encrypting them "for consistency"
+    /// would take that away while protecting nothing.
+    /// </remarks>
+    [Fact]
+    public void The_smtp_credentials_are_ciphertext_on_disk_and_the_rest_is_not()
+    {
+        using TempSettings file = new();
+
+        new DashboardSettings([], null, Account()).Save(file.Path);
+
+        string text = file.Text;
+
+        Assert.DoesNotContain("smtp-password-alpha-1", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("smtp-user-alpha-1", text, StringComparison.Ordinal);
+
+        // The server, the port, the mode and the from address stay legible.
+        Assert.Contains("smtp.example.com", text, StringComparison.Ordinal);
+        Assert.Contains("465", text, StringComparison.Ordinal);
+        Assert.Contains("SslOnConnect", text, StringComparison.Ordinal);
+        Assert.Contains("scanner@example.com", text, StringComparison.Ordinal);
+        Assert.Contains("Esatto cookie scanner", text, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A file from before this build has no account, and must load as none rather than as a blank one.
+    /// </summary>
+    /// <remarks>
+    /// The difference is not cosmetic: a blank account would report itself as set up to the page,
+    /// which would offer an Email report button that could only ever fail. Null is what
+    /// <see cref="EmailAccount.IsConfigured"/> and the page's own check both read.
+    /// </remarks>
+    [Fact]
+    public void A_settings_file_with_no_account_loads_as_none()
+    {
+        using TempSettings file = new();
+
+        new DashboardSettings([Profile("https://example.com")], "https://example.com").Save(file.Path);
+
+        Assert.Null(DashboardSettings.Load(file.Path).Email);
+    }
+
+    /// <summary>
+    /// A password that will not decrypt costs its own field, says which one, and costs nothing else.
+    /// </summary>
+    /// <remarks>
+    /// The same guarantee the four profile credentials have. The warning has to name the SMTP
+    /// password specifically: a machine now holds six encrypted values, and "a saved credential
+    /// could not be read" would leave the operator retyping the wrong one.
+    /// </remarks>
+    [Fact]
+    public void A_damaged_smtp_password_costs_that_field_and_says_so()
+    {
+        using TempSettings file = new();
+
+        new DashboardSettings([], null, Account()).Save(file.Path);
+
+        JsonNode document = JsonNode.Parse(file.Text)!;
+
+        document["Email"]!["Password"] = ProtectedText.Prefix + "AAAA";
+
+        file.Write(document.ToJsonString());
+
+        DashboardSettings loaded = DashboardSettings.Load(file.Path);
+
+        // Everything else about the account is still exactly right - which is most of what it is for.
+        Assert.Equal(Account() with { Password = "" }, loaded.Email);
+
+        string warning = Assert.Single(loaded.Warnings);
+
+        Assert.Contains("SMTP password", warning, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A site's recipients round-trip, and stay legible: they are addressing, not a credential.
+    /// </summary>
+    /// <remarks>
+    /// Legibility is the assertion that matters. A report quietly arriving at the wrong mailbox has
+    /// no other symptom, so the list has to be findable by opening the file - the same argument the
+    /// consent cookie name is stored in clear for.
+    /// </remarks>
+    [Fact]
+    public void A_sites_recipients_round_trip_and_stay_readable()
+    {
+        using TempSettings file = new();
+
+        SiteProfile profile = Profile("https://example.com") with
+        {
+            EmailEnabled = true,
+            EmailTo = "legal@client.se, carl@esatto.se",
+            EmailCc = "ops@esatto.se",
+        };
+
+        new DashboardSettings([profile], profile.Url).Save(file.Path);
+
+        Assert.Contains("legal@client.se", file.Text, StringComparison.Ordinal);
+        Assert.Equal(profile, Assert.Single(DashboardSettings.Load(file.Path).Sites));
+    }
+
+    [Fact]
+    public void Recipients_are_trimmed_by_the_upsert_like_every_other_stored_string()
+    {
+        DashboardSettings settings = new([], null);
+
+        settings.Upsert(Profile("https://example.com") with
+        {
+            EmailTo = "  legal@client.se  ",
+            EmailCc = "  ops@esatto.se  ",
+        });
+
+        SiteProfile stored = Assert.Single(settings.Sites);
+
+        Assert.Equal("legal@client.se", stored.EmailTo);
+        Assert.Equal("ops@esatto.se", stored.EmailCc);
+    }
+
+    /// <summary>
+    /// A profile written by a build that predates the email fields still loads, with them off.
+    /// </summary>
+    /// <remarks>
+    /// The same guarantee every appended field on this record has, and the one that matters most for
+    /// these three: a missing <c>EmailEnabled</c> reading as anything but false would have an
+    /// existing profile start mailing a recipient it does not have.
+    /// </remarks>
+    [Fact]
+    public void A_profile_written_before_the_email_fields_loads_with_them_off()
+    {
+        using TempSettings file = new();
+
+        new DashboardSettings([Profile("https://example.com")], "https://example.com").Save(file.Path);
+
+        JsonNode document = JsonNode.Parse(file.Text)!;
+
+        document["Sites"]![0]!.AsObject().Remove("EmailEnabled");
+        document["Sites"]![0]!.AsObject().Remove("EmailTo");
+        document["Sites"]![0]!.AsObject().Remove("EmailCc");
+
+        file.Write(document.ToJsonString());
+
+        SiteProfile profile = Assert.Single(DashboardSettings.Load(file.Path).Sites);
+
+        Assert.False(profile.EmailEnabled);
+        Assert.Equal("", profile.EmailTo);
+        Assert.Equal("", profile.EmailCc);
+        Assert.Empty(DashboardSettings.Load(file.Path).Warnings);
+    }
 }

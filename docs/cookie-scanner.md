@@ -67,7 +67,7 @@ and the host talk in one JSON envelope both ways (`PostWebMessageAsJson` out of 
 `chrome.webview.postMessage` in), so `ScanSession` runs the same engine the CLI does and reports
 progress as messages rather than as console lines.
 
-The dashboard has two pages. **Scan** takes the CLI's options as fields — site URL, max pages,
+The dashboard has three pages. **Scan** takes the CLI's options as fields — site URL, max pages,
 locale, member email and password, client id — plus the client secret, which the CLI takes from the
 environment instead; all of them picked in one go from the site dropdown above
 them (see Site profiles, below), runs the scan with live progress in a log
@@ -81,9 +81,13 @@ findings table, and compares any two —
 appeared, disappeared and recategorised cookies, as three groups from `ScanDiff.Between` (in
 `Esatto.CookieScan.Core`) — with the pair ordered by completion time rather than by which row was
 clicked first, and a warning when the two ran under different options, so a difference caused by
-the options rather than by the site is not read as a change to the site.
+the options rather than by the site is not read as a change to the site. **Email** holds the one
+mail account this machine sends reports from — see Emailing a report, below; who each report goes to
+is set per site, on Scan.
 
-Two differences from the CLI are deliberate. **Dry run defaults to on** in the dashboard, so the
+Three differences from the CLI are deliberate. **Only the dashboard can email a report** — nothing in
+the console tool sends mail, and the engine gained no mail dependency to make that possible later
+without a decision. **Dry run defaults to on** in the dashboard, so the
 obvious button to press cannot write to a live policy page; the console tool still defaults it off,
 because a CI invocation names every flag explicitly. And the dashboard remembers its options
 between runs — as site profiles, below — while the console tool takes flags fresh every time.
@@ -94,9 +98,12 @@ see Overriding the catalogue, below.
 ### Site profiles
 
 The run card's dropdown holds one **profile per site**: the URL, max pages, locale, the dry-run
-flag, the member email, the member password, the API client id, the API client secret and the
-consent cookie name. Picking one fills every field below it, including both masked credentials;
-**New site…** clears them to the defaults (25 pages, SV, dry run on).
+flag, the member email, the member password, the API client id, the API client secret, the
+consent cookie name, and whether to email the report and to whom (see Emailing a report, below).
+Picking one fills every field below it, including both masked credentials;
+**New site…** clears them to the defaults (25 pages, SV, dry run on, email off and no recipients —
+a new site must not inherit the last one's, since mailing a client's cookie report to a different
+client is the one mistake here that cannot be taken back).
 
 The consent cookie name is the one profile field stored **in clear** rather than under DPAPI. It is
 the name of a cookie every visitor of that site already holds, so there is nothing to protect — and
@@ -130,7 +137,8 @@ staging to production is the common case, and a window that silently renamed the
 have destroyed what it was copied from.
 
 Profiles live in `%LOCALAPPDATA%\Esatto.CookieScan.Engine\settings.json`, and **the member email, the
-member password, the API client id and the API client secret are encrypted at rest** with DPAPI
+member password, the API client id and the API client secret are encrypted at rest** — as are the
+mail account's username and password, which sit beside the profiles in the same file — with DPAPI
 (`System.Security.Cryptography.ProtectedData`, `DataProtectionScope.CurrentUser`, plus a fixed
 application entropy that is a namespace rather than a secret — see `ProtectedText`). Each is stored
 as `"dpapi:<base64>"`, so a reader can tell ciphertext from a value the pre-profiles build wrote in
@@ -158,6 +166,88 @@ Nothing is rewritten on read — the new shape is written the next time anything
 by the profiles build that shipped *before* the secret opens the same way: the missing
 `ClientSecret` key loads as an empty field, with no warning, because a key that was never written is
 not a credential that was lost.
+
+### Emailing a report
+
+The dashboard can send a finished scan as an email — automatically when a scan completes, or by hand
+from a button, for any scan including one out of the history. **The console tool cannot**: nothing in
+`Esatto.CookieScan.Cli` sends mail, and the engine package gained no mail dependency to make that
+possible later without a decision.
+
+The settings are split in two, and the split is the shape of the whole feature:
+
+| What | Where | Why |
+| --- | --- | --- |
+| The SMTP server, credentials and from address | **One per machine**, on the new **Email** page | This is who the operator *is*. Typed once. |
+| Who the report goes to | **Per site**, in that site's profile on the Scan page | This is a fact about the client being scanned. |
+
+Putting the server in the profile instead would mean typing six fields again for every site added,
+to say the same thing every time. The recipients are two fields on the site, behind a checkbox, so a
+profile that will never mail anybody does not grow two empty rows.
+
+**What is stored, and how.** The mail account lives on `DashboardSettings.Email` — null until one is
+saved, which is *not* the same as a blank one and is what a settings file from before this build
+holds. Its **username and password are encrypted at rest with DPAPI**, exactly like the four
+credentials on a profile and through the same `ProtectedText`. The host, port, security mode and from
+address are stored **in clear**, and so are the per-site recipients: credentials are encrypted,
+addressing is readable. A wrong recipient is precisely the mistake somebody has to be able to find by
+opening the file — encrypted, its only symptom would be a report quietly arriving at the wrong
+mailbox. It is the same argument `ConsentCookie` is stored in clear for.
+
+A password that will not decrypt costs that one field and produces a warning naming it — "SMTP
+password" in full, because a machine now holds six encrypted values and "a saved credential could not
+be read" would have the operator retyping the wrong one.
+
+**Security modes.** `StartTls` (587), `SslOnConnect` (465) and `None` (25), offered as words rather
+than as a port to guess from: picking wrongly fails in a way that is hard to read — implicit TLS on
+587 hangs, STARTTLS on 465 reads bytes that are not a greeting. Changing the mode moves the port to
+the one that goes with it *unless* the operator has typed their own. **Both credentials may be left
+empty**, and that is a supported configuration rather than an unfinished one: an internal relay that
+accepts mail from this subnet takes no AUTH at all, and offering it one is how such a relay refuses
+the connection.
+
+**What the message contains.** `ScanEmail.Compose` builds it, in `Esatto.CookieScan.Engine`, and it
+takes a `ScanResult` and nothing else — which is why a scan mails identically whether it finished a
+second ago or last Tuesday. The subject is `Cookie scan - <host> - <verdict>`, where the verdict is
+`1 violation` / `3 to review` / `clean`; a violation outranks a review and the two are never summed,
+the same order `ScanResult.ExitCode` applies. **The dry-run flag is deliberately not in the subject**
+— it answers a different question, and an inbox full of "- dry run" says nothing at a glance. The
+body is table-based HTML with every colour inline (a mail client strips `<style>`), with a plain-text
+alternative part saying the same things in the same order.
+
+**Both report files are attached, generated in memory from the result rather than read off disk.**
+That is not an optimisation. `cookie-scan-report.md` is a single file in the report directory,
+overwritten by every run, so attaching it by path would mail last night's report for a scan picked
+out of the history — and would have nothing at all to attach when the report write had failed. To get
+there, `ScanReportWriter`'s markdown builder was split so `WriteFiles(options, result)` and
+`Markdown(result)` produce the same bytes for the same run; there is a test asserting exactly that.
+The two write-back sentences moved to `WriteBackCounts` and `WriteBackSentence` for the same reason,
+so a mail saying "2 added" beside a log saying "2 would be added" is not reachable.
+
+**When it sends.** The automatic send is the third of the three things a finished scan leaves behind,
+after the report files and the history entry, and it is in the same shape as those two: a mail that
+will not send is a warning line and nothing else, never a scan reported as failed. A cancelled scan
+mails nobody — the cancel path returns before the result block. Every reason *not* to send is a line
+in the log rather than silence: a site whose profile says "email this report" and then does not is
+the failure mode worth spending three warnings on.
+
+The manual button sits on the result card and on a selected History scan. It **opens a row with the
+recipients in it rather than sending straight away** — a send cannot be undone, and a button that
+mailed a client the instant it was pressed, to a list the operator could not see at the time, is the
+one mistake the row exists to prevent. The row is prefilled from the site's own recipients, so the
+common case is still one click and one Enter. A send from the History page answers on its own
+envelope and shows beside the button, because that page has no log panel to print into.
+
+The `sendEmail` message carries an **optional** path: a path names a kept scan, and null means the
+run this session has most recently completed, which `ScanSession` holds itself. That second case is
+not a convenience — it is the one that has to work when the history write itself failed, which is
+exactly when getting the findings out of the window matters most.
+
+**MailKit**, and only on the desktop project. `Esatto.CookieScan.Desktop` is the one half of the
+scanner that is not packed, so a dependency added there reaches nobody who references
+`Esatto.CookieScan.Engine` for its scanner. MailKit rather than `System.Net.Mail.SmtpClient`, which
+Microsoft's own documentation says not to use for new work: it cannot do implicit TLS on 465 at all,
+and its failures arrive as "Failure sending mail" with the reason on an inner exception nobody sees.
 
 ### The WebView2 runtime, and where its user-data folder lives
 

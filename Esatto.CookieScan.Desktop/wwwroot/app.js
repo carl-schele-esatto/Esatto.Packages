@@ -134,6 +134,41 @@ const deleteSiteButton = document.querySelector('#scan-delete-site');
 const optionsDetails = document.querySelector('#scan-options');
 const secretStatus = document.querySelector('#secret-status');
 
+// The site's own email settings: who hears about a scan of THIS site. The server they leave through
+// is one per machine and lives on the Email page below.
+const emailEnabledInput = document.querySelector('#scan-email-enabled');
+const emailFields = document.querySelector('#scan-email-fields');
+const emailToInput = document.querySelector('#scan-email-to');
+const emailCcInput = document.querySelector('#scan-email-cc');
+const emailRecipientsNote = document.querySelector('#email-recipients-note');
+
+// The two manual send controls - the result card's and the History detail's - and the Email page's
+// own test row. All three are the same shape: a button that reveals a row with an address in it,
+// because a send cannot be undone and a button that mailed a client the instant it was pressed
+// would hide the one thing worth checking first.
+const scanEmailSendButton = document.querySelector('#scan-email-send');
+const scanEmailBar = document.querySelector('#scan-email-bar');
+const scanEmailManualTo = document.querySelector('#scan-email-manual-to');
+const historyEmailSendButton = document.querySelector('#history-email-send');
+const historyEmailBar = document.querySelector('#history-email-bar');
+const historyEmailManualTo = document.querySelector('#history-email-manual-to');
+const historyEmailToast = document.querySelector('#history-email-toast');
+
+const emailForm = document.querySelector('#email-form');
+const emailHostInput = document.querySelector('#email-host');
+const emailPortInput = document.querySelector('#email-port');
+const emailSecurityInput = document.querySelector('#email-security');
+const emailUsernameInput = document.querySelector('#email-username');
+const emailPasswordInput = document.querySelector('#email-password');
+const emailFromAddressInput = document.querySelector('#email-from-address');
+const emailFromNameInput = document.querySelector('#email-from-name');
+const emailShowMaskedInput = document.querySelector('#email-show-masked');
+const emailTestButton = document.querySelector('#email-test');
+const emailTestBar = document.querySelector('#email-test-bar');
+const emailTestToInput = document.querySelector('#email-test-to');
+const emailTestSendButton = document.querySelector('#email-test-send');
+const emailToast = document.querySelector('#email-toast');
+
 /**
  * What the host said on ready about the client secret FALLBACK - whether the machine's variable is
  * set, and what it is called. Not the secret itself and not the secret a scan will use: the secret
@@ -328,6 +363,10 @@ const keptScansValue = document.querySelector('#kept-scans');
 const inputs = [
   siteSelect, urlInput, maxPagesInput, localeInput, memberEmailInput,
   memberPasswordInput, clientIdInput, clientSecretInput, dryRunInput, runButton,
+  // The email trio is part of the profile the run writes, so it locks with the rest of it: a
+  // recipient typed halfway through a scan would be saved by that scan without ever having been on
+  // screen when it started.
+  emailEnabledInput, emailToInput, emailCcInput,
 ];
 
 /** Whether a scan is running, as the host last reported it. */
@@ -371,6 +410,11 @@ const NEW_SITE = {
   clientSecret: '',
   // Blank means the CookieBannerOptions default, which is what the field's own placeholder shows.
   consentCookie: '',
+  // Off, and empty. A new site must not inherit the last one's recipients: mailing a client's
+  // cookie report to a different client is the one mistake here that cannot be taken back.
+  emailEnabled: false,
+  emailTo: '',
+  emailCc: '',
 };
 
 /** Every kept scan the host has told us about, newest first, for every site. */
@@ -558,7 +602,17 @@ function fillForm(profile) {
   // would then be saved back as an explicit value the next time Save site was pressed.
   consentCookieInput.value = profile.consentCookie ?? '';
 
+  // Restored from the profile like everything else in the grid, and unlike dry run: a recipient list
+  // is a fact about the client that does not go stale between sessions, and the danger dry run
+  // guards against - a stored value quietly arming something - runs the other way here. A profile
+  // that says "do not email" restoring as unticked is the safe direction.
+  emailEnabledInput.checked = profile.emailEnabled === true;
+  emailToInput.value = profile.emailTo ?? '';
+  emailCcInput.value = profile.emailCc ?? '';
+
   fillDryRun(profile.url ?? '');
+
+  syncEmailFields();
 
   // Setting .value fires no input event, so the note under the pair and the sidebar's site label
   // are recomputed by hand.
@@ -608,6 +662,9 @@ function currentProfile() {
     clientId: clientIdInput.value,
     clientSecret: clientSecretInput.value,
     consentCookie: consentCookieInput.value,
+    emailEnabled: emailEnabledInput.checked,
+    emailTo: emailToInput.value,
+    emailCc: emailCcInput.value,
   };
 }
 
@@ -680,6 +737,14 @@ function applyState(message) {
     // whether there is a fallback to be quiet about; called here as well for the case where this
     // state arrives with the form already showing something.
     showSecretStatus();
+  }
+
+  // 'email' in message, not a truthiness test, for the same reason as 'sites' below: null is a real
+  // answer - no account has ever been saved - and it has to empty the Email page rather than be
+  // ignored. Applied BEFORE showSites, so the note the form fill draws under the recipients already
+  // knows what this machine can send as.
+  if ('email' in message) {
+    showEmailAccount(message.email);
   }
 
   // 'sites' in message, not a truthiness test: an empty array is a real answer - a first launch, or
@@ -807,10 +872,296 @@ function requestCancel() {
   post({ type: 'cancel' });
 }
 
+/* ---------------------------------------------------------------- email
+
+    Two halves that meet only here. The machine's mail account is one record on the Email page; who
+    hears about each site is three fields in that site's profile. The window never guesses either -
+    both travel to the host on the message that uses them.
+*/
+
+/**
+ * The machine's mail account as the host last reported it, or null if none has ever been saved.
+ * @type {{ host: string, port: number, security: string, username: string, password: string,
+ *          fromAddress: string, fromName: string } | null}
+ */
+let emailAccount = null;
+
+/** What the Email page shows before anything has been saved. */
+const NEW_ACCOUNT = {
+  host: '',
+  port: 587,
+  security: 'StartTls',
+  username: '',
+  password: '',
+  fromAddress: '',
+  fromName: '',
+};
+
+/**
+ * The port that goes with each security mode.
+ *
+ * Used only to MOVE the port when the mode changes and the box still holds the old mode's default -
+ * never to override a number the operator typed. Picking the mode is the decision; the port is
+ * almost always the one that follows from it, and making someone remember 465 is a way to have them
+ * get it wrong.
+ */
+const SECURITY_PORTS = { StartTls: 587, SslOnConnect: 465, None: 25 };
+
+const flashTimers = new WeakMap();
+
+/**
+ * Shows one line in a status region for a few seconds, then fades it.
+ *
+ * The same behaviour as the site toast, per element rather than for the one region: three of these
+ * exist now - saving a site, saving the account, sending from the History page - and one shared
+ * timer would have the newest message cut short by the previous one's fade.
+ */
+function flash(element, text) {
+  if (element === null) {
+    return;
+  }
+
+  clearTimeout(flashTimers.get(element));
+
+  element.textContent = text;
+  element.hidden = false;
+  element.classList.remove('is-fading');
+
+  flashTimers.set(element, setTimeout(() => {
+    element.classList.add('is-fading');
+
+    flashTimers.set(element, setTimeout(() => {
+      element.hidden = true;
+      element.textContent = '';
+    }, 450));
+  }, 6000));
+}
+
+/** Whether an account has enough in it to attempt a send - the host's own rule, in one place. */
+function accountIsUsable(account) {
+  return account !== null
+    && typeof account.host === 'string' && account.host.trim() !== ''
+    && typeof account.fromAddress === 'string' && account.fromAddress.trim() !== '';
+}
+
+/** Fills the Email page from what the host reports, and recomputes everything that depends on it. */
+function showEmailAccount(account) {
+  emailAccount = account ?? null;
+
+  const shown = emailAccount ?? NEW_ACCOUNT;
+
+  emailHostInput.value = shown.host ?? '';
+  emailPortInput.value = shown.port ?? NEW_ACCOUNT.port;
+  emailUsernameInput.value = shown.username ?? '';
+  emailPasswordInput.value = shown.password ?? '';
+  emailFromAddressInput.value = shown.fromAddress ?? '';
+  emailFromNameInput.value = shown.fromName ?? '';
+
+  // Checked against the options rather than assigned blind, for the same reason the site dropdown
+  // is: a select handed a value it has no option for selects nothing at all.
+  if (Array.from(emailSecurityInput.options).some((option) => option.value === shown.security)) {
+    emailSecurityInput.value = shown.security;
+  }
+
+  syncEmailControls();
+  showEmailStatus();
+}
+
+/** Everything the Email page currently holds, in the shape saveEmail and testEmail carry. */
+function currentAccount() {
+  const port = Number.parseInt(emailPortInput.value, 10);
+
+  return {
+    host: emailHostInput.value,
+    // The security mode's own default rather than zero for an unreadable box: a port is not
+    // optional the way a page count is, and the host has no sensible number to substitute.
+    port: Number.isFinite(port) && port > 0 ? port : SECURITY_PORTS[emailSecurityInput.value] ?? 587,
+    security: emailSecurityInput.value,
+    username: emailUsernameInput.value,
+    password: emailPasswordInput.value,
+    fromAddress: emailFromAddressInput.value,
+    fromName: emailFromNameInput.value,
+  };
+}
+
+/**
+ * The line under the site's recipient boxes: what this machine would send AS.
+ *
+ * It is the half of the answer the Scan page cannot otherwise show. The boxes above it name who the
+ * report goes to; whether anything can be sent at all is a property of the Email page, two clicks
+ * away, and an operator filling in a recipient deserves to find out here rather than after a scan.
+ */
+function showEmailStatus() {
+  if (emailRecipientsNote === null) {
+    return;
+  }
+
+  emailRecipientsNote.textContent = accountIsUsable(emailAccount)
+    ? `Sent from ${emailAccount.fromAddress.trim()} via ${emailAccount.host.trim()}. Change that on the Email page.`
+    : 'No mail server is set up on this machine yet, so nothing can be sent. Fill in the Email page.';
+}
+
+/** Shows the recipient boxes only when this site is set to email anything. */
+function syncEmailFields() {
+  emailFields.hidden = emailEnabledInput.checked === false;
+}
+
+/**
+ * Hides both Email report buttons while there is no account to send with.
+ *
+ * A disabled button would be the other option and is worse here: it offers something and refuses,
+ * with no room beside it to say why. The note under the recipient boxes is where the "why" lives,
+ * and it is on the page that also has the fields to fix it.
+ */
+function syncEmailControls() {
+  const usable = accountIsUsable(emailAccount);
+
+  if (scanEmailSendButton !== null) {
+    scanEmailSendButton.hidden = usable === false;
+  }
+
+  if (historyEmailSendButton !== null) {
+    historyEmailSendButton.hidden = usable === false;
+  }
+
+  if (usable === false) {
+    closeBar(scanEmailBar);
+    closeBar(historyEmailBar);
+    closeBar(emailTestBar);
+  }
+}
+
+function openBar(bar, input, prefill) {
+  if (bar === null) {
+    return;
+  }
+
+  bar.hidden = false;
+
+  if (input !== null) {
+    input.value = prefill ?? '';
+    input.focus();
+    input.select();
+  }
+}
+
+function closeBar(bar) {
+  if (bar !== null) {
+    bar.hidden = true;
+  }
+}
+
+/**
+ * Mails one scan: the one the result card is showing, or the one a History row selected.
+ *
+ * `path` is what tells the two apart, and null is not an oversight - it means "the run this session
+ * just finished", which the host holds itself. That is the case that has to work when the history
+ * file could not be written, which is exactly when getting the findings out of this window matters
+ * most.
+ */
+function requestSendEmail(input, path) {
+  const to = input.value.trim();
+
+  if (to === '') {
+    return;
+  }
+
+  // The profile's Cc rides along with the Scan page's send and not with the History page's: on the
+  // Scan page the operator can see the Cc box that is being honoured, and on the History page the
+  // form may well be showing a different site than the row that is selected.
+  post({
+    type: 'sendEmail',
+    to,
+    cc: path === null ? emailCcInput.value : '',
+    path,
+  });
+}
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
 
   requestRun();
+});
+
+// Ticking the box reveals the boxes it is about. Nothing is sent and nothing is saved: like every
+// other field in the grid, it reaches settings.json only through Save site or a run.
+emailEnabledInput.addEventListener('change', syncEmailFields);
+
+// Both send controls open a row rather than sending, and both prefill from the site's own recipient
+// list - the common case is "the people this site always goes to", and the row exists so that list
+// is visible and editable before anything leaves.
+scanEmailSendButton?.addEventListener('click', () => {
+  openBar(scanEmailBar, scanEmailManualTo, emailToInput.value);
+});
+
+historyEmailSendButton?.addEventListener('click', () => {
+  openBar(historyEmailBar, historyEmailManualTo, emailToInput.value);
+});
+
+scanEmailBar?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  requestSendEmail(scanEmailManualTo, null);
+  closeBar(scanEmailBar);
+});
+
+historyEmailBar?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  // Read at click time rather than captured when the row opened: the answer is matched against this
+  // path by the host's error envelope, and the selection can have moved while the row was open.
+  requestSendEmail(historyEmailManualTo, selectedHistoryPath);
+  closeBar(historyEmailBar);
+});
+
+// One listener for every Cancel in every one of the three rows. They do exactly the same thing, and
+// three identical handlers is three places for them to stop doing it.
+document.addEventListener('click', (event) => {
+  const cancel = event.target.closest?.('[data-mailbar-cancel]');
+
+  if (cancel !== null && cancel !== undefined) {
+    closeBar(cancel.closest('.mailbar'));
+  }
+});
+
+emailForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+
+  post({ type: 'saveEmail', account: currentAccount() });
+});
+
+// Moves the port to the one that goes with the mode, but only when the box still holds the mode it
+// is leaving. A number the operator typed is theirs.
+emailSecurityInput?.addEventListener('change', () => {
+  const current = Number.parseInt(emailPortInput.value, 10);
+
+  if (Object.values(SECURITY_PORTS).includes(current)) {
+    emailPortInput.value = SECURITY_PORTS[emailSecurityInput.value] ?? current;
+  }
+});
+
+emailTestButton?.addEventListener('click', () => {
+  openBar(emailTestBar, emailTestToInput, emailFromAddressInput.value);
+});
+
+// Sends what is ON SCREEN, saved or not: the question the button answers is "will this work", and
+// testing the last saved values would answer it about the wrong ones the moment anything was edited.
+emailTestSendButton?.addEventListener('click', () => {
+  const to = emailTestToInput.value.trim();
+
+  if (to === '') {
+    return;
+  }
+
+  flash(emailToast, `Sending a test to ${to}...`);
+
+  post({ type: 'testEmail', to, account: currentAccount() });
+
+  closeBar(emailTestBar);
+});
+
+emailShowMaskedInput?.addEventListener('change', () => {
+  emailPasswordInput.type = emailShowMaskedInput.checked ? 'text' : 'password';
 });
 
 cancelButton.addEventListener('click', requestCancel);
@@ -1079,6 +1430,33 @@ host?.addEventListener('message', (event) => {
       if (pendingSiteAction !== null) {
         showToast(`Site ${pendingSiteAction.verb}: ${pendingSiteAction.url}`);
         pendingSiteAction = null;
+      }
+
+      break;
+
+    // The answer to saveEmail: the account as the file now holds it. Refills the page for the same
+    // reason `sites` refills the form - the host is what decides what was stored, and a page still
+    // showing what it posted would save something subtly different next time.
+    case 'email':
+      showEmailAccount(message.account);
+
+      flash(emailToast, 'Email settings saved.');
+
+      break;
+
+    // The answer to testEmail. Said where the button is rather than in the Scan page's log: the
+    // operator is on the Email page looking at the fields this is a verdict on.
+    case 'emailTested':
+      flash(emailToast, message.message);
+
+      break;
+
+    // The answer to a manual sendEmail. A send from the result card has already reported itself in
+    // the log panel beside it, so only a send from a History row needs saying again - which is what
+    // the echoed path tells apart.
+    case 'emailSent':
+      if (typeof message.path === 'string') {
+        flash(historyEmailToast, message.message);
       }
 
       break;

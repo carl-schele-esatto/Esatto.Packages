@@ -33,7 +33,18 @@
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
 
+  <!--
+    MailKit is here and NOT on Esatto.CookieScan.Engine, deliberately. This project is the one half
+    of the scanner that is not packed, so a mail transport referenced here reaches nobody who
+    references the engine for its scanner. The message itself is composed over there by ScanEmail,
+    which is pure and has never heard of SMTP - see EmailSender for the whole argument.
+
+    MailKit rather than System.Net.Mail.SmtpClient, which Microsoft's own documentation says not to
+    use for new development: it cannot do implicit TLS on 465 at all, and its failures arrive as
+    "Failure sending mail" with the reason on an inner exception nobody sees.
+  -->
   <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.17.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
   </ItemGroup>
 

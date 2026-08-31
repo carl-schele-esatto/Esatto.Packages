@@ -55,6 +55,18 @@
         </svg>
         History
       </a>
+      <!--
+        Last, and deliberately: it is the page an operator opens once and then never again. The two
+        above it are the window's work; this one is a machine setting that happens to need a screen.
+      -->
+      <a class="nav-link" href="#email" data-page="email">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3.4" y="5.6" width="17.2" height="12.8" rx="2.2"/>
+          <path d="m4.2 7.4 7.8 5.6 7.8-5.6"/>
+        </svg>
+        Email
+      </a>
     </nav>
 
     <!--
@@ -251,6 +263,48 @@
                 </div>
 
                 <!--
+                  Who hears about a scan of THIS site. The server the mail leaves through is one per
+                  machine and lives on the Email page; only the recipients are a fact about the
+                  client, which is why only they are here. See EmailAccount for the argument.
+
+                  Below the consent cookie because it is the least often touched thing in the grid
+                  after it, and behind its own checkbox because the two address boxes are noise for
+                  the sites nobody mails - hidden until the box is ticked, so the grid does not grow
+                  two empty rows for every profile that will never use them.
+                -->
+                <label class="check field--wide">
+                  <input type="checkbox" id="scan-email-enabled">
+                  Email the report when a scan finishes
+                </label>
+
+                <!--
+                  A grid of its own inside the grid, so To and Cc are a pair like every other pair in
+                  this card while the whole block can be hidden as one thing.
+                -->
+                <div class="email-fields" id="scan-email-fields" hidden>
+                  <div class="field">
+                    <label class="label" for="scan-email-to">To</label>
+                    <input class="input" id="scan-email-to" type="text" spellcheck="false"
+                           autocomplete="off" placeholder="legal@client.se, carl@esatto.se"
+                           aria-describedby="email-recipients-note">
+                  </div>
+
+                  <div class="field">
+                    <label class="label" for="scan-email-cc">Cc</label>
+                    <input class="input" id="scan-email-cc" type="text" spellcheck="false"
+                           autocomplete="off" aria-describedby="email-recipients-note">
+                  </div>
+
+                  <!--
+                    Says where the mail comes FROM, because that is the half of the answer this card
+                    cannot show: the boxes above name the recipients, and an operator looking at them
+                    has no other way to find out whether the machine can send at all. Filled by
+                    showEmailStatus in app.js from what the host reports on ready.
+                  -->
+                  <p class="field-note muted" id="email-recipients-note"></p>
+                </div>
+
+                <!--
                   One toggle for both masked boxes - the member password and the client secret -
                   rather than a reveal button inside each: the five boxes in this grid are
                   deliberately the same size, and a control sitting inside one of them would break
@@ -362,7 +416,31 @@
         <div class="card">
           <div class="card-head">
             <h2 class="card-title">Findings</h2>
+            <!--
+              The manual half of the feature: this scan, to whoever is named, now. It exists beside
+              the automatic send rather than instead of it because they answer different questions -
+              the profile's checkbox is "always tell these people", and this is "send this one to
+              this person", which is what a client asking for last week's report actually is.
+            -->
+            <div class="card-tools">
+              <button class="button" type="button" id="scan-email-send">Email report&hellip;</button>
+            </div>
           </div>
+
+          <!--
+            Revealed by the button above rather than sending straight away. A send is not undoable,
+            and a button that mailed a client the moment it was pressed - to a list the operator
+            could not see at the time - is the one mistake this row exists to prevent. Prefilled from
+            the profile, so the common case is still one click and one Enter.
+          -->
+          <form class="mailbar" id="scan-email-bar" autocomplete="off" hidden>
+            <label class="label" for="scan-email-manual-to">Send this scan to</label>
+            <input class="input" id="scan-email-manual-to" type="text" spellcheck="false"
+                   placeholder="legal@client.se">
+            <button class="button button--primary" type="submit">Send</button>
+            <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+          </form>
+
           <cs-findings-table id="scan-findings-table"></cs-findings-table>
         </div>
 
@@ -441,7 +519,30 @@
       <div class="card" id="history-detail" hidden>
         <div class="card-head">
           <h2 class="card-title">Findings</h2>
+          <!--
+            The same control as on the Scan page, on the scan the row selected. It is the one that
+            makes a kept scan worth keeping for anyone but the operator: the report file on disk is
+            overwritten by the next run, and this composes its attachments from the scan itself.
+          -->
+          <div class="card-tools">
+            <button class="button" type="button" id="history-email-send">Email report&hellip;</button>
+          </div>
         </div>
+
+        <form class="mailbar" id="history-email-bar" autocomplete="off" hidden>
+          <label class="label" for="history-email-manual-to">Send this scan to</label>
+          <input class="input" id="history-email-manual-to" type="text" spellcheck="false"
+                 placeholder="legal@client.se">
+          <button class="button button--primary" type="submit">Send</button>
+          <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+        </form>
+
+        <!--
+          What a send came to, said where the button is. The scan page has a log panel to print into
+          and this page has nothing, so the answer needs somewhere to land - a status region, so a
+          screen reader hears it without it stealing focus.
+        -->
+        <p class="toast toast--detached" id="history-email-toast" role="status" aria-live="polite" hidden></p>
         <!--
           role="alert" so a screen reader hears a load failure the moment it happens, without the
           operator having to go looking for it - the whole point of answering null with an error
@@ -463,6 +564,127 @@
         </div>
         <p id="history-diff-error" role="alert" hidden></p>
         <cs-diff-view id="history-diff-view"></cs-diff-view>
+      </div>
+    </section>
+
+    <!--
+      One mailbox per machine, not one per site. This page is who the operator IS; the recipients are
+      a fact about each client and live in that client's profile on the Scan page. Putting the server
+      in the profile instead would mean typing these six fields again for every site added, to say
+      the same thing every time.
+    -->
+    <section class="page" id="page-email" data-page="email" tabindex="-1" aria-labelledby="email-title" hidden>
+      <header class="page-head">
+        <div>
+          <p class="eyebrow">This machine</p>
+          <h1 class="page-title" id="email-title">Email</h1>
+          <p class="page-lede">
+            The mailbox scan reports are sent from. Filled in once; every site that is set to email
+            its report uses it. Who each report goes to is set per site, on the Scan page.
+          </p>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">SMTP server</h2>
+        </div>
+
+        <form class="scan-form" id="email-form" autocomplete="off" novalidate>
+          <div class="options-grid">
+
+            <div class="field field--wide">
+              <label class="label" for="email-host">Server</label>
+              <input class="input" id="email-host" type="text" spellcheck="false"
+                     placeholder="smtp.office365.com">
+            </div>
+
+            <div class="field">
+              <label class="label" for="email-port">Port</label>
+              <input class="input num" id="email-port" type="number" min="1" max="65535" step="1">
+            </div>
+
+            <div class="field">
+              <label class="label" for="email-security">Security</label>
+              <!--
+                Words rather than a port to guess from. Picking wrongly fails in a way that is hard
+                to read - implicit TLS on 587 hangs, STARTTLS on 465 reads bytes that are not a
+                greeting - so the choice is named, and changing it moves the port to the one that
+                goes with it unless the operator has typed their own.
+              -->
+              <select class="input" id="email-security">
+                <option value="StartTls">STARTTLS (587)</option>
+                <option value="SslOnConnect">SSL/TLS (465)</option>
+                <option value="None">None (25)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="email-username">Username</label>
+              <input class="input" id="email-username" type="text" spellcheck="false"
+                     autocomplete="off" aria-describedby="email-auth-note">
+            </div>
+
+            <div class="field">
+              <label class="label" for="email-password">Password</label>
+              <input class="input" id="email-password" type="password" autocomplete="off"
+                     aria-describedby="email-auth-note">
+            </div>
+
+            <!--
+              Spanning both columns because it speaks for the pair, exactly like the client-secret
+              note on the Scan page. Both boxes empty is a supported setup rather than an unfinished
+              one - an internal relay that accepts mail from this subnet takes no sign-in at all, and
+              offering it one is how such a relay refuses the connection.
+            -->
+            <p class="field-note muted" id="email-auth-note">
+              Leave both empty for a relay that takes no sign-in. The password is stored encrypted
+              for this Windows account on this machine, like the site credentials.
+            </p>
+
+            <div class="field">
+              <label class="label" for="email-from-address">From address</label>
+              <input class="input" id="email-from-address" type="text" spellcheck="false"
+                     placeholder="scanner@esatto.se">
+            </div>
+
+            <div class="field">
+              <label class="label" for="email-from-name">From name</label>
+              <input class="input" id="email-from-name" type="text"
+                     placeholder="Esatto cookie scanner">
+            </div>
+
+            <label class="check field--wide">
+              <input type="checkbox" id="email-show-masked">
+              Show the password
+            </label>
+
+          </div>
+
+          <hr class="rule">
+
+          <!--
+            Test sits beside Save rather than behind it, and sends what is ON SCREEN: the question it
+            answers is "will this work", and a button that tested the last saved values would answer
+            it about the wrong ones the moment anything was edited.
+          -->
+          <div class="actions">
+            <div class="actions-primary">
+              <button class="button button--success" type="submit" id="email-save">Save</button>
+              <button class="button" type="button" id="email-test">Send a test&hellip;</button>
+            </div>
+            <p class="toast" id="email-toast" role="status" aria-live="polite" hidden></p>
+          </div>
+
+          <div class="mailbar" id="email-test-bar" hidden>
+            <label class="label" for="email-test-to">Send the test to</label>
+            <input class="input" id="email-test-to" type="text" spellcheck="false"
+                   placeholder="carl@esatto.se">
+            <button class="button button--primary" type="button" id="email-test-send">Send</button>
+            <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+          </div>
+
+        </form>
       </div>
     </section>
 

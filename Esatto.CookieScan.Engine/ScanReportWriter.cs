@@ -30,18 +30,67 @@ public static class ScanReportWriter
     /// </summary>
     /// <remarks>
     /// Sources every section from <paramref name="result"/> rather than from separate parameters,
-    /// so a caller cannot pass mismatched pieces of two different scans.
+    /// so a caller cannot pass mismatched pieces of two different scans. The three facts that are
+    /// NOT on the result come from <paramref name="options"/>, which is authoritative for a run that
+    /// has just happened - see <see cref="Markdown"/> for where they come from when it has not.
     /// </remarks>
     public static void WriteFiles(ScanOptions options, ScanResult result)
+    {
+        string markdown = BuildMarkdown(
+            site: options.Url.ToString(),
+            maxPages: options.MaxPages,
+            memberScan: options.MemberScanEnabled,
+            result: result);
+
+        Directory.CreateDirectory(options.ReportDir);
+
+        (string markdownPath, string jsonPath) = ReportPaths(options);
+
+        File.WriteAllText(markdownPath, markdown);
+        File.WriteAllText(jsonPath, ScanJson.Serialize(result));
+    }
+
+    /// <summary>
+    /// The same report, for a result with no <see cref="ScanOptions"/> beside it.
+    /// </summary>
+    /// <remarks>
+    /// This is what a scan mails and what the history browser could offer to save: both hold a
+    /// <see cref="ScanResult"/> read back from a file, long after the options that produced it went
+    /// out of scope. Everything the document says is recorded on the result - the site as its own
+    /// URL, and the page count and member dimension on <see cref="ScanResult.Options"/> - so the two
+    /// entry points produce the same bytes for the same run.
+    /// <para>
+    /// The exception is a history file written before <see cref="ScanOptionsSummary"/> existed, whose
+    /// <c>Options</c> is null. Those two lines then say "not recorded", which is the truth about that
+    /// file rather than a default nobody chose - the same rule the diff view applies to the same
+    /// missing member.
+    /// </para>
+    /// </remarks>
+    public static string Markdown(ScanResult result) => BuildMarkdown(
+        site: result.Site,
+        maxPages: result.Options?.MaxPages,
+        memberScan: result.Options?.MemberScanEnabled,
+        result: result);
+
+    /// <remarks>
+    /// One builder behind both entry points. It was inlined in <see cref="WriteFiles"/> until the
+    /// mail needed the same document from a result alone; a second copy that rendered "the report"
+    /// slightly differently is precisely the drift that makes an attachment and a file on disk
+    /// disagree about what a scan found.
+    /// </remarks>
+    private static string BuildMarkdown(string site, int? maxPages, bool? memberScan, ScanResult result)
     {
         var markdown = new StringBuilder();
 
         markdown.AppendLine("# Cookie scan report");
         markdown.AppendLine();
-        markdown.AppendLine($"- Site: {options.Url}");
-        markdown.AppendLine($"- Pages per pass: up to {options.MaxPages}");
-        markdown.AppendLine($"- Member dimension: {(options.MemberScanEnabled ? "yes" : "no")}");
-        markdown.AppendLine($"- Write-back: {Describe(options, result.Outcome, result.Candidates.Count)}");
+        markdown.AppendLine($"- Site: {site}");
+        markdown.AppendLine(
+            $"- Pages per pass: {(maxPages is null ? "not recorded" : $"up to {maxPages}")}");
+        markdown.AppendLine(
+            $"- Member dimension: {(memberScan is null ? "not recorded" : memberScan.Value ? "yes" : "no")}");
+        markdown.AppendLine(
+            $"- Write-back: {Describe(result.CanReachApi, result.DryRun, result.Outcome, result.Candidates.Count)}");
         markdown.AppendLine();
 
         // Violations first, deliberately. It is the finding that matters, and burying it under a
@@ -54,7 +103,7 @@ public static class ScanReportWriter
         {
             // In a dry run nothing was actually added - Describe gets that right already, but this
             // heading used to claim otherwise regardless of DryRun.
-            string addedHeading = options.DryRun ? "Would be added (dry run)" : "Added to the policy page (draft)";
+            string addedHeading = result.DryRun ? "Would be added (dry run)" : "Added to the policy page (draft)";
             Section(markdown, addedHeading, result.Outcome.Added);
             Section(markdown, "Already declared", result.Outcome.AlreadyDeclared);
             Section(
@@ -133,12 +182,7 @@ public static class ScanReportWriter
             .Where(pass => pass.Value.Count > 0)
             .Select(pass => $"{pass.Key}: {string.Join(", ", pass.Value.Order())}"));
 
-        Directory.CreateDirectory(options.ReportDir);
-
-        (string markdownPath, string jsonPath) = ReportPaths(options);
-
-        File.WriteAllText(markdownPath, markdown.ToString());
-        File.WriteAllText(jsonPath, ScanJson.Serialize(result));
+        return markdown.ToString();
     }
 
     /// <summary>
@@ -183,33 +227,9 @@ public static class ScanReportWriter
 
         if (result.Outcome is not null)
         {
-            // "added" is only true when the page was saved. In a dry run the endpoint computes the
-            // merge and writes nothing, and a line that said "2 added" sent an operator to the
-            // backoffice to look for blocks that were never created. The markdown heading already
-            // made this distinction; the console and the dashboard log read this line instead.
-            string added = options.DryRun ? "would be added" : "added";
-
             lines.Add("");
-            lines.Add(
-                $"  {result.Outcome.Added.Count} {added}, {result.Outcome.AlreadyDeclared.Count} already declared, "
-                + $"{result.Outcome.DeclaredButNotFound.Count} declared but not found.");
-
-            if (result.Outcome.Saved)
-            {
-                lines.Add(
-                    $"  The policy page ({result.Outcome.PolicyPageKey}) was saved as a DRAFT. Review the "
-                    + "new blocks in the backoffice and publish when you are happy with the wording.");
-            }
-            else if (options.DryRun)
-            {
-                lines.Add(
-                    "  Dry run - the policy page was not changed. Run again without dry run to save the "
-                    + "new blocks as a draft.");
-            }
-            else
-            {
-                lines.Add("  Nothing new to write - the policy page already declares everything that was found.");
-            }
+            lines.Add($"  {WriteBackCounts(options.DryRun, result.Outcome)}");
+            lines.Add($"  {WriteBackSentence(options.DryRun, result.Outcome)}");
         }
 
         if (result.ExpectedButNotObserved.Count > 0)
@@ -234,16 +254,51 @@ public static class ScanReportWriter
         => (Path.Combine(options.ReportDir, "cookie-scan-report.md"),
             Path.Combine(options.ReportDir, "cookie-scan-report.json"));
 
-    private static string Describe(ScanOptions options, MergeOutcome? outcome, int candidateCount)
+    /// <summary>
+    /// What the merge endpoint reported, as counts.
+    /// </summary>
+    /// <remarks>
+    /// "added" is only true when the page was saved. In a dry run the endpoint computes the merge
+    /// and writes nothing, and a line that said "2 added" sent an operator to the backoffice to look
+    /// for blocks that were never created. The markdown heading already made this distinction; the
+    /// console, the dashboard's log and the scan email all read this one line instead.
+    /// <para>
+    /// Public, and one of two, because <see cref="ScanEmail"/> is now a third reader. A mail saying
+    /// "2 added" beside a log saying "2 would be added" would be that same bug again, one front end
+    /// further along - and this time with no console session left open to check it against.
+    /// </para>
+    /// </remarks>
+    public static string WriteBackCounts(bool dryRun, MergeOutcome outcome)
+        => $"{outcome.Added.Count} {(dryRun ? "would be added" : "added")}, "
+            + $"{outcome.AlreadyDeclared.Count} already declared, "
+            + $"{outcome.DeclaredButNotFound.Count} declared but not found.";
+
+    /// <summary>What happened to the policy page itself, in one sentence.</summary>
+    /// <remarks>See <see cref="WriteBackCounts"/> for why this is shared rather than written twice.</remarks>
+    public static string WriteBackSentence(bool dryRun, MergeOutcome outcome)
+        => outcome.Saved
+            ? $"The policy page ({outcome.PolicyPageKey}) was saved as a DRAFT. Review the new blocks "
+                + "in the backoffice and publish when you are happy with the wording."
+            : dryRun
+                ? "Dry run - the policy page was not changed. Run again without dry run to save the new "
+                    + "blocks as a draft."
+                : "Nothing new to write - the policy page already declares everything that was found.";
+
+    /// <remarks>
+    /// Takes the two flags rather than the whole <see cref="ScanOptions"/>, because
+    /// <see cref="Markdown"/> renders this same line for a result that has no options beside it -
+    /// and <see cref="ScanResult"/> records both of them itself.
+    /// </remarks>
+    private static string Describe(bool canReachApi, bool dryRun, MergeOutcome? outcome, int candidateCount)
         => outcome switch
         {
-            null when options.CanReachApi is false => "not configured (report only)",
+            null when canReachApi is false => "not configured (report only)",
             // The scan deliberately skips the merge call for an empty candidate list rather than
             // let the endpoint reject it - that is a legitimate outcome, not an attempt that failed.
             null when candidateCount == 0 => "not attempted - nothing found to write back",
             null => "attempted but failed - see the console output",
             { Saved: true } => "saved as a draft",
-            _ => options.DryRun ? "dry run, nothing written" : "nothing new to write",
+            _ => dryRun ? "dry run, nothing written" : "nothing new to write",
         };
 
     private static void Section(StringBuilder markdown, string title, IEnumerable<string> lines)

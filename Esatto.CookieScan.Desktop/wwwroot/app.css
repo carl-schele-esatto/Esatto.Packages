@@ -992,6 +992,69 @@ cs-stat-tile {
   opacity: 0;
 }
 
+/*
+    A toast under a card head rather than beside a button row needs the space the row would have
+    supplied. The History page's send answer is the only one of the three in this position.
+*/
+.toast--detached {
+  margin-top: var(--s-3);
+}
+
+/* ---------------------------------------------------------------- email
+
+    The site's recipients, and the row that sends one report by hand. The machine's own account uses
+    the profile form's grid unchanged - it is the same kind of thing, a card of paired fields.
+*/
+
+/*
+    A grid inside the options grid, so To and Cc are a pair like the four pairs above them while the
+    block hides and shows as one thing. `hidden` needs saying again because the display here would
+    otherwise win over it.
+*/
+.email-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+.email-fields[hidden] {
+  display: none;
+}
+
+.email-fields > .field-note {
+  grid-column: 1 / -1;
+  margin-top: calc(var(--s-2) - var(--s-4));
+}
+
+/*
+    The row a send opens: a label, an address, and the two buttons. One line at this width, wrapping
+    rather than squeezing the address box when the window is narrow - a recipient list is the one
+    thing here that must stay readable, since reading it before pressing Send is the whole point of
+    the row existing.
+*/
+.mailbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.mailbar[hidden] {
+  display: none;
+}
+
+/* The box takes what the label and the buttons leave, down to a width still worth reading. */
+.mailbar .input {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
 /* ---------------------------------------------------------------- data table */
 
 /*

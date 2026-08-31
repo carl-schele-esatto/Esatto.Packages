@@ -284,4 +284,139 @@ public class DashboardMessageTests
     {
         Assert.Null(DashboardCommand.Parse("not json"));
     }
+
+    [Fact]
+    public void A_run_carries_the_sites_email_settings()
+    {
+        const string json = """
+            {"type":"run","url":"https://example.com","maxPages":25,"locale":"Sv","dryRun":true,
+             "emailEnabled":true,"emailTo":"legal@client.se","emailCc":"ops@esatto.se"}
+            """;
+
+        RunCommand run = Assert.IsType<RunCommand>(DashboardCommand.Parse(json));
+
+        Assert.True(run.EmailEnabled);
+        Assert.Equal("legal@client.se", run.EmailTo);
+        Assert.Equal("ops@esatto.se", run.EmailCc);
+    }
+
+    /// <summary>
+    /// A page from a build that predates the email fields still runs, and mails nobody.
+    /// </summary>
+    /// <remarks>
+    /// The same guarantee the consent-cookie field has, with a sharper failure behind it: this is the
+    /// message that decides whether a finished scan sends mail, so a missing field reading as
+    /// anything but "no" would have an old page start mailing on the operator's behalf.
+    /// </remarks>
+    [Fact]
+    public void A_run_from_a_page_that_predates_email_mails_nobody()
+    {
+        const string json = """
+            {"type":"run","url":"https://example.com","maxPages":25,"locale":"Sv","dryRun":true}
+            """;
+
+        RunCommand run = Assert.IsType<RunCommand>(DashboardCommand.Parse(json));
+
+        Assert.False(run.EmailEnabled);
+        Assert.Null(run.EmailTo);
+        Assert.Null(run.EmailCc);
+    }
+
+    [Fact]
+    public void A_save_email_command_parses_the_whole_account()
+    {
+        const string json = """
+            {"type":"saveEmail","account":{"host":"smtp.example.com","port":465,
+             "security":"SslOnConnect","username":"scanner@example.com","password":"p",
+             "fromAddress":"scanner@example.com","fromName":"Esatto cookie scanner"}}
+            """;
+
+        SaveEmailCommand save = Assert.IsType<SaveEmailCommand>(DashboardCommand.Parse(json));
+
+        Assert.Equal("smtp.example.com", save.Account.Host);
+        Assert.Equal(465, save.Account.Port);
+        Assert.Equal(EmailSecurity.SslOnConnect, save.Account.Security);
+        Assert.True(save.Account.IsConfigured);
+    }
+
+    // Guarded like saveSite, and for the same reason: the next thing that happens is a write, and an
+    // account of nulls would go over a working one.
+    [Fact]
+    public void A_save_email_with_no_account_is_dropped()
+    {
+        Assert.Null(DashboardCommand.Parse("""{"type":"saveEmail"}"""));
+    }
+
+    // A security mode this build cannot read is refused at the parse rather than silently becoming
+    // the default - the same rule SaveSiteCommand's locale follows, for the same reason: what
+    // follows is a write to disk.
+    [Fact]
+    public void A_save_email_naming_an_unknown_security_mode_is_dropped()
+    {
+        Assert.Null(DashboardCommand.Parse(
+            """{"type":"saveEmail","account":{"host":"h","security":"Quantum","fromAddress":"a@b.c"}}"""));
+    }
+
+    [Fact]
+    public void A_test_email_carries_the_account_on_screen_rather_than_the_saved_one()
+    {
+        const string json = """
+            {"type":"testEmail","to":"carl@esatto.se",
+             "account":{"host":"smtp.example.com","port":587,"security":"StartTls",
+             "fromAddress":"scanner@example.com"}}
+            """;
+
+        TestEmailCommand test = Assert.IsType<TestEmailCommand>(DashboardCommand.Parse(json));
+
+        Assert.Equal("carl@esatto.se", test.To);
+        Assert.Equal("smtp.example.com", test.Account?.Host);
+    }
+
+    // Null means "use what is saved", which is what the button sends when nothing has been edited.
+    [Fact]
+    public void A_test_email_without_an_account_falls_back_to_the_saved_one()
+    {
+        TestEmailCommand test = Assert.IsType<TestEmailCommand>(
+            DashboardCommand.Parse("""{"type":"testEmail","to":"carl@esatto.se"}"""));
+
+        Assert.Null(test.Account);
+    }
+
+    [Fact]
+    public void A_send_or_test_with_no_recipient_is_dropped()
+    {
+        Assert.Null(DashboardCommand.Parse("""{"type":"testEmail"}"""));
+        Assert.Null(DashboardCommand.Parse("""{"type":"sendEmail","path":"c:\\scans\\a.json"}"""));
+    }
+
+    [Fact]
+    public void A_send_email_naming_a_kept_scan_carries_its_path()
+    {
+        const string json = """
+            {"type":"sendEmail","to":"legal@client.se","cc":"ops@esatto.se","path":"c:\\scans\\a.json"}
+            """;
+
+        SendEmailCommand send = Assert.IsType<SendEmailCommand>(DashboardCommand.Parse(json));
+
+        Assert.Equal("legal@client.se", send.To);
+        Assert.Equal("ops@esatto.se", send.Cc);
+        Assert.Equal(@"c:\scans\a.json", send.Path);
+    }
+
+    /// <summary>
+    /// No path is not a missing field - it is the run this session just finished.
+    /// </summary>
+    /// <remarks>
+    /// Which is why this one is NOT guarded the way deleteScan's path is: null is a meaningful value
+    /// here, and the case it names is the one that has to work when the history file could not be
+    /// written at all.
+    /// </remarks>
+    [Fact]
+    public void A_send_email_with_no_path_means_the_last_run()
+    {
+        SendEmailCommand send = Assert.IsType<SendEmailCommand>(
+            DashboardCommand.Parse("""{"type":"sendEmail","to":"legal@client.se"}"""));
+
+        Assert.Null(send.Path);
+    }
 }

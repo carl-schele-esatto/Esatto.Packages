@@ -50,6 +50,9 @@ public abstract record DashboardCommand
                 "deleteSite" => CompleteDelete(JsonSerializer.Deserialize<DeleteSiteCommand>(json, ScanJson.Options)),
                 "deleteScan" => CompleteDeleteScan(JsonSerializer.Deserialize<DeleteScanCommand>(json, ScanJson.Options)),
                 "clearScans" => new ClearScansCommand(),
+                "saveEmail" => CompleteSaveEmail(JsonSerializer.Deserialize<SaveEmailCommand>(json, ScanJson.Options)),
+                "testEmail" => CompleteTestEmail(JsonSerializer.Deserialize<TestEmailCommand>(json, ScanJson.Options)),
+                "sendEmail" => CompleteSendEmail(JsonSerializer.Deserialize<SendEmailCommand>(json, ScanJson.Options)),
                 _ => null,
             };
         }
@@ -78,6 +81,20 @@ public abstract record DashboardCommand
 
         static DeleteScanCommand? CompleteDeleteScan(DeleteScanCommand? command)
             => command is { Path: not null } ? command : null;
+
+        // saveEmail ends in a write to settings.json, so it is guarded like saveSite: a message with
+        // no `account` would otherwise store an account of nulls over a working one.
+        static SaveEmailCommand? CompleteSaveEmail(SaveEmailCommand? command)
+            => command is { Account: not null } ? command : null;
+
+        // These two end in a message leaving the machine rather than in a write, which is the same
+        // class of thing: unrecoverable once done. A send with no recipient is refused here rather
+        // than at the SMTP conversation, so nothing connects to a server to find out.
+        static TestEmailCommand? CompleteTestEmail(TestEmailCommand? command)
+            => command is { To: not null } ? command : null;
+
+        static SendEmailCommand? CompleteSendEmail(SendEmailCommand? command)
+            => command is { To: not null } ? command : null;
     }
 }
 
@@ -107,7 +124,15 @@ public sealed record RunCommand(
     // Defaulted, so a page from a build that predates the field still parses into a run rather than
     // being dropped by the loop. Null means "the cookie-consent default", which is what almost every
     // site is.
-    string? ConsentCookie = null) : DashboardCommand;
+    string? ConsentCookie = null,
+    // The email trio, defaulted for the same reason as the field above it. A run carries them
+    // because a run WRITES the profile it ran with - see ScanSession.Remembered - so a form whose
+    // recipients had been edited and not saved would otherwise have those edits discarded by the
+    // scan that used them. EmailEnabled defaults to false: a page that does not know about email
+    // must not start a run that mails anybody.
+    bool EmailEnabled = false,
+    string? EmailTo = null,
+    string? EmailCc = null) : DashboardCommand;
 
 /// <summary>Save the run card's current values as the profile for the URL they name.</summary>
 /// <remarks>
@@ -133,6 +158,40 @@ public sealed record DeleteScanCommand(string Path) : DashboardCommand;
 /// <summary>Delete every kept scan. The page asks the operator first; the host does not.</summary>
 public sealed record ClearScansCommand : DashboardCommand;
 
+/// <summary>Store the machine's one mail account, as the Email page currently shows it.</summary>
+/// <remarks>
+/// The whole account travels in one member for the reason <see cref="SaveSiteCommand"/> gives about
+/// the profile: the record the page sends and the record the file stores are the same type, so a
+/// field added to <see cref="EmailAccount"/> later needs no second declaration to keep in step. Its
+/// <c>Security</c> is therefore the enum itself, and a spelling this build cannot read is refused at
+/// the parse - which is right, because the next thing that happens is a write to disk.
+/// </remarks>
+public sealed record SaveEmailCommand(EmailAccount Account) : DashboardCommand;
+
+/// <summary>Send the message that proves the account works.</summary>
+/// <remarks>
+/// Carries the account as well as the address, so the button tests what is ON SCREEN rather than
+/// what was last saved. Testing the stored account would make "change the port, press Test" report
+/// on the old port - and the whole point of the button is to try a setting before committing to it.
+/// Null means "use what is saved", which is what the button sends when nothing has been edited.
+/// </remarks>
+public sealed record TestEmailCommand(string To, EmailAccount? Account = null) : DashboardCommand;
+
+/// <summary>Mail one scan's report to the addresses named.</summary>
+/// <remarks>
+/// <c>Path</c> identifies the scan and is optional: a path names a kept scan out of the history
+/// folder, and null means the run this session has most recently completed. The second case is not a
+/// convenience - it is the one that has to work when the history write itself failed, which is
+/// exactly when the operator most wants the findings out of the window and into a mailbox.
+/// <para>
+/// The recipients travel on the message rather than being looked up here from the profile. What is
+/// sent must be what the operator was reading, for the same reason <see cref="RunCommand"/> carries
+/// the form's own fields: a send that fetched its own recipient list could mail a different set of
+/// people from the one shown next to the button that was pressed.
+/// </para>
+/// </remarks>
+public sealed record SendEmailCommand(string To, string? Cc = null, string? Path = null) : DashboardCommand;
+
 public sealed record CancelCommand : DashboardCommand;
 public sealed record ListHistoryCommand : DashboardCommand;
 public sealed record LoadScanCommand(string Path) : DashboardCommand;
@@ -154,4 +213,21 @@ public static class DashboardAnswer
 {
     public static object Sites(DashboardSettings settings)
         => new { type = "sites", sites = settings.Sites, selectedUrl = settings.SelectedUrl };
+
+    /// <summary>
+    /// The mail account as stored, for the Email page's fields.
+    /// </summary>
+    /// <remarks>
+    /// A second entry here for the same reason as the first: it is built by the <c>ready</c> answer
+    /// and again by <c>saveEmail</c>, and two anonymous objects spelling one envelope is drift with
+    /// nothing to compile against.
+    /// <para>
+    /// The password goes out decrypted, exactly as the profiles' do, and for the same reason: the
+    /// page fills its own masked field from it and posts back what the field holds. The envelope
+    /// never leaves the process - WebView2 hands it to a renderer inside this exe, over no socket and
+    /// no origin anything else can reach.
+    /// </para>
+    /// </remarks>
+    public static object Email(DashboardSettings settings)
+        => new { type = "email", account = settings.Email };
 }

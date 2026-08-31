@@ -24,6 +24,21 @@ public sealed class ScanSession(DashboardBridge bridge, DashboardSettings settin
     private CancellationTokenSource? cancellation;
 
     /// <summary>
+    /// The last scan this session finished, for the result card's own Send email button.
+    /// </summary>
+    /// <remarks>
+    /// Held here rather than looked up out of the history folder by path, and the difference matters
+    /// in exactly the case the button is most wanted: a scan whose history entry could not be written
+    /// has no path to be found by, and it is the scan whose findings most need a way out of this
+    /// window. Set from the result the page was shown, so the two cannot be different scans.
+    /// <para>
+    /// Not cleared when a new run starts. A run that fails leaves the previous result on screen and
+    /// mailable, which is the honest reading - the button sends what the card is showing.
+    /// </para>
+    /// </remarks>
+    public ScanResult? LastResult { get; private set; }
+
+    /// <summary>
     /// Where the window writes its report files.
     /// </summary>
     /// <remarks>
@@ -111,6 +126,11 @@ public sealed class ScanSession(DashboardBridge bridge, DashboardSettings settin
                 return;
             }
 
+            // Set before the result is posted, so the page cannot show a Send email button for a scan
+            // this session could not then produce. See the property's own remark for why the result is
+            // kept here rather than found again by path.
+            LastResult = result;
+
             // Posted before anything is written, and carrying the summary lines with it. A report
             // file left open in an editor, or a full disk, used to throw straight past this and cost
             // the operator the findings of a scan that had actually succeeded. The summary lines name
@@ -145,6 +165,17 @@ public sealed class ScanSession(DashboardBridge bridge, DashboardSettings settin
             {
                 log.Warning($"The scan finished, but its history entry could not be written: {error.Message}");
             }
+
+            // The third of the three things a finished scan leaves behind, in the same shape as the
+            // two above it: a mail that will not send is a warning line and nothing else, never a
+            // scan reported as failed. Last of the three because a report is worth recording before
+            // it is announced - though the message itself is composed from the result rather than
+            // from either file, so neither write failing costs the mail its attachments.
+            //
+            // Its own method rather than a fourth try block, because unlike the two writes above it
+            // has decisions to make before it does anything: whether this site asked for a mail,
+            // whether anyone is named, and whether the machine can send one at all.
+            await MailAsync(command, result, token);
         }
         catch (OperationCanceledException)
         {
@@ -167,6 +198,127 @@ public sealed class ScanSession(DashboardBridge bridge, DashboardSettings settin
             cancellation.Dispose();
             cancellation = null;
         }
+    }
+
+    /// <summary>
+    /// Mails a finished scan's report, if the site asked for one and the machine can send it.
+    /// </summary>
+    /// <remarks>
+    /// Every reason not to send is a line in the log rather than silence. A site whose profile says
+    /// "email this report" and then does not is the failure mode worth spending three warnings on:
+    /// the operator has ticked a box, walked away, and would otherwise learn that nothing was sent
+    /// only from the recipient never mentioning it.
+    /// <para>
+    /// Under the run's own cancellation, so closing the window during a send does not leave an SMTP
+    /// conversation holding the process open. That cannot be mistaken for a cancelled scan:
+    /// <see cref="EmailSender"/> catches the cancel itself and answers with an outcome, so nothing
+    /// reaches the handler that reports a run as abandoned.
+    /// </para>
+    /// </remarks>
+    private async Task MailAsync(RunCommand command, ScanResult result, CancellationToken token)
+    {
+        if (command.EmailEnabled is false)
+        {
+            return;
+        }
+
+        IReadOnlyList<string> to = EmailRecipients.Parse(command.EmailTo);
+
+        if (to.Count == 0)
+        {
+            log.Warning(
+                "This site is set to email its report, but no recipient is filled in. Nothing was sent.");
+
+            return;
+        }
+
+        if (settings.Email is not { IsConfigured: true } account)
+        {
+            log.Warning(
+                "This site is set to email its report, but this machine has no mail server set up. "
+                + "Fill in the Email page. Nothing was sent.");
+
+            return;
+        }
+
+        // The outcome is dropped here on purpose: an automatic send has already said everything it
+        // has to say in the log, and the page it would answer is the one with the log on it.
+        _ = await SendAsync(account, to, EmailRecipients.Parse(command.EmailCc), result, token);
+    }
+
+    /// <summary>Mails one scan on demand - the result card's button, or a row on the History page.</summary>
+    /// <remarks>
+    /// The same send the automatic path takes, from the same account and through the same sender, so
+    /// a report that arrives by hand is the report that would have arrived by itself.
+    /// <para>
+    /// Answered on an envelope as well as logged, which the automatic path is not. The History page
+    /// has no log panel to print into - a send from a row there would otherwise report itself two
+    /// pages away, on a screen the operator is not looking at. The envelope echoes
+    /// <see cref="SendEmailCommand.Path"/> so the page can tell a send from a row apart from a send
+    /// from the result card, which does have a log.
+    /// </para>
+    /// </remarks>
+    public async Task SendAsync(SendEmailCommand command, ScanResult result)
+    {
+        IReadOnlyList<string> to = EmailRecipients.Parse(command.To);
+
+        if (to.Count == 0)
+        {
+            Answer(command, new EmailOutcome(
+                false, "There is nobody to send this to. Fill in a recipient and try again."));
+
+            return;
+        }
+
+        if (settings.Email is not { IsConfigured: true } account)
+        {
+            Answer(command, new EmailOutcome(
+                false, "This machine has no mail server set up, so nothing was sent. Fill in the Email page."));
+
+            return;
+        }
+
+        EmailOutcome outcome = await SendAsync(
+            account, to, EmailRecipients.Parse(command.Cc), result, CancellationToken.None);
+
+        bridge.Post(new { type = "emailSent", path = command.Path, sent = outcome.Sent, message = outcome.Message });
+    }
+
+    /// <summary>One refusal, said in the log and beside the button that asked, before anything connects.</summary>
+    private void Answer(SendEmailCommand command, EmailOutcome outcome)
+    {
+        log.Warning(outcome.Message);
+
+        bridge.Post(new { type = "emailSent", path = command.Path, sent = outcome.Sent, message = outcome.Message });
+    }
+
+    /// <remarks>
+    /// The one place a scan actually becomes a message. Both callers reach it with an account they
+    /// have already checked and a recipient list they have already found to be non-empty, so the
+    /// three states an operator sees - about to send, sent, would not send - are worded once.
+    /// </remarks>
+    private async Task<EmailOutcome> SendAsync(
+        EmailAccount account,
+        IReadOnlyList<string> to,
+        IReadOnlyList<string> cc,
+        ScanResult result,
+        CancellationToken token)
+    {
+        log.Info($"Emailing the report to {string.Join(", ", to)}...");
+
+        EmailOutcome outcome = await EmailSender.SendAsync(
+            account, to, cc, ScanEmail.Compose(result), token);
+
+        if (outcome.Sent)
+        {
+            log.Info(outcome.Message);
+        }
+        else
+        {
+            log.Warning(outcome.Message);
+        }
+
+        return outcome;
     }
 
     /// <remarks>
@@ -293,7 +445,10 @@ public sealed class ScanSession(DashboardBridge bridge, DashboardSettings settin
         MemberPassword: command.MemberPassword ?? "",
         ClientId: command.ClientId ?? "",
         ClientSecret: command.ClientSecret ?? "",
-        ConsentCookie: command.ConsentCookie ?? "");
+        ConsentCookie: command.ConsentCookie ?? "",
+        EmailEnabled: command.EmailEnabled,
+        EmailTo: command.EmailTo ?? "",
+        EmailCc: command.EmailCc ?? "");
 
     /// <remarks>
     /// Swedish for anything unrecognised, which is the rule the console tool applies to --locale.
