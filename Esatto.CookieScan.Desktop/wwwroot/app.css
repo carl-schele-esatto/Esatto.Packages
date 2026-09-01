@@ -847,6 +847,89 @@ cs-stat-tile {
   color: var(--ink-500);
 }
 
+/*
+    A masked box and the button that shows what is in it. The button is inside the box's right edge
+    rather than under the grid as one checkbox for every masked box, so that it can name the single
+    box it belongs to - see the member password in index.html for why that changed. The box keeps
+    the height and the width every other box in the grid has: the button is paid for out of the
+    right padding.
+*/
+.masked {
+  position: relative;
+  display: grid;
+}
+
+/*
+    Room for the button at the end of the line, so a secret longer than the box scrolls under the
+    button rather than behind it.
+*/
+.masked .input {
+  padding-right: var(--s-8);
+}
+
+/*
+    The input's own height, and flush with its right edge: the whole corner of the box is the target,
+    which is the size a pointer wants and the size the border-radius asks for.
+*/
+.reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  /* --ink-500, one step lighter than the value it sits beside: present, and not competing with it. */
+  color: var(--ink-500);
+  cursor: pointer;
+  transition: color .12s ease;
+}
+
+.reveal:hover,
+.reveal[aria-pressed="true"] {
+  color: var(--blue-600);
+}
+
+/*
+    Inward, unlike the global ring. Offset outwards on a control flush with the input's right edge,
+    it would draw a second border across the field's own.
+*/
+.reveal:focus-visible {
+  outline-offset: -3px;
+}
+
+/*
+    The eye is the whole icon while the box is masked; the slash is added to it while the box is
+    showing, because that is when the button's job is to hide. Drawn from aria-pressed rather than
+    from a class of its own, so the state a screen reader is told is the state on screen.
+*/
+.reveal-slash {
+  display: none;
+}
+
+.reveal[aria-pressed="true"] .reveal-slash {
+  display: block;
+}
+
+/*
+    Edge's own reveal button, removed. WebView2 draws an eye of its own inside every password box that
+    has a value - the window is Edge, so the box came with one before we put one there - and left in
+    place the field had two eyes side by side. Ours is the one that stays: the native button flips the
+    input's type without telling anything, so aria-pressed, the label and the slash would all go on
+    saying "masked" while the password sat on screen. ::-ms-clear goes with it for the same reason.
+
+    Scoped to .masked rather than to every password input, so a password box added later without a
+    button of its own keeps the reveal the browser gives it for free.
+*/
+.masked .input::-ms-reveal,
+.masked .input::-ms-clear {
+  display: none;
+}
+
 /* ---------------------------------------------------------------- scan form
 
     Layout only. Every control in here is one of the primitives above; what this section adds is the
@@ -935,11 +1018,18 @@ cs-stat-tile {
   margin-top: calc(var(--s-2) - var(--s-4));
 }
 
+/*
+    13px, not the 14px it inherits from the body. 14px in this app is a value an operator typed into
+    a box, or a card's own title; a checkbox's label is neither. It is chrome - the same kind of text
+    as the nav links, the buttons beside it and the table headers, every one of which sits at 13 - and
+    left at 14 these two labels were the largest plain text in the card, saying nothing that earns it.
+*/
 .check {
   display: inline-flex;
   align-items: center;
   gap: var(--s-2);
   width: fit-content;
+  font-size: 13px;
   cursor: pointer;
 }
 
@@ -968,10 +1058,15 @@ cs-stat-tile {
   border-top: 1px solid var(--border);
 }
 
-/* Run and Cancel, pushed to the row's far right; whichever is visible occupies the same spot. */
+/*
+    Run and Cancel, pushed to the row's far right; whichever is visible occupies the same spot.
+    The gap is for the Email page, whose row holds Save AND Send a test at once rather than two
+    buttons taking turns in one place, and without it they touch.
+*/
 .actions-primary {
   display: flex;
   align-items: center;
+  gap: var(--s-3);
   margin-left: auto;
 }
 

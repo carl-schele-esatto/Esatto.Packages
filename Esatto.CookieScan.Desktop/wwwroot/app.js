@@ -126,7 +126,8 @@ const clientIdInput = document.querySelector('#scan-client-id');
 const clientSecretInput = document.querySelector('#scan-client-secret');
 const consentCookieInput = document.querySelector('#scan-consent-cookie');
 const dryRunInput = document.querySelector('#scan-dry-run');
-const showMaskedInput = document.querySelector('#scan-show-masked');
+/** Every masked box's reveal button, on both pages - see setRevealed. */
+const revealButtons = Array.from(document.querySelectorAll('.reveal'));
 const runButton = document.querySelector('#scan-run');
 const cancelButton = document.querySelector('#scan-cancel');
 const saveSiteButton = document.querySelector('#scan-save-site');
@@ -162,7 +163,6 @@ const emailUsernameInput = document.querySelector('#email-username');
 const emailPasswordInput = document.querySelector('#email-password');
 const emailFromAddressInput = document.querySelector('#email-from-address');
 const emailFromNameInput = document.querySelector('#email-from-name');
-const emailShowMaskedInput = document.querySelector('#email-show-masked');
 const emailTestButton = document.querySelector('#email-test');
 const emailTestBar = document.querySelector('#email-test-bar');
 const emailTestToInput = document.querySelector('#email-test-to');
@@ -618,6 +618,11 @@ function fillForm(profile) {
   // are recomputed by hand.
   showSecretStatus();
   showBrandSite();
+
+  // Every masked box goes back to masked. The profile on screen is not the one that was on screen a
+  // moment ago, and a box left revealed would put this site's secret in front of whoever the last
+  // site's was revealed for.
+  maskAll();
 
   if (Array.from(localeInput.options).some((option) => option.value === profile.locale)) {
     localeInput.value = profile.locale;
@@ -1160,10 +1165,6 @@ emailTestSendButton?.addEventListener('click', () => {
   closeBar(emailTestBar);
 });
 
-emailShowMaskedInput?.addEventListener('change', () => {
-  emailPasswordInput.type = emailShowMaskedInput.checked ? 'text' : 'password';
-});
-
 cancelButton.addEventListener('click', requestCancel);
 saveSiteButton.addEventListener('click', requestSaveSite);
 deleteSiteButton.addEventListener('click', requestDeleteSite);
@@ -1206,18 +1207,43 @@ dryRunInput.addEventListener('change', () => {
 clientIdInput.addEventListener('input', showSecretStatus);
 clientSecretInput.addEventListener('input', showSecretStatus);
 
-// The two masked boxes together: the member password and the client secret. The client id is not in
-// the list because it is not masked - it is a name, not a credential. The reason to reveal either of
-// these is the same, which is why one control serves both: checking that what is in the box is what
-// the operator meant to put there. Nothing is re-read or re-sent; only the input's own type changes,
-// so a revealed box behaves exactly like a masked one.
-showMaskedInput.addEventListener('change', () => {
-  const type = showMaskedInput.checked ? 'text' : 'password';
+// One button per masked box - the member password and the client secret here, the SMTP password on
+// the Email page - in place of the one checkbox under the grid that used to unmask them together.
+// The reason to reveal any of them is the same, which is why one piece of code serves all three:
+// checking that what is in the box is what the operator meant to put there. Nothing is re-read or
+// re-sent; only the input's own type changes, so a revealed box behaves exactly like a masked one.
+//
+// aria-pressed carries the state. The CSS draws the slash across the eye from that attribute, so
+// what a screen reader is told and what is on screen cannot drift apart, and the label is rewritten
+// with it - "show the password" is a lie the moment the password is showing.
+function setRevealed(button, revealed) {
+  const input = button.closest('.masked')?.querySelector('.input');
 
-  for (const input of [memberPasswordInput, clientSecretInput]) {
-    input.type = type;
+  if (!input) {
+    return;
   }
-});
+
+  input.type = revealed ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(revealed));
+
+  const label = `${revealed ? 'Hide' : 'Show'} the ${button.dataset.reveals}`;
+
+  button.setAttribute('aria-label', label);
+  button.title = label;
+}
+
+/** Puts every masked box back to masked, wherever it is and whatever it was showing. */
+function maskAll() {
+  for (const button of revealButtons) {
+    setRevealed(button, false);
+  }
+}
+
+for (const button of revealButtons) {
+  button.addEventListener('click', () => {
+    setRevealed(button, button.getAttribute('aria-pressed') !== 'true');
+  });
+}
 
 // Ctrl+Enter runs and Escape cancels, but only while the Scan page is the one on screen: a shortcut
 // that fires from another page would act on a form the operator cannot see.

@@ -193,10 +193,32 @@
                   Saved with the profile, encrypted at rest under this Windows user - see
                   DashboardSettings. Masked because it is over the operator's shoulder that it is
                   most likely to be read, not in the file.
+
+                  Revealed by the button inside the box, which is not what this was: one checkbox
+                  under the grid used to unmask every masked box at once. The checkbox was there to
+                  keep the boxes identical in size, and it bought that at the price of naming none of
+                  them - it had to read "show the masked values" because it spoke for two boxes, and
+                  answering "is the password right" put the client secret on screen as well. A button
+                  in the box asks about that box only, and sits where the operator is already
+                  looking. The boxes stay the same size: the button is paid for out of the right
+                  padding, not out of the width.
                 -->
                 <div class="field">
                   <label class="label" for="scan-member-password">Member password</label>
-                  <input class="input" id="scan-member-password" type="password" autocomplete="off">
+                  <div class="masked">
+                    <input class="input" id="scan-member-password" type="password" autocomplete="off">
+                    <button class="reveal" type="button" aria-pressed="false"
+                            aria-controls="scan-member-password" data-reveals="member password"
+                            aria-label="Show the member password" title="Show the member password">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                           aria-hidden="true">
+                        <path d="M2.6 12S6.4 5.9 12 5.9 21.4 12 21.4 12 17.6 18.1 12 18.1 2.6 12 2.6 12Z"/>
+                        <circle cx="12" cy="12" r="2.9"/>
+                        <path class="reveal-slash" d="m4.6 4.6 14.8 14.8"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <!--
@@ -222,8 +244,21 @@
 
                 <div class="field">
                   <label class="label" for="scan-client-secret">API client secret</label>
-                  <input class="input" id="scan-client-secret" type="password" autocomplete="off"
-                         aria-describedby="secret-status">
+                  <div class="masked">
+                    <input class="input" id="scan-client-secret" type="password" autocomplete="off"
+                           aria-describedby="secret-status">
+                    <button class="reveal" type="button" aria-pressed="false"
+                            aria-controls="scan-client-secret" data-reveals="client secret"
+                            aria-label="Show the client secret" title="Show the client secret">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                           aria-hidden="true">
+                        <path d="M2.6 12S6.4 5.9 12 5.9 21.4 12 21.4 12 17.6 18.1 12 18.1 2.6 12 2.6 12Z"/>
+                        <circle cx="12" cy="12" r="2.9"/>
+                        <path class="reveal-slash" d="m4.6 4.6 14.8 14.8"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 <!--
@@ -303,18 +338,6 @@
                   -->
                   <p class="field-note muted" id="email-recipients-note"></p>
                 </div>
-
-                <!--
-                  One toggle for both masked boxes - the member password and the client secret -
-                  rather than a reveal button inside each: the five boxes in this grid are
-                  deliberately the same size, and a control sitting inside one of them would break
-                  that. Unchecked on every launch and never remembered - a reveal that outlived the
-                  window would put a secret on screen that nobody had asked to see.
-                -->
-                <label class="check field--wide">
-                  <input type="checkbox" id="scan-show-masked">
-                  Show the masked values
-                </label>
               </div>
 
               <!--
@@ -322,11 +345,14 @@
                 rather than out beside Run. They read as part of starting a scan when all three share
                 a row, and they are not: two of them write settings.json and never touch the site.
 
+                Delete first and Save site last, the order the mail bars use: the button that keeps
+                what is on screen ends the row, and the one that throws it away is the detour before
+                it. Left the other way round, the row put its destructive button where the eye stops.
+
                 type="button" on both: they are inside a form whose submit runs a scan, and a button
                 without it would run one.
               -->
               <div class="actions actions--profile">
-                <button class="button button--success" id="scan-save-site" type="button">Save site</button>
                 <!--
                   aria-label, because "Delete" alone is what a screen reader announces out of context -
                   in a list of this page's controls, say - and it does not say what is deleted. The
@@ -335,6 +361,7 @@
                 -->
                 <button class="button button--danger" id="scan-delete-site" type="button"
                         aria-label="Delete saved site">Delete</button>
+                <button class="button button--success" id="scan-save-site" type="button">Save site</button>
                 <!--
                   What just happened, said once. Save and Delete otherwise succeed in silence - the
                   dropdown changes, a button greys out - and silence reads as "did that work?". A
@@ -423,7 +450,7 @@
               this person", which is what a client asking for last week's report actually is.
             -->
             <div class="card-tools">
-              <button class="button" type="button" id="scan-email-send">Email report&hellip;</button>
+              <button class="button button--primary" type="button" id="scan-email-send">Email report&hellip;</button>
             </div>
           </div>
 
@@ -432,13 +459,19 @@
             and a button that mailed a client the moment it was pressed - to a list the operator
             could not see at the time - is the one mistake this row exists to prevent. Prefilled from
             the profile, so the common case is still one click and one Enter.
+
+            Cancel first and Send last in all three mail bars, and Send in the same green Save wears:
+            the send is the act the row exists for, so it belongs at the end of the row where the eye
+            stops, wearing the colour this palette gives a good outcome. Cancel is red by the
+            operator's choice - it destroys nothing, it closes the row - but the bar has only two
+            buttons to tell apart and red is the colour that reads as "not this" without being read.
           -->
           <form class="mailbar" id="scan-email-bar" autocomplete="off" hidden>
             <label class="label" for="scan-email-manual-to">Send this scan to</label>
             <input class="input" id="scan-email-manual-to" type="text" spellcheck="false"
                    placeholder="legal@client.se">
-            <button class="button button--primary" type="submit">Send</button>
-            <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+            <button class="button button--danger" type="button" data-mailbar-cancel>Cancel</button>
+            <button class="button button--success" type="submit">Send</button>
           </form>
 
           <cs-findings-table id="scan-findings-table"></cs-findings-table>
@@ -525,7 +558,7 @@
             overwritten by the next run, and this composes its attachments from the scan itself.
           -->
           <div class="card-tools">
-            <button class="button" type="button" id="history-email-send">Email report&hellip;</button>
+            <button class="button button--primary" type="button" id="history-email-send">Email report&hellip;</button>
           </div>
         </div>
 
@@ -533,8 +566,8 @@
           <label class="label" for="history-email-manual-to">Send this scan to</label>
           <input class="input" id="history-email-manual-to" type="text" spellcheck="false"
                  placeholder="legal@client.se">
-          <button class="button button--primary" type="submit">Send</button>
-          <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+          <button class="button button--danger" type="button" data-mailbar-cancel>Cancel</button>
+          <button class="button button--success" type="submit">Send</button>
         </form>
 
         <!--
@@ -627,8 +660,21 @@
 
             <div class="field">
               <label class="label" for="email-password">Password</label>
-              <input class="input" id="email-password" type="password" autocomplete="off"
-                     aria-describedby="email-auth-note">
+              <div class="masked">
+                <input class="input" id="email-password" type="password" autocomplete="off"
+                       aria-describedby="email-auth-note">
+                <button class="reveal" type="button" aria-pressed="false"
+                        aria-controls="email-password" data-reveals="password"
+                        aria-label="Show the password" title="Show the password">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+                       stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                       aria-hidden="true">
+                    <path d="M2.6 12S6.4 5.9 12 5.9 21.4 12 21.4 12 17.6 18.1 12 18.1 2.6 12 2.6 12Z"/>
+                    <circle cx="12" cy="12" r="2.9"/>
+                    <path class="reveal-slash" d="m4.6 4.6 14.8 14.8"/>
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!--
@@ -654,11 +700,6 @@
                      placeholder="Esatto cookie scanner">
             </div>
 
-            <label class="check field--wide">
-              <input type="checkbox" id="email-show-masked">
-              Show the password
-            </label>
-
           </div>
 
           <hr class="rule">
@@ -667,11 +708,15 @@
             Test sits beside Save rather than behind it, and sends what is ON SCREEN: the question it
             answers is "will this work", and a button that tested the last saved values would answer
             it about the wrong ones the moment anything was edited.
+
+            Save is the last of the two because the row is right aligned and the eye stops at its
+            right end: the button that finishes with this page is the one that should be waiting
+            there. Test is the detour, so it comes first.
           -->
           <div class="actions">
             <div class="actions-primary">
+              <button class="button button--primary" type="button" id="email-test">Send a test&hellip;</button>
               <button class="button button--success" type="submit" id="email-save">Save</button>
-              <button class="button" type="button" id="email-test">Send a test&hellip;</button>
             </div>
             <p class="toast" id="email-toast" role="status" aria-live="polite" hidden></p>
           </div>
@@ -680,8 +725,8 @@
             <label class="label" for="email-test-to">Send the test to</label>
             <input class="input" id="email-test-to" type="text" spellcheck="false"
                    placeholder="carl@esatto.se">
-            <button class="button button--primary" type="button" id="email-test-send">Send</button>
-            <button class="button" type="button" data-mailbar-cancel>Cancel</button>
+            <button class="button button--danger" type="button" data-mailbar-cancel>Cancel</button>
+            <button class="button button--success" type="button" id="email-test-send">Send</button>
           </div>
 
         </form>
