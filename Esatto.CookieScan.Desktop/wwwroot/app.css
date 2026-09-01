@@ -343,6 +343,19 @@ svg {
   font-weight: 600;
 }
 
+/*
+    The keyboard hint beside "Run a scan". Sized here because .muted carries colour and nothing else:
+    every other .muted on the page is paired with .field-note, which supplies 11px, and this is the
+    one that stands alone - so it inherited the body's 14px and rendered at exactly the size of the
+    card title it sits next to, reading as body copy rather than as a hint.
+
+    12px rather than .field-note's 11px: this sits at the top of a card against a 14px baseline-aligned
+    title, not tucked under an input.
+*/
+.card-hint {
+  font-size: 12px;
+}
+
 /* A small control in a card's header - the log's colour picker - label and select on one line. */
 .card-tools {
   display: flex;
@@ -369,6 +382,13 @@ svg {
     text below 18.66px, and every use of this class on this page is 11-14px. --ink-600 measures
     6.37:1 on white - see the four-tint numbers on .tile-hint above, which is the same ink on the
     same surfaces.
+*/
+/*
+    Colour and nothing else, deliberately - it is a tint, not a text style, and it is applied to
+    things of several different sizes. So it does NOT set font-size, and anything wearing it needs a
+    size of its own from somewhere: .field-note supplies 11px to most of them, .card-hint 12px to the
+    one in a card header. A bare `class="muted"` inherits the body's 14px, which is how the run hint
+    came to render at the same size as the card title beside it.
 */
 .muted {
   color: var(--ink-600);
