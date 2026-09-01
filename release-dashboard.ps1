@@ -31,9 +31,16 @@
     Tag, publish and hash, but create no GitHub release. Use this first: it is the cheap way to see
     the exact artifacts and prove the version assertion passes.
 
-.PARAMETER PushTags
-    Also `git push` the tag to origin. Off by default. Note that `gh release create` publishes the
-    tag as a side effect of creating the release, so a real run does not need this.
+    THE TAG IS ALWAYS PUSHED, and there is no flag to stop it. `gh release create --target <sha>`
+    fails with
+
+        HTTP 422: Validation Failed
+
+    when GitHub has never seen that commit - which is every release cut from a branch that has not
+    been pushed yet. An earlier version of this script left the push optional on the theory that
+    creating the release publishes the tag as a side effect; it does, but only once GitHub can
+    resolve the target, so the optional step was a precondition wearing a switch. Pushing the tag
+    sends the commit and its history with it, which is what makes the target resolvable.
 
 .PARAMETER Notes
     Release notes. Defaults to a line pointing at the launcher, which is how anyone should be
@@ -60,7 +67,6 @@ param(
     [string]$Output = "$PSScriptRoot\dist",
     [string]$Notes,
     [switch]$BuildOnly,
-    [switch]$PushTags,
     [switch]$AllowDirty,
     [switch]$Force
 )
@@ -115,6 +121,29 @@ try {
         gh auth status 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "gh is not authenticated. Run 'gh auth login', or pass -BuildOnly."
+        }
+
+        # Warned here rather than discovered after the publish, which costs a minute and 90MB before
+        # it would have said anything. The tag push below makes the RELEASE work regardless - it
+        # sends the commit with it - but a release pointing at a commit that is on no branch is
+        # almost never what someone means, and it is invisible once the release page renders fine.
+        #
+        # ls-remote rather than origin/<branch>, which is only as fresh as the last fetch.
+        $remoteHead = (git ls-remote origin "refs/heads/$branch" | ForEach-Object { $_.Split("`t")[0] })
+
+        if ($remoteHead -ne $head) {
+            Write-Host "WARNING: origin/$branch does not point at this commit." -ForegroundColor Yellow
+
+            if ($remoteHead) {
+                Write-Host "         origin/$branch is at $($remoteHead.Substring(0, 8)); you are at $($head.Substring(0, 8))." -ForegroundColor Yellow
+            }
+            else {
+                Write-Host "         The branch $branch does not exist on origin at all." -ForegroundColor Yellow
+            }
+
+            Write-Host "         The release will still work - pushing its tag sends the commit too - but" -ForegroundColor Yellow
+            Write-Host "         it will point at a commit that is on no branch. Consider: git push origin $branch" -ForegroundColor Yellow
+            Write-Host ""
         }
     }
 
@@ -237,8 +266,20 @@ That fetches this exe, verifies it against the published SHA-256, caches it unde
         }
     }
 
-    # --target pins the release to this commit explicitly. Without it, gh creates the tag at the
-    # default branch's head if it is not on the remote yet - which is not necessarily what was built.
+    # Not optional, and not a convenience. `gh release create --target <sha>` answers HTTP 422 for a
+    # commit GitHub has never seen, which is every release cut from a branch that has not been pushed
+    # - so the tag goes first, and it carries the commit and its history with it. Idempotent: a tag
+    # already on origin at this commit is an "Everything up-to-date" and a zero exit.
+    Write-Host "Publishing the tag so GitHub can resolve the release target..." -ForegroundColor Cyan
+
+    git push origin $tag
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not push the tag $tag to origin, so the release cannot be created. Nothing was released."
+    }
+
+    # --target pins the release to this commit explicitly rather than letting gh place the tag at the
+    # default branch's head, which is not necessarily what was built.
     gh release create $tag $exe $hashFile `
         --title "Cookie scanner dashboard $Version" `
         --notes $Notes `
@@ -252,12 +293,6 @@ That fetches this exe, verifies it against the published SHA-256, caches it unde
     Write-Host ""
     Write-Host "Anyone with the console tool now gets it by running:" -ForegroundColor Cyan
     Write-Host "  esatto-cookiescan ui"
-
-    if ($PushTags) {
-        # Usually redundant: creating the release published the tag. Harmless, and it matters when
-        # the release was created against an already-pushed tag.
-        git push origin $tag 2>$null | Out-Null
-    }
 }
 finally {
     Pop-Location
