@@ -37,6 +37,39 @@ public sealed class DashboardForm : Form
     private readonly bool secretIsSet =
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(ScanOptions.SecretVariable)) is false;
 
+    /// <summary>This build's version, for the sidebar to show.</summary>
+    /// <remarks>
+    /// An exe carries its version nowhere but inside itself - unlike a package, which has it in the
+    /// filename and on a feed page - and a copy that has been passed around for months looks exactly
+    /// like a fresh one. "Which version are you running" is the first question any report about this
+    /// window has to answer, and until this it could not be answered at all.
+    /// <para>
+    /// <c>AssemblyInformationalVersion</c> rather than <c>Version</c>, because MinVer writes the real
+    /// one there: <c>Version</c> is stamped 1.2.0.0 with any prerelease label dropped. The commit
+    /// sha MinVer appends after a '+' is cut here - it is build provenance, not something to put in a
+    /// sidebar, and it is still in the file's properties for anyone who needs it.
+    /// </para>
+    /// </remarks>
+    private static string Version
+    {
+        get
+        {
+            string? informational = typeof(DashboardForm).Assembly
+                .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+                .FirstOrDefault()?.InformationalVersion;
+
+            if (string.IsNullOrWhiteSpace(informational))
+            {
+                return "";
+            }
+
+            int build = informational.IndexOf('+');
+
+            return build < 0 ? informational : informational[..build];
+        }
+    }
+
     /// <remarks>
     /// Loaded here rather than on <c>ready</c>: a settings file that cannot be read costs the window
     /// its remembered options, and finding that out while the page waits for its first message is
@@ -257,6 +290,9 @@ public sealed class DashboardForm : Form
                     // when none has ever been saved, which is what the page reads to decide whether
                     // to offer to email a report at all.
                     email = settings.Email,
+                    // Sent once, on the message that is guaranteed to arrive after the sidebar
+                    // exists. Fixed for the life of the process, like secretVariable beside it.
+                    version = Version,
                     // Load's decrypt failures, carried on the one message that is guaranteed to
                     // arrive after the log panel exists. The page prints them as warnings; there is
                     // nothing for it to do about them beyond telling the operator which field to

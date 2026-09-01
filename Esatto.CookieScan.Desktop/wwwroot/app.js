@@ -351,6 +351,7 @@ const historyDiffView = document.querySelector('#history-diff-view');
 
 const lastScanValue = document.querySelector('#last-scan');
 const keptScansValue = document.querySelector('#kept-scans');
+const appVersionValue = document.querySelector('#app-version');
 
 /**
  * Everything a running scan must not let the operator change under it.
@@ -729,6 +730,13 @@ function applyState(message) {
     if (wasRunning && message.running === false) {
       post({ type: 'listHistory' });
     }
+  }
+
+  // Sent once, with ready. Left as it arrives rather than prefixed with a 'v' - it is the string
+  // MinVer stamped, and the eyebrow above it already says what it is. Blank for a build with no
+  // version attribute at all, which shows as an empty row rather than as "undefined".
+  if (typeof message.version === 'string' && appVersionValue !== null) {
+    appVersionValue.textContent = message.version;
   }
 
   if ('secretIsSet' in message) {

@@ -18,6 +18,20 @@
     -->
     <IsPackable>false</IsPackable>
     <!--
+      Set explicitly, because the repo-wide default cannot work here. Directory.Build.targets derives
+      MinVerTagPrefix from $(PackageId), and a project that is not packable never sets one - so it
+      defaulted to $(AssemblyName), "esatto-cookiescan-ui-", and no tag by that name has ever
+      existed. MinVer found nothing and stamped every build 0.0.0-preview.0.<commit height>, a number
+      that changed on every commit and told an operator nothing.
+
+      It matters more here than for a package. A NuGet package carries its version in its filename
+      and on a feed page; a copied exe carries it nowhere but inside itself, and "which one are you
+      running" is the first question any bug report has to answer. The launcher also reads this
+      prefix off the release tags - see DashboardRelease.TagPrefix - so the version in a tag name,
+      the version inside the exe and the folder it is cached under are necessarily one string.
+    -->
+    <MinVerTagPrefix>Esatto.CookieScan.Desktop-</MinVerTagPrefix>
+    <!--
       The exe's icon in Explorer and the taskbar. Generated from the sidebar's brand mark by
       Assets\make-icon.ps1; regenerate rather than edit. The same file is embedded below so the
       window can wear it too - ApplicationIcon only decorates the file, not the Form.

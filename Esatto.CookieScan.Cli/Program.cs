@@ -3,6 +3,14 @@ using Esatto.CookieScan.Engine;
 
 try
 {
+    // Before Parse, and it has to be: Parse only reads arguments beginning with "--", so a bare verb
+    // falls straight through it and is reported as a missing --url. Checked on args[0] alone, so a
+    // site that is somehow called "ui" cannot be mistaken for the verb - that would be --url ui.
+    if (args.Length > 0 && string.Equals(args[0], DashboardLauncher.Verb, StringComparison.OrdinalIgnoreCase))
+    {
+        return await new DashboardLauncher(new ConsoleScanLog()).RunAsync(args, CancellationToken.None);
+    }
+
     ScanOptions options = ScanOptions.Parse(args);
     var log = new ConsoleScanLog();
 

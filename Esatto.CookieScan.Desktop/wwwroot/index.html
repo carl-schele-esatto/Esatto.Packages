@@ -82,6 +82,16 @@
         <span class="eyebrow">Kept scans</span>
         <span class="foot-value num" id="kept-scans"></span>
       </div>
+      <!--
+        Which build this is. An exe carries its version nowhere but inside itself, so a copy that has
+        been passed around for months looks exactly like a fresh one - and "which version are you
+        running" is the first question any report about this window has to answer. Quieter than the
+        two above it: it is a fact to be looked up, not a number to be read at a glance.
+      -->
+      <div class="foot-item">
+        <span class="eyebrow">Version</span>
+        <span class="foot-value foot-value--quiet num" id="app-version"></span>
+      </div>
     </div>
 
   </aside>

@@ -2,9 +2,19 @@
 
   <!-- Per-package independent versioning. Set here (not in Directory.Build.props) so each
        project's $(PackageId) is already defined when this is evaluated. MinVer reads this
-       at version-compute time, so a package only picks up tags matching "<PackageId>-". -->
+       at version-compute time, so a package only picks up tags matching "<PackageId>-".
+
+       The Condition is not decoration. Directory.Build.targets is imported at the END of every
+       project file, so an unconditional assignment here silently overwrites a MinVerTagPrefix the
+       csproj set for itself - which is exactly what happened to Esatto.CookieScan.Desktop: it asked
+       for "Esatto.CookieScan.Desktop-", got "$(PackageId)-" instead, and since a non-packable
+       project has no PackageId that resolved to its AssemblyName, "esatto-cookiescan-ui-". No tag by
+       that name has ever existed, so every build stamped 0.0.0-preview.0.<commit height>.
+
+       A default, in other words, has to behave like one. Every packable project still gets
+       "<PackageId>-" and nothing about them changes. -->
   <PropertyGroup>
-    <MinVerTagPrefix>$(PackageId)-</MinVerTagPrefix>
+    <MinVerTagPrefix Condition="'$(MinVerTagPrefix)' == ''">$(PackageId)-</MinVerTagPrefix>
   </PropertyGroup>
 
 </Project>

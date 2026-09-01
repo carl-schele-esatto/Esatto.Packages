@@ -671,6 +671,42 @@ then running the exe from a directory containing nothing else, per the Verified 
 
 ### The dashboard
 
+**For an operator, there is one way to get it, and it is not this section:**
+
+```
+dotnet tool install -g Esatto.CookieScan.Cli
+esatto-cookiescan ui
+```
+
+The first command installs the console tool; the second downloads the dashboard, verifies it and
+opens it, and every later run picks up a newer release automatically. See Installing the dashboard,
+below, for what it does and where it puts things. The rest of this section is how a *release* is
+produced.
+
+**A WinForms app cannot be a dotnet tool**, which is why the dashboard is fetched rather than
+installed directly. The SDK refuses it outright:
+
+```
+NETSDK1146: PackAsTool does not support TargetPlatformIdentifier being set. For example,
+TargetFramework cannot be net5.0-windows, only net5.0. PackAsTool also does not support UseWPF or
+UseWindowsForms when targeting .NET 5 and higher.
+```
+
+So the exe ships as a GitHub release asset, and the console tool — which *is* a dotnet tool — installs
+it on the operator's behalf. `release-dashboard.ps1` produces one:
+
+```
+./release-dashboard.ps1 -Version 1.2.0 -BuildOnly   # tag, publish, hash, release nothing
+./release-dashboard.ps1 -Version 1.2.0              # ...and create the GitHub release
+```
+
+It tags `Esatto.CookieScan.Desktop-<version>`, publishes the self-contained exe, **asserts that the
+exe MinVer stamped really carries that version**, writes a SHA-256 beside it and uploads both. The
+assertion is not ceremony: it caught the versioning bug described under Versioning the dashboard,
+below, on its first run.
+
+The publish it wraps is the same one that has always worked by hand:
+
 ```
 dotnet publish Esatto.CookieScan.Desktop -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:IncludeAllContentForSelfExtract=true -p:EnableCompressionInSingleFile=true -o dist
 ```
@@ -686,6 +722,61 @@ the dashboard's own `wwwroot` is embedded resources, so the page needs nothing o
 The assembly name is deliberately still `esatto-cookiescan-ui`, the retired WinForms window's:
 the published exe, the shortcut pointing at it and the commands here stay as they were, and the
 two were never going to ship together.
+
+### Installing the dashboard
+
+`esatto-cookiescan ui` is the whole operator-facing story: install the console tool once, run that
+command whenever you want the window. `DashboardLauncher` in the CLI does the work, and every
+decision it makes lives in `DashboardRelease` as a pure function with tests, so the rules below are
+asserted rather than described.
+
+- **It asks GitHub for releases tagged `Esatto.CookieScan.Desktop-`** and takes the highest *stable*
+  one. It deliberately does not use GitHub's "latest release" endpoint, which answers with the newest
+  release of any tag in the repository and would happily hand back an `Esatto.CookieScan.Engine`
+  package tag. Prereleases never win an automatic update; `--ui-version 1.3.0-preview.1` pins one by
+  hand.
+- **It verifies the download against the SHA-256 published beside it**, and discards it otherwise.
+  The launcher downloads a binary and then executes it — HTTPS establishes that the bytes came from
+  GitHub, not that GitHub holds what the release intended. The file is written under a `.partial`
+  name and moved into place only after the hash matches, so an interrupted download cannot leave a
+  folder that looks like a cached version and is not.
+- **Cached at `%LOCALAPPDATA%\Esatto.CookieScan\ui\<version>\`**, beside `settings.json`, `scans\`
+  and `reports\` — one place to look and one place to delete. The two newest are kept; each is
+  roughly 90MB, and keeping one would leave nothing to fall back to after a bad update. The version
+  in use is never pruned, which matters when `--ui-version` pins an old one.
+- **Offline still works.** If GitHub cannot be reached and anything is cached, the newest cached copy
+  opens with a warning rather than a refusal. Once this tool has been used once it has to keep
+  working on a train. Only a first run with no network fails, and it says so.
+- **"Could not reach GitHub" and "no release has been published yet" are different sentences**, because
+  they have different fixes and the second is what the very first run sees.
+- `--no-update` skips the version check when something is already cached — it means "do not look for
+  a newer one", not "do not install", so a first run still fetches.
+
+The verb is intercepted in `Program` *before* `ScanOptions.Parse`, and has to be: `Parse` only reads
+arguments beginning with `--`, so a bare verb falls straight through it and gets reported as a
+missing `--url`. It matches on `args[0]` alone, so `--url ui` is still a (bad) URL rather than the verb.
+
+### Versioning the dashboard
+
+The exe now carries a real version, and did not until this work. `Directory.Build.targets` derives
+`MinVerTagPrefix` from `$(PackageId)`, and a non-packable project never sets one — so the dashboard's
+prefix defaulted to its `AssemblyName`, `esatto-cookiescan-ui-`. No tag by that name has ever
+existed, so MinVer found nothing and stamped every build `0.0.0-preview.0.<commit height>`: a number
+that changed on every commit and told an operator nothing.
+
+Setting `MinVerTagPrefix` in the csproj alone did not fix it, and the reason is worth recording.
+**`Directory.Build.targets` is imported at the END of every project file**, so its unconditional
+assignment silently overwrote the value the csproj had asked for. The targets file now sets the
+prefix only when one is not already set — a default has to behave like a default. Every packable
+project still gets `<PackageId>-` and nothing about them changed.
+
+The version appears in the sidebar footer under **Version**, beside "Last scan" and "Kept scans". A
+package carries its version in its filename and on a feed page; a copied exe carries it nowhere but
+inside itself, and "which one are you running" is the first question any report about this window has
+to answer.
+
+The tag, the number MinVer stamps into the exe, and the folder the launcher caches it under are one
+string — `release-dashboard.ps1` asserts that before it uploads anything.
 
 `Esatto.CookieScan.Desktop.csproj` also carries a `DropUnusedWebView2Wpf` target. The WebView2
 package ships a WPF control beside the WinForms one, and the WPF assembly references a
