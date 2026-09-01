@@ -73,6 +73,38 @@ native library. Without it the exe builds, runs, and then fails at the first bro
 authenticating with client credentials. The merge is append-only and never publishes — see that
 package for why.
 
+## Composing a report as email
+
+`ScanEmail.Compose` turns a finished scan into the message that reports it — subject, an HTML body,
+a plain-text alternative, and the two report files as attachments:
+
+```csharp
+ScanEmailContent mail = ScanEmail.Compose(result);
+
+// mail.Subject     "Cookie scan - example.com - 1 violation"
+// mail.Html        table-based, every colour inline, safe in Outlook
+// mail.Text        the same things in the same order, for clients that will not render HTML
+// mail.Attachments cookie-scan-<host>-<stamp>.md and .json, as bytes
+```
+
+- **It composes; it does not send.** No SMTP, no network, no transport dependency — the engine gains
+  nothing you did not already reference it for. Hand `mail` to whatever sender you like; the
+  dashboard uses MailKit.
+- **It takes a `ScanResult` and nothing else**, so a scan composes identically whether it finished a
+  second ago or was read back out of the history folder.
+- **Attachments are built in memory, never read off disk.** `cookie-scan-report.md` is one file in
+  the report directory, overwritten by every run, so attaching it by path would send the wrong scan's
+  report for anything but the latest — and nothing at all when that write had failed.
+- **`ScanReportWriter.Markdown(result)`** renders the same report document from a result alone, which
+  is what the markdown attachment is. `WriteFiles` and this produce identical bytes for the same run.
+- **`EmailRecipients.Parse`** splits one typed field — commas, semicolons or newlines — into trimmed,
+  de-duplicated addresses. It deliberately does not validate: there is one rule for what a mailbox is,
+  and it belongs to whatever builds the message.
+
+The subject's verdict is `N violation(s)`, `N to review`, or `clean`, in that order of precedence —
+the same order `ScanResult.ExitCode` applies. The dry-run flag is deliberately not in it: whether the
+policy page was written to is a different question, and it is answered in the body.
+
 ## Where it keeps things
 
 | What | Where |
