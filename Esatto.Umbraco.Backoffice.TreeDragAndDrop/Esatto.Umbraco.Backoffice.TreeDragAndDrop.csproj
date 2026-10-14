@@ -21,8 +21,8 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.TreeDragAndDrop</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Drag-and-drop and keyboard "grab &amp; place" moving for the Umbraco 17/18 backoffice Dictionary tree, built on a shared tree core that the Content and Media trees join in later releases. Each tree can be switched off in appsettings.json (Esatto:TreeDragAndDrop).</Description>
-    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;tree;dictionary;translation;drag-and-drop</PackageTags>
+    <Description>Drag-and-drop and keyboard "grab &amp; place" moving for the Umbraco 17/18 backoffice Content, Media and Dictionary trees, with real ordering for content and media. Each tree can be switched off in appsettings.json (Esatto:TreeDragAndDrop). Replaces Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop and MediaTreeDragAndDrop.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;tree;content;media;dictionary;translation;drag-and-drop</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

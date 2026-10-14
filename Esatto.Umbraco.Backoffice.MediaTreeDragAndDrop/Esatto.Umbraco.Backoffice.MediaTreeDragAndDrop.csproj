@@ -21,7 +21,7 @@
   <PropertyGroup Label="NuGet">
     <PackageId>Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop</PackageId>
     <Authors>Carl Schéle</Authors>
-    <Description>Native HTML5 drag-and-drop for the Umbraco 17/18 backoffice Media tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
+    <Description>Deprecated: use Esatto.Umbraco.Backoffice.TreeDragAndDrop. Native HTML5 drag-and-drop for the Umbraco 17/18 backoffice Media tree. Adds three-zone (above / into / below) drop targets per row with optimistic same-parent reorder and full cross-parent move support. Pure App_Plugins package — no C# code.</Description>
     <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;media;tree;drag-and-drop</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>

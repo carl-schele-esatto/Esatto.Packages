@@ -1,5 +1,7 @@
 # Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop
 
+> **Deprecated.** Use [Esatto.Umbraco.Backoffice.TreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.TreeDragAndDrop), which covers the Content, Media and Dictionary trees in one package. Remove this package when you install it.
+
 Native HTML5 drag-and-drop for the Umbraco 17/18 backoffice **Media** tree.
 
 Media-tree counterpart to [Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop) (which handles the Content tree). Same architecture, different entity type and Management API surface.

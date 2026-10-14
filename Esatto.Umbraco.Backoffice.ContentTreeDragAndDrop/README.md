@@ -1,5 +1,7 @@
 # Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop
 
+> **Deprecated.** Use [Esatto.Umbraco.Backoffice.TreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.TreeDragAndDrop), which covers the Content, Media and Dictionary trees in one package. Remove this package when you install it.
+
 Native HTML5 drag-and-drop **and keyboard reordering** for the Umbraco 17/18 backoffice **Content** tree.
 
 - Three-zone drop targets per row: above sibling / into as child / below sibling

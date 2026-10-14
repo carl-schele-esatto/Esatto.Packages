@@ -1,16 +1,17 @@
 # Esatto.Umbraco.Backoffice.TreeDragAndDrop
 
-Drag-and-drop **and keyboard moving** for the Umbraco 17/18 backoffice **Dictionary** tree (Translation section).
+Drag-and-drop **and keyboard moving** for the Umbraco 17/18 backoffice **Content**, **Media** and **Dictionary** trees. One package, and each tree can be switched off.
 
-- Drop onto the middle of an item to move it inside that item
-- Drop onto the top or bottom edge of an item to move it next to that item (same parent). Use a top-level item's edge to move something to the root
-- Dictionary items are always listed alphabetically, so only the parent changes. The tree re-sorts after the move
-- Hover-to-expand collapsed branches mid-drag
-- Cycle guard against dropping an item into its own descendants
+- Move items by dragging them in the section sidebar tree
+- Real ordering for content and media: drop above, inside or below an item
+- Instant visual feedback when reordering, rolled back if saving fails
+- A spinner on the item while it's being saved
+- Hover over a collapsed item mid-drag to expand it
+- Cycle guard: an item can't be dropped into itself or its own descendants
 - Keyboard-accessible "grab & place" (WCAG 2.2 AA) with screen-reader announcements
-- Each tree can be switched off in `appsettings.json`
+- Pickers (such as "Move to…") and the recycle bin are left alone
 
-Content and Media tree support is coming to this package in 1.1 and 1.2. Until then, keep using [ContentTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop) and [MediaTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop). They work side by side with this package.
+Replaces [ContentTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop) and [MediaTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop). See [Replacing the old packages](#replacing-the-old-packages).
 
 ## Demo
 
@@ -24,6 +25,23 @@ dotnet add package Esatto.Umbraco.Backoffice.TreeDragAndDrop
 
 Restart the site and hard-refresh the backoffice.
 
+## How dropping works
+
+**Content and Media**: each row has three drop zones.
+
+| Drop on | Result |
+|---------|--------|
+| Top third of a row | Placed **above** that item (same parent) |
+| Middle of a row | Moved **inside** that item |
+| Bottom third of a row | Placed **below** that item (same parent) |
+
+**Dictionary**: Umbraco has no sort order for dictionary items and always lists them alphabetically, so a drop only chooses the parent.
+
+| Drop on | Result |
+|---------|--------|
+| Middle of a row | Moved **inside** that item |
+| Top or bottom edge of a row | Moved **next to** that item (same parent). On a top-level item, that means the root |
+
 ## Settings
 
 Everything is on by default. To switch a tree off:
@@ -32,6 +50,8 @@ Everything is on by default. To switch a tree off:
 {
   "Esatto": {
     "TreeDragAndDrop": {
+      "Content": true,
+      "Media": true,
       "Dictionary": false
     }
   }
@@ -45,12 +65,17 @@ Restart the site after changing it. A disabled tree's script isn't loaded at all
 | Key | Action |
 |-----|--------|
 | Space | Grab the focused item / drop it at the chosen position |
-| ↑ / ↓ | Move between rows ("next to this item") |
-| → | Target the highlighted item itself ("into this item") |
+| Enter | Drop (while an item is grabbed) |
+| ↑ / ↓ | Move between rows |
+| → | Target the highlighted item itself ("inside this item") |
 | ← | Jump to the parent row |
 | Esc | Cancel |
 
-Each step is announced through an `aria-live` region.
+Each step is announced through an `aria-live` region. Clicking or typing outside the tree also cancels the move.
+
+## Replacing the old packages
+
+Remove `Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop` and `Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop` when you install this package. While one of them is still installed, this package leaves that tree to it and logs a warning, so a tree never gets two sets of drag handlers.
 
 ## Compatibility
 

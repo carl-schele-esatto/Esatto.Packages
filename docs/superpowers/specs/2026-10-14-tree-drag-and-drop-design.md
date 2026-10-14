@@ -25,6 +25,12 @@ Delivered in four independently releasable steps:
 Step 1 is designed in full. Steps 2–4 are designed at the level needed to keep step 1's
 abstractions honest; each gets its own plan.
 
+**Amended 2026-10-14 (Carl):** all four steps ship together as a single **1.0.0**, since nothing had
+been published yet (plan `2026-10-14-tree-drag-and-drop-step2-3.md`). Two behaviour changes go with it:
+reordering at the **tree root** works (both legacy packages showed "Target sibling not found"
+there, because their sibling walk started from `document`), and **recycle-bin rows**
+(`props.item.isTrashed`) are never draggable.
+
 ### Out of scope
 
 - A backoffice settings UI (appsettings only; restart to apply).
