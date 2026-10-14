@@ -43,6 +43,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.SharedPreviewLink.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- ASP.NET Core framework: provides Controller, Middleware infrastructure,
          DataProtection, etc. -->
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
