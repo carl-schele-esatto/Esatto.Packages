@@ -82,7 +82,7 @@ Remove `Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop` and `Esatto.Umbraco.Ba
 | Umbraco | Status |
 |---------|--------|
 | 17.x    | Supported |
-| 18.x    | Supported |
+| 18.x    | Verified |
 
 ## License
 
