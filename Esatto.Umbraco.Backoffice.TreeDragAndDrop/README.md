@@ -13,10 +13,6 @@ Drag-and-drop **and keyboard moving** for the Umbraco 17/18 backoffice **Content
 
 Replaces [ContentTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop) and [MediaTreeDragAndDrop](https://www.nuget.org/packages/Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop). See [Replacing the old packages](#replacing-the-old-packages).
 
-## Demo
-
-![Moving dictionary items by drag-and-drop in the Umbraco Translation section](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.TreeDragAndDrop/docs/images/dictionary-tree-dnd-demo.gif)
-
 ## Install
 
 ```bash
