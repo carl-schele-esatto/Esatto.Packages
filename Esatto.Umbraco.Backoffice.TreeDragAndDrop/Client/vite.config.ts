@@ -7,6 +7,8 @@ export default defineConfig({
       // emitted as a chunk that every entry imports by the same URL, so the
       // browser evaluates it once: one attachShadow patch, one host.
       entry: {
+        content: "src/entries/content.ts",
+        media: "src/entries/media.ts",
         dictionary: "src/entries/dictionary.ts",
       },
       formats: ["es"],

@@ -1,7 +1,8 @@
 // The controller host: a single hidden Lit element that owns the drag state,
 // installs document-level (capture-phase) drag + keyboard listeners, and runs
-// the adapter's API calls. Mounted inside <umb-app> so it can consume
-// UMB_NOTIFICATION_CONTEXT / UMB_ACTION_EVENT_CONTEXT.
+// the adapter's API calls (move, and sort for trees that have it). Mounted
+// inside <umb-app> so it can consume UMB_NOTIFICATION_CONTEXT /
+// UMB_ACTION_EVENT_CONTEXT.
 //
 // Tree-agnostic: anything tree-specific comes from the TreeAdapter registered
 // for the row's entity type. A drag only ever accepts targets from the same
@@ -19,6 +20,7 @@ import {
   adapterOf,
   expandRow,
   findTreeItemByUnique,
+  listSiblings,
   isTreeItem,
   listTreeItemsInOrder,
   propagateDraggable,
@@ -29,7 +31,8 @@ import {
 } from './tree-item';
 import { getDropZone, type DropZone } from './drop-zone';
 import { collectDescendantUniques, isBlockedTarget } from './cycle-guard';
-import { canCommit, describePlan, planDrop, type DropPlan, type MovePlan } from './drop-plan';
+import { canCommit, describePlan, planDrop, planSortedDrop, type ActionPlan, type DropPlan } from './drop-plan';
+import { optimisticReorder } from './reorder-dom';
 import { showPlan } from './plan-view';
 import { hideIndicator } from './indicator';
 import { showSpinner, hideSpinner } from './spinner';
@@ -169,12 +172,16 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     const targetUnique = readUnique(el);
     if (!targetUnique) return null;
     if (isBlockedTarget(targetUnique, s.sourceUnique, s.descendantUniques)) return null;
-    return planDrop({
+    const ctx = {
       zone,
       sourceParentUnique: s.sourceParentUnique,
       targetUnique,
       targetParentUnique: readParentUnique(el),
-    });
+    };
+    if (!s.adapter.sort) return planDrop(ctx);
+    // Siblings are only needed for edge zones; skip the DOM walk for "into".
+    const siblings = zone === 'into' ? [] : listSiblings(ctx.targetParentUnique, s.adapter.entityType);
+    return planSortedDrop({ ...ctx, sourceUnique: s.sourceUnique, siblings });
   }
 
   #onDragStart(event: DragEvent, el: AnyTreeItem): void {
@@ -188,7 +195,8 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
 
   #onDragOver(event: DragEvent, el: AnyTreeItem): void {
     if (!this.#dragState) return;
-    const plan = this.#planFor(el, getDropZone(el, event.clientY));
+    const zone = getDropZone(el, event.clientY);
+    const plan = this.#planFor(el, zone);
     if (plan === null) {
       hideIndicator();
       return;
@@ -203,7 +211,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     }
     event.preventDefault();
     event.dataTransfer!.dropEffect = 'move';
-    showPlan(plan, this.#dragState.adapter);
+    showPlan(plan, this.#dragState.adapter, el, zone);
   }
 
   #scheduleHoverExpand(el: AnyTreeItem): void {
@@ -226,11 +234,12 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
   }
 
   async #onDrop(event: DragEvent, el: AnyTreeItem): Promise<void> {
-    const plan = this.#planFor(el, getDropZone(el, event.clientY));
+    const zone = getDropZone(el, event.clientY);
+    const plan = this.#planFor(el, zone);
     if (!canCommit(plan)) return;
     event.preventDefault();
     hideIndicator();
-    await this.#execute(plan);
+    await this.#execute(plan, el, zone);
   }
 
   #onDragEnd(): void {
@@ -239,31 +248,64 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     this.#clearHoverTimer();
   }
 
-  // Run a move plan for the current #dragState. Returns whether it succeeded.
-  // Both affected branches are reloaded either way: on success the tree
-  // re-sorts them; on failure it re-syncs with the server (e.g. a cycle
-  // through a collapsed branch the client couldn't see).
-  async #execute(plan: MovePlan): Promise<boolean> {
+  // Run a plan for the current #dragState. Returns whether it fully succeeded.
+  //   move       → move; reload both branches (chevrons come from the data
+  //                store; Dictionary re-sorts alphabetically).
+  //   reorder    → optimistic DOM move first (the sort API is slow), then sort;
+  //                roll the DOM back if it fails. No reload on success.
+  //   move+sort  → move, then sort. If only the sort fails the item stays moved
+  //                (a completed move beats a rollback) and a warning says so.
+  // Any failure reloads both branches so the tree matches the server again
+  // (e.g. a cycle through a collapsed branch the client couldn't see).
+  async #execute(plan: ActionPlan, targetEl: AnyTreeItem, zone: DropZone): Promise<boolean> {
     const s = this.#dragState;
     // In-flight lock: a second drop / Space while a move is running is ignored.
     if (!s || this.#movePending) return false;
     this.#movePending = true;
 
-    const sourceEl = findTreeItemByUnique(s.sourceUnique, s.adapter.entityType);
+    const { adapter, sourceUnique, sourceParentUnique } = s;
+    const sourceEl = findTreeItemByUnique(sourceUnique, adapter.entityType);
     if (sourceEl) {
       (sourceEl as HTMLElement).style.opacity = '0.4';
       showSpinner(sourceEl);
     }
 
     let ok = false;
+    let reload = true;
     try {
-      await s.adapter.move(this, s.sourceUnique, plan.parentUnique);
-      ok = true;
+      if (plan.kind === 'move') {
+        await adapter.move(this, sourceUnique, plan.parentUnique);
+        ok = true;
+      } else if (plan.kind === 'reorder') {
+        const rollbackParent = sourceEl?.parentNode ?? null;
+        const rollbackBefore = sourceEl?.nextSibling ?? null;
+        optimisticReorder(sourceEl, targetEl, zone);
+        // Re-pin the spinner over the row's NEW position.
+        if (sourceEl) showSpinner(sourceEl);
+        try {
+          await adapter.sort!(this, plan.parentUnique, plan.order);
+        } catch (err) {
+          if (sourceEl && rollbackParent) rollbackParent.insertBefore(sourceEl, rollbackBefore);
+          throw err;
+        }
+        ok = true;
+        reload = false;
+      } else {
+        await adapter.move(this, sourceUnique, plan.parentUnique);
+        try {
+          await adapter.sort!(this, plan.parentUnique, plan.order);
+          ok = true;
+        } catch (sortErr) {
+          this.#showWarn(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${(sortErr as Error)?.message ?? sortErr})`);
+        }
+      }
     } catch (err) {
       this.#showError((err as Error)?.message ?? String(err));
     } finally {
-      this.#reload(s.adapter, s.sourceParentUnique);
-      this.#reload(s.adapter, plan.parentUnique);
+      if (reload) {
+        this.#reload(adapter, sourceParentUnique);
+        this.#reload(adapter, plan.parentUnique);
+      }
       hideSpinner();
       if (sourceEl) (sourceEl as HTMLElement).style.opacity = '';
       this.#movePending = false;
@@ -372,7 +414,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
         hideIndicator();
         return;
       }
-      showPlan(plan, this.#dragState!.adapter);
+      showPlan(plan, this.#dragState!.adapter, targetEl, r.state.zone);
       announce(this.#describe(plan, r.state.zone, targetEl));
       return;
     }
@@ -385,13 +427,14 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     }
     const { sourceUnique, adapter } = this.#dragState!;
     const sourceName = readName(findTreeItemByUnique(sourceUnique, adapter.entityType));
+    const zone = r.state.zone;
     // Clear #kbState synchronously so the grabbed branch can't re-enter
     // mid-flight; #dragState stays set until the move resolves (#execute
     // reads it) and the #movePending lock blocks a second #execute.
     this.#kbState = null;
     hideIndicator();
     void (async () => {
-      const ok = await this.#execute(plan);
+      const ok = await this.#execute(plan, targetEl, zone);
       announce(ok ? `Moved ${sourceName}.` : `Could not move ${sourceName}.`);
       // Best-effort refocus of the moved row so keyboard users keep their place.
       // The reload is async, so the row may not be re-rendered yet; then we
@@ -419,6 +462,11 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
         entityType: parentUnique ? adapter.entityType : adapter.rootEntityType,
       }),
     );
+  }
+
+  #showWarn(message: string): void {
+    console.warn(LOG_PREFIX, message);
+    this.#notifications?.peek('warning', { data: { message } });
   }
 
   #showError(message: string): void {

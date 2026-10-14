@@ -6,8 +6,8 @@
 // next to this item" (under its parent) instead of "insert above/below".
 
 import { DictionaryService } from '@umbraco-cms/backoffice/external/backend-api';
-import { tryExecute } from '@umbraco-cms/backoffice/resources';
 import type { TreeAdapter } from '../core/types';
+import { run } from './run';
 
 export const dictionaryAdapter: TreeAdapter = {
   entityType: 'dictionary',
@@ -17,15 +17,10 @@ export const dictionaryAdapter: TreeAdapter = {
   // The dictionary tree registers its tree items with kind: 'default'.
   innerTag: 'umb-default-tree-item',
 
-  async move(host, unique, parentUnique) {
-    const { error } = await tryExecute(
-      host,
-      DictionaryService.putDictionaryByIdMove({
-        path: { id: unique },
-        body: { target: parentUnique ? { id: parentUnique } : null },
-      }),
-      { disableNotifications: true },
-    );
-    if (error) throw error;
+  move(host, unique, parentUnique) {
+    return run(host, DictionaryService.putDictionaryByIdMove({
+      path: { id: unique },
+      body: { target: parentUnique ? { id: parentUnique } : null },
+    }));
   },
 };
