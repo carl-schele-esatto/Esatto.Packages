@@ -1,6 +1,8 @@
 using System.Reflection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Manifest;
 using Umbraco.Cms.Infrastructure.Manifest;
 
@@ -21,11 +23,16 @@ public sealed class TreeDragAndDropManifestReader : IPackageManifestReader
         ?? "0.0.0";
 
     private readonly IOptions<TreeDragAndDropOptions> _options;
+    private readonly IPackageManifestFileProviderFactory _fileProviderFactory;
     private readonly ILogger<TreeDragAndDropManifestReader> _logger;
 
-    public TreeDragAndDropManifestReader(IOptions<TreeDragAndDropOptions> options, ILogger<TreeDragAndDropManifestReader> logger)
+    public TreeDragAndDropManifestReader(
+        IOptions<TreeDragAndDropOptions> options,
+        IPackageManifestFileProviderFactory fileProviderFactory,
+        ILogger<TreeDragAndDropManifestReader> logger)
     {
         _options = options;
+        _fileProviderFactory = fileProviderFactory;
         _logger = logger;
     }
 
@@ -33,7 +40,7 @@ public sealed class TreeDragAndDropManifestReader : IPackageManifestReader
     {
         TreeDragAndDropOptions options = ReadOptions();
         object[] extensions = TreeDefinitions.All
-            .Where(tree => tree.IsEnabled(options))
+            .Where(tree => tree.IsEnabled(options) && !IsTakenByLegacyPackage(tree))
             .Select(object (tree) => tree.ToEntryPoint())
             .ToArray();
 
@@ -53,6 +60,27 @@ public sealed class TreeDragAndDropManifestReader : IPackageManifestReader
                 },
             ];
         return Task.FromResult<IEnumerable<PackageManifest>>(manifests);
+    }
+
+    // Two packages on one tree means double drag handlers. While a legacy package is still
+    // installed, it keeps its tree and this package stays out of it. Detected the way Umbraco's
+    // AppPluginsPackageManifestReader finds manifests (a static-assets-only package's DLL is
+    // never loaded, so an assembly check would not work).
+    private bool IsTakenByLegacyPackage(TreeDefinition tree)
+    {
+        if (tree.LegacyPackageId is null) return false;
+        IFileProvider? provider = _fileProviderFactory.Create();
+        if (provider is null) return false;
+
+        bool installed = provider.GetDirectoryContents($"/App_Plugins/{tree.LegacyPackageId}")
+            .Any(file => !file.IsDirectory && file.Name.Equals("umbraco-package.json", StringComparison.OrdinalIgnoreCase));
+        if (installed)
+        {
+            _logger.LogWarning(
+                "{Package}: {Tree} drag-and-drop is left to the legacy package {Legacy}, which is still installed. Remove it to use this package for the {Tree} tree.",
+                TreeDefinition.PackageId, tree.Name, tree.LegacyPackageId, tree.Name);
+        }
+        return installed;
     }
 
     // The manifest endpoint feeds the whole backoffice; a bad value in appsettings must

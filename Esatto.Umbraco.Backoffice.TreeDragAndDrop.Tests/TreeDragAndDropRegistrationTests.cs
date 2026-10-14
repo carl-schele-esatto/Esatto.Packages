@@ -2,6 +2,8 @@ using Esatto.Umbraco.Backoffice.TreeDragAndDrop;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using NSubstitute;
+using Umbraco.Cms.Core.IO;
 using Umbraco.Cms.Core.Manifest;
 using Umbraco.Cms.Infrastructure.Manifest;
 using Xunit;
@@ -26,6 +28,7 @@ public class TreeDragAndDropRegistrationTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton(Substitute.For<IPackageManifestFileProviderFactory>());
         services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(config ?? []).Build());
         services.AddSingleton<IPackageManifestReader, FirstUmbracoReader>();
         services.AddSingleton<IPackageManifestReader, LastUmbracoReader>();
@@ -68,11 +71,11 @@ public class TreeDragAndDropRegistrationTests
 
     // Review Focus 2.
     [Fact]
-    public async Task Missing_section_enables_dictionary()
+    public async Task Missing_section_enables_every_tree()
     {
         using var provider = Build();
         var manifest = Assert.Single(await OurReader(provider).ReadPackageManifestsAsync());
-        Assert.Single(manifest.Extensions);
+        Assert.Equal(3, manifest.Extensions.Length);
     }
 
     // Review Focus 1: a typo in appsettings must not take down the manifest endpoint
@@ -82,6 +85,6 @@ public class TreeDragAndDropRegistrationTests
     {
         using var provider = Build(new() { ["Esatto:TreeDragAndDrop:Dictionary"] = "nope" });
         var manifest = Assert.Single(await OurReader(provider).ReadPackageManifestsAsync());
-        Assert.Single(manifest.Extensions);
+        Assert.Equal(3, manifest.Extensions.Length);
     }
 }

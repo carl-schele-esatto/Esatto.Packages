@@ -1,7 +1,14 @@
 namespace Esatto.Umbraco.Backoffice.TreeDragAndDrop;
 
-/// <summary>A tree this package can enable: its switch, its section, and its client entry file.</summary>
-internal sealed record TreeDefinition(string Name, string SectionAlias, Func<TreeDragAndDropOptions, bool> IsEnabled)
+/// <summary>
+/// A tree this package can enable: its switch, its section, its client entry file, and the
+/// legacy package (if any) that already handles it.
+/// </summary>
+internal sealed record TreeDefinition(
+    string Name,
+    string SectionAlias,
+    Func<TreeDragAndDropOptions, bool> IsEnabled,
+    string? LegacyPackageId = null)
 {
     public const string PackageId = "Esatto.Umbraco.Backoffice.TreeDragAndDrop";
 
@@ -16,9 +23,10 @@ internal sealed record TreeDefinition(string Name, string SectionAlias, Func<Tre
 
 internal static class TreeDefinitions
 {
-    // Content (Umb.Section.Content) and Media (Umb.Section.Media) join here in 1.1.0 / 1.2.0.
     public static readonly IReadOnlyList<TreeDefinition> All =
     [
+        new("Content", "Umb.Section.Content", options => options.Content, "Esatto.Umbraco.Backoffice.ContentTreeDragAndDrop"),
+        new("Media", "Umb.Section.Media", options => options.Media, "Esatto.Umbraco.Backoffice.MediaTreeDragAndDrop"),
         new("Dictionary", "Umb.Section.Translation", options => options.Dictionary),
     ];
 }
