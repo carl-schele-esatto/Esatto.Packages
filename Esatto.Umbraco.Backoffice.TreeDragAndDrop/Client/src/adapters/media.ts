@@ -2,7 +2,8 @@
 
 import { MediaService } from '@umbraco-cms/backoffice/external/backend-api';
 import type { TreeAdapter } from '../core/types';
-import { run } from './run';
+import { collectAllIds } from './paging';
+import { read, run } from './run';
 
 export const mediaAdapter: TreeAdapter = {
   entityType: 'media',
@@ -23,5 +24,11 @@ export const mediaAdapter: TreeAdapter = {
         sorting: orderedUniques.map((id, sortOrder) => ({ id, sortOrder })),
       },
     }));
+  },
+
+  childOrder(host, parentUnique) {
+    return collectAllIds((skip, take) => read(host, parentUnique
+      ? MediaService.getTreeMediaChildren({ query: { parentId: parentUnique, skip, take } })
+      : MediaService.getTreeMediaRoot({ query: { skip, take } })));
   },
 };

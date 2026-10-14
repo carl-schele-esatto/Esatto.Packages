@@ -46,18 +46,34 @@ export function planSortedDrop(ctx: SortedDropContext): DropPlan {
       : { kind: 'move', parentUnique: ctx.targetUnique };
   }
 
-  const without = ctx.siblings.filter((u) => u !== ctx.sourceUnique);
-  const targetIdx = without.indexOf(ctx.targetUnique);
-  if (targetIdx === -1) {
+  const order = placeInOrder(ctx.siblings, ctx.sourceUnique, ctx.targetUnique, ctx.zone);
+  if (order === null) {
     // Can't place it among siblings we can't see: still honour a parent change.
     return sameParent ? { kind: 'noop' } : { kind: 'move', parentUnique: ctx.targetParentUnique };
   }
-  const insertAt = ctx.zone === 'before' ? targetIdx : targetIdx + 1;
-  const order = [...without.slice(0, insertAt), ctx.sourceUnique, ...without.slice(insertAt)];
 
+  // NOTE: `order` here is only the RENDERED siblings — enough to decide what the
+  // drop means and to detect a no-op. The host re-places the source in the
+  // parent's full server order before sorting (see placeInOrder).
   if (!sameParent) return { kind: 'move+sort', parentUnique: ctx.targetParentUnique, order };
   const unchanged = order.length === ctx.siblings.length && order.every((u, i) => u === ctx.siblings[i]);
   return unchanged ? { kind: 'noop' } : { kind: 'reorder', parentUnique: ctx.targetParentUnique, order };
+}
+
+// Put `sourceUnique` directly above/below `targetUnique` in `order` (the source
+// is removed from its old place first; it may be absent, as after a move).
+// Returns null if the target isn't in `order`.
+//
+// The sort endpoint treats each sortOrder as an ABSOLUTE index among all the
+// parent's children. Bellissima may render only a window of a large parent
+// ("Load previous" / "Load more"), so the host passes the parent's full child
+// order from the server here — never just the rendered siblings.
+export function placeInOrder(order: readonly string[], sourceUnique: string, targetUnique: string, zone: DropZone): string[] | null {
+  const without = order.filter((u) => u !== sourceUnique);
+  const targetIdx = without.indexOf(targetUnique);
+  if (targetIdx === -1) return null;
+  const insertAt = zone === 'before' ? targetIdx : targetIdx + 1;
+  return [...without.slice(0, insertAt), sourceUnique, ...without.slice(insertAt)];
 }
 
 // A plan is worth committing only if it actually changes something. `null`

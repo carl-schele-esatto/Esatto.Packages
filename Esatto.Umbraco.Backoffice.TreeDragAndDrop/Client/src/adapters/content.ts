@@ -2,7 +2,8 @@
 
 import { DocumentService } from '@umbraco-cms/backoffice/external/backend-api';
 import type { TreeAdapter } from '../core/types';
-import { run } from './run';
+import { collectAllIds } from './paging';
+import { read, run } from './run';
 
 export const contentAdapter: TreeAdapter = {
   entityType: 'document',
@@ -23,5 +24,11 @@ export const contentAdapter: TreeAdapter = {
         sorting: orderedUniques.map((id, sortOrder) => ({ id, sortOrder })),
       },
     }));
+  },
+
+  childOrder(host, parentUnique) {
+    return collectAllIds((skip, take) => read(host, parentUnique
+      ? DocumentService.getTreeDocumentChildren({ query: { parentId: parentUnique, skip, take } })
+      : DocumentService.getTreeDocumentRoot({ query: { skip, take } })));
   },
 };

@@ -16,4 +16,10 @@ export interface TreeAdapter {
    * (Content, Media). Absent for Dictionary, so row edges mean "next to".
    */
   sort?(host: UmbControllerHost, parentUnique: string | null, orderedUniques: string[]): Promise<void>;
+  /**
+   * The parent's FULL child order from the server (null = root). Required with
+   * `sort`: the sort endpoint treats each sortOrder as an absolute index, and
+   * the sidebar may only have rendered a window of a large parent.
+   */
+  childOrder?(host: UmbControllerHost, parentUnique: string | null): Promise<string[]>;
 }

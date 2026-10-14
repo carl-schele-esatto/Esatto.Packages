@@ -149,3 +149,29 @@ describe('canCommit / describePlan for sorted plans', () => {
     expect(describePlan({ kind: 'move+sort', parentUnique: 'home', order: [] }, 'after', 'About', 'Home')).toBe('Move below About');
   });
 });
+
+import { placeInOrder } from '../src/core/drop-plan';
+
+// Review (steps 2-3) Critical 1: Bellissima can render a middle window of a large
+// parent ("Load previous"). The sort endpoint treats sortOrder as an absolute
+// index, so the order sent must be the parent's FULL child order.
+describe('placeInOrder (full server order)', () => {
+  const full = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+  it('moves within a window without disturbing the rest', () => {
+    // Sidebar shows only d, e, f; f is dropped above d.
+    expect(placeInOrder(full, 'f', 'd', 'before')).toEqual(['a', 'b', 'c', 'f', 'd', 'e', 'g', 'h']);
+  });
+
+  it('places below the target', () => {
+    expect(placeInOrder(full, 'b', 'g', 'after')).toEqual(['a', 'c', 'd', 'e', 'f', 'g', 'b', 'h']);
+  });
+
+  it('inserts a source that is not yet among the children (cross-parent)', () => {
+    expect(placeInOrder(['a', 'b'], 'x', 'b', 'before')).toEqual(['a', 'x', 'b']);
+  });
+
+  it('returns null when the target is not a child of that parent', () => {
+    expect(placeInOrder(full, 'a', 'zz', 'before')).toBeNull();
+  });
+});

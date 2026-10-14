@@ -31,7 +31,7 @@ import {
 } from './tree-item';
 import { getDropZone, type DropZone } from './drop-zone';
 import { collectDescendantUniques, isBlockedTarget } from './cycle-guard';
-import { canCommit, describePlan, planDrop, planSortedDrop, type ActionPlan, type DropPlan } from './drop-plan';
+import { canCommit, describePlan, placeInOrder, planDrop, planSortedDrop, type ActionPlan, type DropPlan } from './drop-plan';
 import { optimisticReorder } from './reorder-dom';
 import { showPlan } from './plan-view';
 import { hideIndicator } from './indicator';
@@ -249,14 +249,15 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
   }
 
   // Run a plan for the current #dragState. Returns whether it fully succeeded.
-  //   move       → move; reload both branches (chevrons come from the data
-  //                store; Dictionary re-sorts alphabetically).
-  //   reorder    → optimistic DOM move first (the sort API is slow), then sort;
-  //                roll the DOM back if it fails. No reload on success.
-  //   move+sort  → move, then sort. If only the sort fails the item stays moved
-  //                (a completed move beats a rollback) and a warning says so.
-  // Any failure reloads both branches so the tree matches the server again
-  // (e.g. a cycle through a collapsed branch the client couldn't see).
+  //   move       → move.
+  //   reorder    → optimistic DOM move first (the sort API is slow), then sort
+  //                with the parent's full server order.
+  //   move+sort  → move, then sort with the new parent's full server order. If
+  //                only the sort fails the item stays moved (a completed move
+  //                beats a rollback) and a warning says so.
+  // Both branches are always reloaded afterwards: chevrons come from the data
+  // store, Dictionary re-sorts alphabetically, and after a failure the tree
+  // must match the server again (e.g. a cycle through a collapsed branch).
   async #execute(plan: ActionPlan, targetEl: AnyTreeItem, zone: DropZone): Promise<boolean> {
     const s = this.#dragState;
     // In-flight lock: a second drop / Space while a move is running is ignored.
@@ -264,36 +265,38 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     this.#movePending = true;
 
     const { adapter, sourceUnique, sourceParentUnique } = s;
+    const targetUnique = readUnique(targetEl)!;
     const sourceEl = findTreeItemByUnique(sourceUnique, adapter.entityType);
     if (sourceEl) {
       (sourceEl as HTMLElement).style.opacity = '0.4';
       showSpinner(sourceEl);
     }
+    // The optimistic reorder moves the row node inside Lit's repeat part of the
+    // target. Lit owns that DOM: leaving the node there lets a later re-render
+    // of the target's part remove it. So the DOM is always put back before the
+    // reload, and Lit re-renders the rows in their new order itself.
+    const rollbackParent = sourceEl?.parentNode ?? null;
+    const rollbackBefore = sourceEl?.nextSibling ?? null;
+    // A no-op when the row never moved.
+    const rollbackDom = () => {
+      if (sourceEl && rollbackParent) rollbackParent.insertBefore(sourceEl, rollbackBefore);
+    };
 
     let ok = false;
-    let reload = true;
     try {
       if (plan.kind === 'move') {
         await adapter.move(this, sourceUnique, plan.parentUnique);
         ok = true;
       } else if (plan.kind === 'reorder') {
-        const rollbackParent = sourceEl?.parentNode ?? null;
-        const rollbackBefore = sourceEl?.nextSibling ?? null;
         optimisticReorder(sourceEl, targetEl, zone);
         // Re-pin the spinner over the row's NEW position.
         if (sourceEl) showSpinner(sourceEl);
-        try {
-          await adapter.sort!(this, plan.parentUnique, plan.order);
-        } catch (err) {
-          if (sourceEl && rollbackParent) rollbackParent.insertBefore(sourceEl, rollbackBefore);
-          throw err;
-        }
+        await this.#sortAround(adapter, plan.parentUnique, sourceUnique, targetUnique, zone);
         ok = true;
-        reload = false;
       } else {
         await adapter.move(this, sourceUnique, plan.parentUnique);
         try {
-          await adapter.sort!(this, plan.parentUnique, plan.order);
+          await this.#sortAround(adapter, plan.parentUnique, sourceUnique, targetUnique, zone);
           ok = true;
         } catch (sortErr) {
           this.#showWarn(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${(sortErr as Error)?.message ?? sortErr})`);
@@ -302,15 +305,27 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     } catch (err) {
       this.#showError((err as Error)?.message ?? String(err));
     } finally {
-      if (reload) {
-        this.#reload(adapter, sourceParentUnique);
-        this.#reload(adapter, plan.parentUnique);
-      }
+      rollbackDom();
+      this.#reload(adapter, sourceParentUnique);
+      if (plan.parentUnique !== sourceParentUnique) this.#reload(adapter, plan.parentUnique);
       hideSpinner();
       if (sourceEl) (sourceEl as HTMLElement).style.opacity = '';
       this.#movePending = false;
     }
     return ok;
+  }
+
+  // Sort `parentUnique`'s children so the source sits above/below the target.
+  // The sort endpoint treats each sortOrder as an ABSOLUTE index, and the
+  // sidebar may have rendered only a window of a large parent, so the order is
+  // built from the parent's full child list on the server — never from the
+  // rendered rows. If that order can't be built, nothing is sorted.
+  async #sortAround(adapter: TreeAdapter, parentUnique: string | null, sourceUnique: string, targetUnique: string, zone: DropZone): Promise<void> {
+    if (!adapter.sort || !adapter.childOrder) throw new Error('This tree cannot be sorted');
+    const full = await adapter.childOrder(this, parentUnique);
+    const order = placeInOrder(full, sourceUnique, targetUnique, zone);
+    if (!order) throw new Error('The drop target is no longer under that parent');
+    await adapter.sort(this, parentUnique, order);
   }
 
   // --- Keyboard "grab & place" ------------------------------------------------

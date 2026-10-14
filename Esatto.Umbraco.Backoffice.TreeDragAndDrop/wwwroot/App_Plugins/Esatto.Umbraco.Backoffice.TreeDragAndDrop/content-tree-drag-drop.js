@@ -1,23 +1,27 @@
-import { r, a as d } from "./core-CrszW97q.js";
+import { r as m, a as u, b as c } from "./core-B7lI1kZv.js";
 import { DocumentService as n } from "@umbraco-cms/backoffice/external/backend-api";
-const i = {
+import { c as i } from "./core-By19G-8s.js";
+const l = {
   entityType: "document",
   rootEntityType: "document-root",
   innerTag: "umb-document-tree-item",
-  move(o, t, e) {
-    return r(o, n.putDocumentByIdMove({
+  move(r, t, e) {
+    return m(r, n.putDocumentByIdMove({
       path: { id: t },
       body: { target: e ? { id: e } : null }
     }));
   },
-  sort(o, t, e) {
-    return r(o, n.putDocumentSort({
+  sort(r, t, e) {
+    return m(r, n.putDocumentSort({
       body: {
         parent: t ? { id: t } : null,
-        sorting: e.map((m, u) => ({ id: m, sortOrder: u }))
+        sorting: e.map((o, d) => ({ id: o, sortOrder: d }))
       }
     }));
+  },
+  childOrder(r, t) {
+    return i((e, o) => u(r, t ? n.getTreeDocumentChildren({ query: { parentId: t, skip: e, take: o } }) : n.getTreeDocumentRoot({ query: { skip: e, take: o } })));
   }
 };
-d(i);
+c(l);
 //# sourceMappingURL=content-tree-drag-drop.js.map

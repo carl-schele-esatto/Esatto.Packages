@@ -1,4 +1,4 @@
-import { r as e, a as o } from "./core-CrszW97q.js";
+import { r as e, b as o } from "./core-B7lI1kZv.js";
 import { DictionaryService as a } from "@umbraco-cms/backoffice/external/backend-api";
 const n = {
   entityType: "dictionary",
