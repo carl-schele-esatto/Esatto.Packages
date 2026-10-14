@@ -1,0 +1,7 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.TreeDragAndDrop",
+  "name": "Esatto Umbraco Backoffice Tree Drag and Drop",
+  "version": "1.0.0",
+  "extensions": []
+}
