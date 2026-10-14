@@ -236,13 +236,16 @@ many trees are enabled.
    Umbraco.Infrastructure 17.0.0 and 18.0.0.** Umbraco registers `BackOfficePackageManifestReader`
    then `AppPluginsPackageManifestReader` with plain `AddSingleton`. `PackageManifestService`
    enumerates all readers without deduplicating. `PackagingService` takes the single, last-registered
-   reader and uses it to build the **Packages → Installed** list. Composers run after those
-   registrations, so a plain `AddSingleton` (or `TryAddEnumerable`, which still appends) would
-   make ours the last one and empty the Installed list of every App_Plugins package. **Decision:**
-   insert our descriptor *before* the first existing `IPackageManifestReader` descriptor, so
-   Umbraco's App_Plugins reader stays last. Also ship a static `umbraco-package.json` with
-   `"extensions": []`, so the package itself still appears in the Installed list and telemetry.
-   The reader's manifest has no `Id` and `AllowTelemetry = false`, so it is not counted twice.
+   reader for its installed-package queries (`GetAllInstalledPackagesAsync`, used by package
+   migrations and telemetry). Composers run after those registrations, so a plain `AddSingleton`
+   (or `TryAddEnumerable`, which still appends) would make ours the last one and hide every
+   App_Plugins package from those queries. **Decision:** insert our descriptor *before* the first
+   existing `IPackageManifestReader` descriptor, so Umbraco's App_Plugins reader stays last. Also
+   ship a static `umbraco-package.json` with `"extensions": []`, which gives the package its identity.
+   **Correction (final review, 2026-10-14):** the Packages → Installed *view* does not use
+   `PackagingService`. It lists every manifest with a name from `ManifestService` (all readers), so the
+   reader's manifest has an **empty `Name`** as well as no `Id` and `AllowTelemetry = false`. The
+   backoffice still registers its extensions, because `UmbServerExtensionRegistrator` ignores the name.
 2. **Dictionary tree DOM.** Only verified from the bundle. `props.item` shape, `toggleChildren`
    and the row-rect selectors need live confirmation; budget an extra hour.
 3. **Shared chunk singleton.** Relies on all entries importing the core chunk by the same URL.

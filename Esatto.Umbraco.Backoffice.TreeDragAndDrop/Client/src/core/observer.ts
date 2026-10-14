@@ -18,8 +18,10 @@ export interface DndHost {
   attachItem(el: Element): void;
 }
 
+// Weak on purpose: the script now loads for every backoffice user at login, and
+// a strong list of every shadow root ever created (every uui-button, every
+// workspace navigated away from) would grow for the whole session.
 const observedRoots = new WeakSet<object>();
-const knownRoots: Array<Document | ShadowRoot> = []; // includes document; for re-sweep
 
 let host: DndHost | null = null;
 
@@ -28,13 +30,12 @@ export function setHost(h: DndHost | null): void {
   if (h) resweep();
 }
 
-// Re-walk every captured root. Called when the host mounts, and when a tree
+// Re-walk the live document. Called when the host mounts, and when a tree
 // registers after rows of that tree are already rendered (isTreeItem only
-// matches rows whose adapter is registered).
+// matches rows whose adapter is registered). Bellissima's shadow roots are
+// open, so walkDescendantsComposed reaches every connected row from here.
 export function resweep(): void {
-  for (const root of knownRoots) {
-    sweepSubtree(root);
-  }
+  sweepSubtree(document);
 }
 
 function sweepSubtree(root: Node | null): void {
@@ -58,7 +59,6 @@ function sweepSubtree(root: Node | null): void {
 function observeRoot(root: Document | ShadowRoot | null): void {
   if (!root || observedRoots.has(root)) return;
   observedRoots.add(root);
-  knownRoots.push(root);
 
   const observer = new MutationObserver((mutations) => {
     for (const m of mutations) {
@@ -77,8 +77,13 @@ function observeRoot(root: Document | ShadowRoot | null): void {
         // the inner kind-element + uui-menu-item async, so elements that
         // need draggable=true frequently appear AFTER the wrapper's initial
         // attachItem.
+        // attachItem too: isTreeItem needs props.isMenu, which may only be
+        // readable once the row starts rendering its inner element.
         const enclosing = findEnclosingTreeItemComposed(node);
-        if (enclosing) propagateDraggable(enclosing);
+        if (enclosing) {
+          host?.attachItem(enclosing);
+          propagateDraggable(enclosing);
+        }
       }
     }
   });

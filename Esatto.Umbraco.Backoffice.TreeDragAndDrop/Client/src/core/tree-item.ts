@@ -9,11 +9,19 @@ import type { TreeAdapter } from './types';
 // shape is NOT part of any public contract — we read it best-effort. Modelled
 // as an intersection with Element so the helpers stay DOM-typed.
 export type AnyTreeItem = Element & {
-  props?: { item?: { unique?: string | null; name?: string; parent?: { unique?: string | null } } };
+  props?: {
+    item?: { unique?: string | null; name?: string; parent?: { unique?: string | null } };
+    // true for rows of the section sidebar (menu) tree; false in pickers such as
+    // the "Move to…" modal. Passed down to every child row by Bellissima.
+    isMenu?: boolean;
+  };
   api?: { unique?: string | null };
   _item?: { unique?: string | null };
-  toggleChildren?: () => void;
 };
+
+// Inner kind element (e.g. <umb-default-tree-item>) — its `api` is the row's
+// tree-item context, which owns expand/collapse.
+type KindElement = Element & { api?: { showChildren?: () => void } };
 
 export function readEntityType(el: Element): string | null {
   // Lit's default @property() reflection lowercases the property name without
@@ -24,11 +32,32 @@ export function readEntityType(el: Element): string | null {
   return el.getAttribute('entitytype') ?? el.getAttribute('entity-type');
 }
 
+// A row is ours only in the section sidebar. The same <umb-tree-item> rows also
+// render inside pickers (the "Move to…" modal, "Insert dictionary item",
+// umb-input-dictionary) with isMenu: false — dragging or Space-grabbing there
+// would perform a real move from inside a picker.
 export function isTreeItem(el: unknown): el is AnyTreeItem {
-  const node = el as Element | null;
+  const node = el as AnyTreeItem | null;
   if (!node || node.nodeType !== 1) return false;
   if (node.tagName !== 'UMB-TREE-ITEM') return false;
+  if (node.props?.isMenu !== true) return false;
   return adapterForEntityType(readEntityType(node)) !== undefined;
+}
+
+// Children of a collapsed branch stay in the DOM (Bellissima keeps loaded child
+// items and uui-menu-item just stops slotting them), so "in the DOM" is not
+// "on screen". A row with no layout boxes is hidden.
+export function isRendered(el: Element): boolean {
+  return el.getClientRects().length > 0;
+}
+
+// Expand a collapsed row. <umb-tree-item> renders into its light DOM (no
+// shadowRoot, no toggleChildren); expansion goes through the inner kind
+// element's tree-item context. showChildren() on an open row is a no-op.
+export function expandRow(el: Element): void {
+  const innerTag = adapterOf(el)?.innerTag ?? 'umb-default-tree-item';
+  const inner = el.querySelector(`:scope > ${innerTag}`) as KindElement | null;
+  inner?.api?.showChildren?.();
 }
 
 export function adapterOf(el: Element): TreeAdapter | undefined {
@@ -117,12 +146,13 @@ export function findTreeItemByUnique(unique: string, entityType: string): AnyTre
 }
 
 export function listTreeItemsInOrder(entityType: string): AnyTreeItem[] {
-  // All rendered rows of one tree in composed DOM order, which matches their
+  // All visible rows of one tree in composed DOM order, which matches their
   // visual top-to-bottom order. Used by keyboard grab & place and to find the
-  // first top-level row for the "move to root" indicator.
+  // first top-level row for the "move to root" indicator. Rows inside a
+  // collapsed branch are skipped (see isRendered).
   const out: AnyTreeItem[] = [];
   walkDescendantsComposed(document.documentElement, (el) => {
-    if (isTreeItem(el) && readEntityType(el) === entityType) out.push(el);
+    if (isTreeItem(el) && readEntityType(el) === entityType && isRendered(el)) out.push(el);
   });
   return out;
 }

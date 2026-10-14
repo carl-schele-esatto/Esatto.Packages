@@ -42,8 +42,10 @@ public class TreeDragAndDropManifestReaderTests
     {
         var manifest = Assert.Single(await ReadAsync(new TreeDragAndDropOptions()));
 
-        // The static umbraco-package.json carries the package's Id and telemetry;
-        // this manifest only contributes entry points.
+        // The static umbraco-package.json carries the package's Id, name and telemetry;
+        // this manifest only contributes entry points. Packages → Installed lists every
+        // manifest with a name, so an empty Name keeps it from showing as a second package.
+        Assert.Equal(string.Empty, manifest.Name);
         Assert.Null(manifest.Id);
         Assert.False(manifest.AllowTelemetry);
         Assert.False(manifest.AllowPublicAccess);

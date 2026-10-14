@@ -19,6 +19,9 @@ export interface KbState {
 export type KbAction =
   | { type: 'none'; state: KbState }
   | { type: 'commit'; state: KbState }
+  // Space/Enter on the source itself or one of its descendants: nothing moves,
+  // but the host must say why rather than stay silent.
+  | { type: 'blocked'; state: KbState }
   | { type: 'cancel' };
 
 function nextNonBlocked(from: number, dir: 1 | -1, candidates: KbCandidate[]): number {
@@ -48,7 +51,8 @@ export function reduceKey(state: KbState, key: string, candidates: KbCandidate[]
     case ' ':
     case 'Enter': {
       const target = candidates[state.targetIndex];
-      if (!target || target.blocked) return { type: 'none', state };
+      if (!target) return { type: 'none', state };
+      if (target.blocked) return { type: 'blocked', state };
       return { type: 'commit', state };
     }
     case 'Escape':

@@ -64,9 +64,15 @@ describe('reduceKey', () => {
     expect(reduceKey(start, 'Enter', candidates).type).toBe('commit');
   });
 
-  it('does not commit when the resolved target is blocked', () => {
+  // Review fix #4: committing on a blocked target must be reported, not silent,
+  // so the host can explain why nothing moved.
+  it('Space or Enter on a blocked target reports "blocked" and keeps the state', () => {
     const onB: KbState = { sourceUnique: 'B', targetIndex: 1, zone: 'into' };
-    expect(reduceKey(onB, ' ', candidates).type).toBe('none');
+    for (const key of [' ', 'Enter']) {
+      const r = reduceKey(onB, key, candidates);
+      expect(r.type).toBe('blocked');
+      expect(r.state).toEqual(onB);
+    }
   });
 
   it('Escape cancels', () => {

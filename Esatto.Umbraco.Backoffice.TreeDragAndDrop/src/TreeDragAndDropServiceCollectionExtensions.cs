@@ -11,10 +11,10 @@ public static class TreeDragAndDropServiceCollectionExtensions
     /// </summary>
     /// <remarks>
     /// Umbraco registers its manifest readers with plain AddSingleton. PackageManifestService reads
-    /// ALL of them, but PackagingService resolves ONE (the last registered) to build
-    /// Packages → Installed. Appending ours (AddSingleton or TryAddEnumerable alike) would make it
-    /// that one and hide every App_Plugins package from the Installed list, so it is inserted in
-    /// front of the existing readers instead.
+    /// ALL of them, but PackagingService resolves ONE (the last registered) for its installed-package
+    /// queries (GetAllInstalledPackagesAsync, used by package migrations and telemetry). Appending ours
+    /// (AddSingleton or TryAddEnumerable alike) would make it that one and hide every App_Plugins
+    /// package from those queries, so it is inserted in front of the existing readers instead.
     /// </remarks>
     public static IServiceCollection AddTreeDragAndDrop(this IServiceCollection services)
     {

@@ -17,6 +17,7 @@ import { ATTACHED_FLAG, DRAG_MIME, HOVER_EXPAND_MS, LOG_PREFIX } from './constan
 import { setHost } from './observer';
 import {
   adapterOf,
+  expandRow,
   findTreeItemByUnique,
   isTreeItem,
   listTreeItemsInOrder,
@@ -34,6 +35,7 @@ import { hideIndicator } from './indicator';
 import { showSpinner, hideSpinner } from './spinner';
 import { reduceKey, type KbCandidate, type KbState } from './keyboard';
 import { announce } from './announce';
+import { isGrabStartPath, isInsideTree } from './key-path';
 import type { TreeAdapter } from './types';
 
 interface DragState {
@@ -128,6 +130,14 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     // handling (open node, expand/collapse, roving tabindex) doesn't fire for
     // the keys we own while grabbed.
     document.addEventListener('keydown', (e) => this.#onKeyDown(e), true);
+    // A click anywhere outside the grabbed tree ends a keyboard grab, so a
+    // forgotten grab can't capture keys typed later in, say, a textarea.
+    document.addEventListener('pointerdown', (e) => {
+      if (this.#kbState && this.#dragState && !isInsideTree(e.composedPath(), this.#dragState.adapter.entityType)) {
+        this.#endKeyboardGrab();
+        announce('Move cancelled.');
+      }
+    }, true);
   }
 
   #findTreeItemInPath(event: Event): AnyTreeItem | null {
@@ -200,15 +210,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     if (this.#lastHoverTarget === el) return;
     this.#clearHoverTimer();
     this.#lastHoverTarget = el;
-    this.#hoverTimer = setTimeout(() => {
-      if (el.hasAttribute('show-children') || el.hasAttribute('is-expanded') || el.hasAttribute('open')) return;
-      if (typeof el.toggleChildren === 'function') {
-        el.toggleChildren();
-      } else {
-        const chevron = el.shadowRoot?.querySelector('[name="caret"], [data-mark="chevron"]');
-        (chevron as HTMLElement | null | undefined)?.click?.();
-      }
-    }, HOVER_EXPAND_MS);
+    this.#hoverTimer = setTimeout(() => expandRow(el), HOVER_EXPAND_MS);
   }
 
   #clearHoverTimer(): void {
@@ -311,7 +313,9 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
       // "open node" behaviour; other keys pass through untouched.
       if (e.key !== ' ' || this.#movePending) return;
       const el = this.#findTreeItemInPath(e);
-      if (!el) return;
+      // Only the row itself grabs; Space on its caret, actions or buttons keeps
+      // its normal meaning.
+      if (!el || !isGrabStartPath(e.composedPath(), el)) return;
       const state = this.#beginDrag(el);
       if (!state) return;
       e.preventDefault();
@@ -327,6 +331,13 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     }
 
     if (!KEYBOARD_KEYS.includes(e.key)) return;
+    // A key outside the grabbed tree (focus moved to a textarea, a modal…)
+    // isn't ours: end the grab and let the key do its normal job.
+    if (!isInsideTree(e.composedPath(), this.#dragState!.adapter.entityType)) {
+      this.#endKeyboardGrab();
+      announce('Move cancelled.');
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
 
@@ -343,6 +354,12 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     if (r.type === 'cancel') {
       this.#endKeyboardGrab();
       announce('Move cancelled.');
+      return;
+    }
+
+    if (r.type === 'blocked') {
+      // Stay grabbed: the position is the item itself or one of its descendants.
+      announce('Can\'t move an item into itself or its own children. Choose another position, or press escape to cancel.');
       return;
     }
 

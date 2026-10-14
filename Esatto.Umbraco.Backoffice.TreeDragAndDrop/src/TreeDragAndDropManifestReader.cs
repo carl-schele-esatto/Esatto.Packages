@@ -8,9 +8,9 @@ namespace Esatto.Umbraco.Backoffice.TreeDragAndDrop;
 
 /// <summary>
 /// Contributes one <c>backofficeEntryPoint</c> per enabled tree, so a disabled tree's
-/// JavaScript is never loaded. The static <c>umbraco-package.json</c> (no extensions) is what
-/// lists the package under Packages → Installed; this manifest has no Id and no telemetry so
-/// the package isn't counted twice.
+/// JavaScript is never loaded. The static <c>umbraco-package.json</c> (no extensions) gives the
+/// package its identity — the Packages → Installed row, PackagingService and telemetry; this
+/// manifest has no name, Id or telemetry so the package isn't listed or counted twice.
 /// </summary>
 public sealed class TreeDragAndDropManifestReader : IPackageManifestReader
 {
@@ -43,7 +43,10 @@ public sealed class TreeDragAndDropManifestReader : IPackageManifestReader
             [
                 new PackageManifest
                 {
-                    Name = $"{TreeDefinition.PackageId}.EntryPoints",
+                    // Empty on purpose: Packages → Installed (ManifestService → every reader)
+                    // lists each manifest that has a name, and the static umbraco-package.json
+                    // already lists this package. Extensions register regardless of name.
+                    Name = string.Empty,
                     Version = PackageVersion,
                     AllowTelemetry = false,
                     Extensions = extensions,
