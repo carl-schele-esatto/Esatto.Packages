@@ -10,7 +10,7 @@ import type { TreeAdapter } from './types';
 // as an intersection with Element so the helpers stay DOM-typed.
 export type AnyTreeItem = Element & {
   props?: {
-    item?: { unique?: string | null; name?: string; parent?: { unique?: string | null } };
+    item?: { unique?: string | null; name?: string; isTrashed?: boolean; parent?: { unique?: string | null } };
     // true for rows of the section sidebar (menu) tree; false in pickers such as
     // the "Move to…" modal. Passed down to every child row by Bellissima.
     isMenu?: boolean;
@@ -41,6 +41,9 @@ export function isTreeItem(el: unknown): el is AnyTreeItem {
   if (!node || node.nodeType !== 1) return false;
   if (node.tagName !== 'UMB-TREE-ITEM') return false;
   if (node.props?.isMenu !== true) return false;
+  // Recycle-bin rows share the sidebar; moving one out is a restore, which
+  // Umbraco does through its own action.
+  if (node.props?.item?.isTrashed === true) return false;
   return adapterForEntityType(readEntityType(node)) !== undefined;
 }
 
@@ -154,5 +157,18 @@ export function listTreeItemsInOrder(entityType: string): AnyTreeItem[] {
   walkDescendantsComposed(document.documentElement, (el) => {
     if (isTreeItem(el) && readEntityType(el) === entityType && isRendered(el)) out.push(el);
   });
+  return out;
+}
+
+// Current visible child order under `parentUnique` (null = tree root). Unlike
+// ContentTreeDragAndDrop 2.0's walk from the parent row, this works at the
+// root, where there is no parent row to walk from.
+export function listSiblings(parentUnique: string | null, entityType: string): string[] {
+  const out: string[] = [];
+  for (const el of listTreeItemsInOrder(entityType)) {
+    if (readParentUnique(el) !== parentUnique) continue;
+    const u = readUnique(el);
+    if (u) out.push(u);
+  }
   return out;
 }

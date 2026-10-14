@@ -34,6 +34,11 @@ describe('isTreeItem', () => {
     expect(isTreeItem(row('dictionary'))).toBe(false);
   });
 
+  // Review Focus 4: recycle-bin rows render in the same sidebar but must not move.
+  it('rejects a trashed row', () => {
+    expect(isTreeItem(row('dictionary', { isMenu: true, item: { isTrashed: true } }))).toBe(false);
+  });
+
   it('rejects a sidebar row of an unregistered tree', () => {
     expect(isTreeItem(row('document', { isMenu: true }))).toBe(false);
   });

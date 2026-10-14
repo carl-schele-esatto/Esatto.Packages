@@ -71,3 +71,81 @@ describe('describePlan', () => {
     expect(describePlan({ kind: 'noop' }, 'before', 'Päron', null)).toBe('No change: already here');
   });
 });
+
+import { planSortedDrop } from '../src/core/drop-plan';
+
+// Content tree used below:
+//   Home        (root)
+//   ├ About
+//   ├ Blog
+//   └ Contact
+//   Settings    (root)
+describe('planSortedDrop (tree with sort)', () => {
+  const homeKids = ['about', 'blog', 'contact'];
+
+  it('middle of a row moves into it', () => {
+    expect(planSortedDrop({ zone: 'into', sourceUnique: 'contact', sourceParentUnique: 'home', targetUnique: 'settings', targetParentUnique: null, siblings: ['home', 'settings'] }))
+      .toEqual({ kind: 'move', parentUnique: 'settings' });
+  });
+
+  it('into the current parent is a no-op', () => {
+    expect(planSortedDrop({ zone: 'into', sourceUnique: 'about', sourceParentUnique: 'home', targetUnique: 'home', targetParentUnique: null, siblings: ['home', 'settings'] }))
+      .toEqual({ kind: 'noop' });
+  });
+
+  it('same parent, above a sibling → reorder', () => {
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'contact', sourceParentUnique: 'home', targetUnique: 'about', targetParentUnique: 'home', siblings: homeKids }))
+      .toEqual({ kind: 'reorder', parentUnique: 'home', order: ['contact', 'about', 'blog'] });
+  });
+
+  it('same parent, below a sibling → reorder', () => {
+    expect(planSortedDrop({ zone: 'after', sourceUnique: 'about', sourceParentUnique: 'home', targetUnique: 'contact', targetParentUnique: 'home', siblings: homeKids }))
+      .toEqual({ kind: 'reorder', parentUnique: 'home', order: ['blog', 'contact', 'about'] });
+  });
+
+  // Review Focus 1: the legacy packages failed here ("Target sibling not found").
+  it('reorders at the tree root', () => {
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'settings', sourceParentUnique: null, targetUnique: 'home', targetParentUnique: null, siblings: ['home', 'settings'] }))
+      .toEqual({ kind: 'reorder', parentUnique: null, order: ['settings', 'home'] });
+  });
+
+  // Review Focus 2: dropping where it already is does nothing.
+  it('above its own next sibling is a no-op', () => {
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'about', sourceParentUnique: 'home', targetUnique: 'blog', targetParentUnique: 'home', siblings: homeKids }))
+      .toEqual({ kind: 'noop' });
+  });
+
+  it('below its own previous sibling is a no-op', () => {
+    expect(planSortedDrop({ zone: 'after', sourceUnique: 'blog', sourceParentUnique: 'home', targetUnique: 'about', targetParentUnique: 'home', siblings: homeKids }))
+      .toEqual({ kind: 'noop' });
+  });
+
+  it('cross-parent slot → move+sort with the source inserted', () => {
+    expect(planSortedDrop({ zone: 'after', sourceUnique: 'settings', sourceParentUnique: null, targetUnique: 'about', targetParentUnique: 'home', siblings: homeKids }))
+      .toEqual({ kind: 'move+sort', parentUnique: 'home', order: ['about', 'settings', 'blog', 'contact'] });
+  });
+
+  it('cross-parent slot to the root → move+sort under null', () => {
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'blog', sourceParentUnique: 'home', targetUnique: 'settings', targetParentUnique: null, siblings: ['home', 'settings'] }))
+      .toEqual({ kind: 'move+sort', parentUnique: null, order: ['home', 'blog', 'settings'] });
+  });
+
+  it('target missing from the rendered siblings → plain move (cross-parent) or no-op (same parent)', () => {
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'x', sourceParentUnique: null, targetUnique: 'about', targetParentUnique: 'home', siblings: [] }))
+      .toEqual({ kind: 'move', parentUnique: 'home' });
+    expect(planSortedDrop({ zone: 'before', sourceUnique: 'blog', sourceParentUnique: 'home', targetUnique: 'about', targetParentUnique: 'home', siblings: [] }))
+      .toEqual({ kind: 'noop' });
+  });
+});
+
+describe('canCommit / describePlan for sorted plans', () => {
+  it('commits reorder and move+sort', () => {
+    expect(canCommit({ kind: 'reorder', parentUnique: null, order: ['a'] })).toBe(true);
+    expect(canCommit({ kind: 'move+sort', parentUnique: 'p', order: ['a'] })).toBe(true);
+  });
+
+  it('describes above / below', () => {
+    expect(describePlan({ kind: 'reorder', parentUnique: 'home', order: [] }, 'before', 'About', 'Home')).toBe('Move above About');
+    expect(describePlan({ kind: 'move+sort', parentUnique: 'home', order: [] }, 'after', 'About', 'Home')).toBe('Move below About');
+  });
+});
