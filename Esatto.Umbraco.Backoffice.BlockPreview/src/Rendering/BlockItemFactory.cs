@@ -31,19 +31,30 @@ public sealed class BlockItemFactory : IBlockItemFactory
         IPublishedContent? owner = _contentCache.GetById(preview: true, request.DocumentKey);
         if (owner is null)
         {
-            return new BlockItemResult(null, alias, OwnerMissing: true);
+            return new BlockItemResult(null, alias, NotPreviewableReason: "unsavedDocument");
         }
 
-        IPublishedPropertyType propertyType =
-            _contentTypeCache.Get(PublishedItemType.Content, request.DocumentTypeKey).GetPropertyType(request.PropertyAlias)
-            ?? throw new InvalidOperationException($"The document type has no property '{request.PropertyAlias}'.");
+        // From the owner itself, so the property type always matches the document being previewed.
+        // Missing means the Block List lives somewhere else, e.g. nested inside a block.
+        IPublishedPropertyType? propertyType = owner.ContentType.GetPropertyType(request.PropertyAlias);
+        if (propertyType is null)
+        {
+            return new BlockItemResult(null, alias, NotPreviewableReason: "unsupported");
+        }
 
         string source = BlockListValueJson.Build(request);
         object? inter = propertyType.ConvertSourceToInter(owner, source, preview: true);
-        var model = propertyType.ConvertInterToObject(owner, PropertyCacheLevel.None, inter, preview: true) as BlockListModel;
-        BlockListItem item = model?.FirstOrDefault()
+        object? converted = propertyType.ConvertInterToObject(owner, PropertyCacheLevel.None, inter, preview: true);
+        BlockListItem item = ExtractItem(converted)
             ?? throw new InvalidOperationException("The block could not be converted (is it allowed in this Block List?).");
 
-        return new BlockItemResult(item, alias, OwnerMissing: false);
+        return new BlockItemResult(item, alias, NotPreviewableReason: null);
     }
+
+    /// <summary>
+    /// The converter returns a <see cref="BlockListModel"/>, or in (deprecated) single block mode the
+    /// <see cref="BlockListItem"/> itself.
+    /// </summary>
+    public static BlockListItem? ExtractItem(object? converted) =>
+        converted as BlockListItem ?? (converted as BlockListModel)?.FirstOrDefault();
 }

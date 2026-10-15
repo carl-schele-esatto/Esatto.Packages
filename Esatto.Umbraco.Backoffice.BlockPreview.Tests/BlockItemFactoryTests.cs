@@ -1,0 +1,35 @@
+using Esatto.Umbraco.Backoffice.BlockPreview.Rendering;
+using NSubstitute;
+using Umbraco.Cms.Core.Models.Blocks;
+using Umbraco.Cms.Core.Models.PublishedContent;
+using Xunit;
+
+namespace Esatto.Umbraco.Backoffice.BlockPreview.Tests;
+
+public class BlockItemFactoryTests
+{
+    private static BlockListItem Item() => new(Guid.NewGuid(), Substitute.For<IPublishedElement>(), null, null);
+
+    [Fact]
+    public void Takes_the_first_item_of_a_block_list_model()
+    {
+        var item = Item();
+        Assert.Same(item, BlockItemFactory.ExtractItem(new BlockListModel([item])));
+    }
+
+    // Final review, Important 2: in (deprecated but still offered) single block mode the converter
+    // returns the BlockListItem itself, not a BlockListModel.
+    [Fact]
+    public void Accepts_a_single_block_mode_item()
+    {
+        var item = Item();
+        Assert.Same(item, BlockItemFactory.ExtractItem(item));
+    }
+
+    [Fact]
+    public void Returns_null_for_an_empty_model_or_nothing()
+    {
+        Assert.Null(BlockItemFactory.ExtractItem(new BlockListModel([])));
+        Assert.Null(BlockItemFactory.ExtractItem(null));
+    }
+}

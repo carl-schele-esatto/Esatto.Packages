@@ -14,5 +14,9 @@ public interface IBlockItemFactory
 
 /// <param name="Item">The block list item, or null when it couldn't be produced.</param>
 /// <param name="ContentTypeAlias">The block's content type alias (the partial's file name).</param>
-/// <param name="OwnerMissing">True when the document has never been saved (not in the content cache).</param>
-public sealed record BlockItemResult(object? Item, string ContentTypeAlias, bool OwnerMissing);
+/// <param name="NotPreviewableReason">
+/// <c>unsavedDocument</c> (the document has never been saved, so it isn't in the content cache) or
+/// <c>unsupported</c> (the property isn't on the document's type, e.g. a Block List nested inside a
+/// block); null when <paramref name="Item"/> was produced.
+/// </param>
+public sealed record BlockItemResult(object? Item, string ContentTypeAlias, string? NotPreviewableReason);

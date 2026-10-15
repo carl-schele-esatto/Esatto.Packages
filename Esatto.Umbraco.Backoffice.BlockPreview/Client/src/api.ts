@@ -3,7 +3,7 @@ import type { RenderRequestBody } from './render-request';
 
 export type RenderOutcome =
   | { status: 'rendered'; html: string }
-  | { status: 'notPreviewable'; reason: 'noPartial' | 'ignored' | 'unsavedDocument' }
+  | { status: 'notPreviewable'; reason: 'noPartial' | 'ignored' | 'unsavedDocument' | 'unsupported' }
   | { status: 'error'; message: string };
 
 const ENDPOINT = '/umbraco/management/api/v1/esatto/block-preview/render';

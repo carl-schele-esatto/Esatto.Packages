@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Umbraco.Cms.Core.Manifest;
 using Umbraco.Cms.Infrastructure.Manifest;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
 using Xunit;
 
 namespace Esatto.Umbraco.Backoffice.BlockPreview.Tests;
@@ -45,6 +46,15 @@ public class BlockPreviewRegistrationTests
     {
         using var provider = Build(registrations: 2);
         Assert.Single(provider.GetServices<IPackageManifestReader>().OfType<BlockPreviewManifestReader>());
+    }
+
+    // Final review, Important 7: the opaque-origin font/script header must actually be in the pipeline.
+    [Fact]
+    public void Adds_the_opaque_origin_assets_pipeline_filter_once()
+    {
+        using var provider = Build(registrations: 2);
+        var filters = provider.GetRequiredService<IOptions<UmbracoPipelineOptions>>().Value.PipelineFilters;
+        Assert.Single(filters, f => f.Name == "Esatto.BlockPreview.OpaqueOriginAssets");
     }
 
     [Fact]

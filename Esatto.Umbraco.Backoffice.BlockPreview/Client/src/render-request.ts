@@ -54,3 +54,11 @@ export function requestFingerprint(body: RenderRequestBody): string {
   const { nonce: _nonce, ...rest } = body;
   return JSON.stringify(rest);
 }
+
+// Per-render id. crypto.randomUUID only exists in secure contexts (https or localhost); a backoffice
+// on plain http would otherwise fail every render. getRandomValues works everywhere.
+export function newNonce(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID();
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}

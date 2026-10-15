@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readHeight, HEIGHT_MESSAGE_TYPE } from '../src/frame-messages';
+import { readHeight, HEIGHT_MESSAGE_TYPE, MAX_PREVIEW_HEIGHT } from '../src/frame-messages';
 
 const frame = {};
 const msg = (data: unknown, source: unknown = frame) => ({ source, data });
@@ -32,5 +32,13 @@ describe('readHeight', () => {
 
   it('rounds up fractional heights', () => {
     expect(readHeight(msg({ type: HEIGHT_MESSAGE_TYPE, id: 'n1', height: 100.2 }), frame, 'n1')).toBe(101);
+  });
+});
+
+// Final review, Important 5: content sized to the viewport (min-height: 100vh) would otherwise grow
+// the frame forever (frame grows → vh grows → content grows → …).
+describe('readHeight cap', () => {
+  it('caps the height at MAX_PREVIEW_HEIGHT', () => {
+    expect(readHeight(msg({ type: HEIGHT_MESSAGE_TYPE, id: 'n1', height: 50_000 }), frame, 'n1')).toBe(MAX_PREVIEW_HEIGHT);
   });
 });

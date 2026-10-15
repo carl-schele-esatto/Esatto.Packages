@@ -85,9 +85,17 @@ All optional, in `appsettings.json`:
 | `Layout` | `~/Views/BlockPreview.cshtml` | Your preview layout |
 | `Stylesheets` / `Scripts` | `[]` | Used by the built-in layout when your layout file doesn't exist |
 
+### Good to know
+
+- **Permissions.** A preview renders draft content, so it requires the same access as opening the document: access to the Content tree and read permission on that document.
+- **Fonts and module scripts.** The preview iframe is sandboxed with an opaque origin, and browsers fetch fonts and `<script type="module">` with CORS even from your own site. The package adds `Access-Control-Allow-Origin: *` to font and script responses requested from a preview (`Origin: null`) and to nothing else. Self-hosted fonts and module bundles work without extra setup.
+- **Viewport units size against the preview, not the browser window.** `100vh` means the height of the preview frame. Previews are capped at 3000px tall.
+
 ### Limitations (1.0)
 
 - **Block List only.** Block Grid and blocks in the Rich Text editor are planned.
+- **Inline editing mode.** On a Block List configured with "Inline editing mode", the preview replaces Umbraco's inline editor, and blocks open in the editor instead. To keep inline editing, list those block types in `IgnoredContentTypes`, or set `BlockList.Enabled` to `false`.
+- **Nested Block Lists.** A Block List inside a block (edited in the block's own editor) shows a plain row, with no preview.
 - **A refresh starts the preview over.** For example, a carousel goes back to its first slide.
 - **One request and one iframe per block.** That's fine for typical pages.
 

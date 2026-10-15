@@ -9,18 +9,13 @@ import { UMB_BLOCK_ENTRY_CONTEXT } from '@umbraco-cms/backoffice/block';
 import type { UmbBlockEditorCustomViewConfiguration, UmbBlockEditorCustomViewElement } from '@umbraco-cms/backoffice/block-custom-view';
 import { UMB_CONTENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/content';
 import { UMB_PROPERTY_CONTEXT, UMB_PROPERTY_DATASET_CONTEXT } from '@umbraco-cms/backoffice/property';
-import { buildRenderRequest, requestFingerprint, type BlockData } from './render-request';
+import { UMB_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/workspace';
+import { buildRenderRequest, newNonce, requestFingerprint, type BlockData } from './render-request';
 import { readHeight } from './frame-messages';
 import { renderBlockPreview, type RenderOutcome } from './api';
+import { isPreviewableWorkspace, toViewState, type ViewState } from './view-state';
 
 const DEBOUNCE_MS = 400;
-
-type ViewState =
-  | { kind: 'loading' }
-  | { kind: 'rendered'; html: string; nonce: string }
-  | { kind: 'plain' }
-  | { kind: 'unsaved' }
-  | { kind: 'error'; message: string };
 
 @customElement('esatto-block-preview-frame')
 export class EsattoBlockPreviewFrameElement extends UmbLitElement implements UmbBlockEditorCustomViewElement {
@@ -42,11 +37,22 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   #timer?: ReturnType<typeof setTimeout>;
   #lastFingerprint?: string;
   #currentNonce = '';
+  // The nearest workspace: the document's, or a block workspace when this Block List is nested
+  // inside a block (UMB_CONTENT_WORKSPACE_CONTEXT would skip past that to the document).
+  #nearestWorkspaceType?: string;
 
   constructor() {
     super();
     this.consumeContext(UMB_BLOCK_ENTRY_CONTEXT, (ctx) => { this.#entry = ctx; this.#schedule(0); });
-    this.consumeContext(UMB_CONTENT_WORKSPACE_CONTEXT, (ctx) => { this.#workspace = ctx; this.#schedule(0); });
+    this.consumeContext(UMB_WORKSPACE_CONTEXT, (ctx) => { this.#nearestWorkspaceType = ctx?.getEntityType(); this.#schedule(0); });
+    this.consumeContext(UMB_CONTENT_WORKSPACE_CONTEXT, (ctx) => {
+      this.#workspace = ctx;
+      this.#schedule(0);
+      // After "Save the page once…" the editor saves; the block data didn't change, so re-render explicitly.
+      this.observe(ctx?.isNew, (isNew) => {
+        if (isNew === false && this._view.kind === 'unsaved') this.#schedule(0);
+      }, '_observeIsNew');
+    });
     this.consumeContext(UMB_PROPERTY_CONTEXT, (ctx) => { this.#property = ctx; this.#schedule(0); });
     this.consumeContext(UMB_PROPERTY_DATASET_CONTEXT, (ctx) => { this.#dataset = ctx; this.#schedule(0); });
   }
@@ -68,10 +74,24 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
 
   #schedule(delay: number): void {
     clearTimeout(this.#timer);
-    this.#timer = setTimeout(() => void this.#render(), delay);
+    this.#timer = setTimeout(() => void this.#renderSafely(), delay);
+  }
+
+  // Never leave a block on the placeholder because of an unexpected exception.
+  async #renderSafely(): Promise<void> {
+    try {
+      await this.#render();
+    } catch (err) {
+      this.#lastFingerprint = undefined;
+      this._view = { kind: 'error', message: (err as Error)?.message ?? 'The preview could not be loaded.' };
+    }
   }
 
   async #render(): Promise<void> {
+    if (this.#nearestWorkspaceType !== undefined && !isPreviewableWorkspace(this.#nearestWorkspaceType)) {
+      this._view = { kind: 'plain' };
+      return;
+    }
     const content = this.#entry?.getContent() as BlockData | undefined;
     const documentKey = this.#workspace?.getUnique();
     const documentTypeKey = this.#workspace?.structure.getOwnerContentTypeUnique();
@@ -79,7 +99,7 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
     if (!content || !documentKey || !documentTypeKey || !propertyAlias) return; // contexts not ready yet
 
     const variant = this.#dataset?.getVariantId();
-    const nonce = crypto.randomUUID();
+    const nonce = newNonce();
     const body = buildRenderRequest({
       documentKey,
       documentTypeKey,
@@ -102,19 +122,10 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
       this._view = { kind: 'error', message: 'The preview could not be loaded.' };
       return;
     }
-    this._view = this.#toView(data as RenderOutcome, nonce);
-  }
-
-  #toView(outcome: RenderOutcome, nonce: string): ViewState {
-    switch (outcome.status) {
-      case 'rendered':
-        this.#currentNonce = nonce;
-        return { kind: 'rendered', html: outcome.html, nonce };
-      case 'notPreviewable':
-        return outcome.reason === 'unsavedDocument' ? { kind: 'unsaved' } : { kind: 'plain' };
-      default:
-        return { kind: 'error', message: outcome.message };
-    }
+    const { view, keepFingerprint } = toViewState(data as RenderOutcome, nonce);
+    if (!keepFingerprint) this.#lastFingerprint = undefined;
+    if (view.kind === 'rendered') this.#currentNonce = view.nonce;
+    this._view = view;
   }
 
   #onMessage = (event: MessageEvent): void => {

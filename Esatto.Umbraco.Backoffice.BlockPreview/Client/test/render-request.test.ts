@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildRenderRequest, requestFingerprint, type RenderInput } from '../src/render-request';
+import { buildRenderRequest, newNonce, requestFingerprint, type RenderInput } from '../src/render-request';
 
 const input = (over: Partial<RenderInput> = {}): RenderInput => ({
   documentKey: 'doc',
@@ -53,5 +53,22 @@ describe('requestFingerprint', () => {
   it('changes when the culture changes', () => {
     expect(requestFingerprint(buildRenderRequest(input({ culture: 'en-GB' }))))
       .not.toBe(requestFingerprint(buildRenderRequest(input())));
+  });
+});
+
+// Final review, Important 8: crypto.randomUUID only exists in secure contexts (an http:// intranet
+// backoffice would leave every block on the placeholder).
+describe('newNonce', () => {
+  it('works without crypto.randomUUID and returns distinct values', () => {
+    const original = globalThis.crypto.randomUUID;
+    try {
+      (globalThis.crypto as { randomUUID?: unknown }).randomUUID = undefined;
+      const a = newNonce();
+      const b = newNonce();
+      expect(a.length).toBeGreaterThan(8);
+      expect(a).not.toBe(b);
+    } finally {
+      (globalThis.crypto as { randomUUID?: unknown }).randomUUID = original;
+    }
   });
 });

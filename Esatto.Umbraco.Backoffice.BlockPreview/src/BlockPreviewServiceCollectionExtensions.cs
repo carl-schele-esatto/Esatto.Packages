@@ -2,6 +2,7 @@ using Esatto.Umbraco.Backoffice.BlockPreview.Manifest;
 using Esatto.Umbraco.Backoffice.BlockPreview.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Infrastructure.Manifest;
+using Umbraco.Cms.Web.Common.ApplicationBuilder;
 
 namespace Esatto.Umbraco.Backoffice.BlockPreview;
 
@@ -33,6 +34,10 @@ public static class BlockPreviewServiceCollectionExtensions
         {
             services.Insert(firstReader, descriptor);
         }
+
+        // Fonts and module scripts inside the opaque-origin preview frame need CORS (see OpaqueOriginAssets).
+        services.Configure<UmbracoPipelineOptions>(options => options.AddFilter(
+            new UmbracoPipelineFilter("Esatto.BlockPreview.OpaqueOriginAssets") { PrePipeline = app => app.UseOpaqueOriginAssets() }));
 
         services.AddScoped<IBlockItemFactory, BlockItemFactory>();
         services.AddScoped<IViewRenderer, RazorViewRenderer>();

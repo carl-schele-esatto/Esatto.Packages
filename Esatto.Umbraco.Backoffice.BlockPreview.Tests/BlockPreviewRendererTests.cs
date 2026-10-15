@@ -33,7 +33,7 @@ public class BlockPreviewRendererTests
     private void ItemConverts()
     {
         _items.GetContentTypeAlias(Arg.Any<Guid>()).Returns("carouselBlock");
-        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(_item, "carouselBlock", OwnerMissing: false));
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(_item, "carouselBlock", NotPreviewableReason: null));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class BlockPreviewRendererTests
     [Fact]
     public async Task Unsaved_document_is_not_previewable()
     {
-        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, "carouselBlock", OwnerMissing: true));
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, "carouselBlock", NotPreviewableReason: "unsavedDocument"));
         Assert.Equal(RenderOutcome.NotPreviewable("unsavedDocument"), await Renderer().RenderAsync(Request(), new ActionContext()));
     }
 
@@ -111,6 +111,36 @@ public class BlockPreviewRendererTests
         var outcome = await Renderer().RenderAsync(Request(), new ActionContext());
         Assert.Equal("error", outcome.Status);
         Assert.Contains("boom", outcome.Message);
+    }
+
+    // Final review, Important 3: a nested Block List (inside a block) or a property the owner's type
+    // doesn't have can't be converted against the document — show the plain row, not an error.
+    [Fact]
+    public async Task Unsupported_context_is_not_previewable()
+    {
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, "carouselBlock", NotPreviewableReason: "unsupported"));
+        Assert.Equal(RenderOutcome.NotPreviewable("unsupported"), await Renderer().RenderAsync(Request(), new ActionContext()));
+    }
+
+    // Final review, Critical 1: element types that vary by culture are only exposed for the edited
+    // culture, so the CONVERSION (not just the rendering) must run under the request's culture.
+    [Fact]
+    public async Task Converts_the_block_under_the_requested_culture()
+    {
+        _items.GetContentTypeAlias(Arg.Any<Guid>()).Returns("carouselBlock");
+        string? variationDuringConvert = null;
+        _items.Create(Arg.Any<RenderRequest>()).Returns(_ =>
+        {
+            variationDuringConvert = _variation.VariationContext?.Culture;
+            return new BlockItemResult(_item, "carouselBlock", NotPreviewableReason: null);
+        });
+        _views.ViewExists(Arg.Any<string>()).Returns(true);
+        _views.RenderAsync(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<ActionContext>()).Returns("<body></body>");
+
+        await Renderer().RenderAsync(Request(culture: "en-GB"), new ActionContext());
+
+        Assert.Equal("en-GB", variationDuringConvert);
+        Assert.Null(_variation.VariationContext);
     }
 
     // Review Focus 1.

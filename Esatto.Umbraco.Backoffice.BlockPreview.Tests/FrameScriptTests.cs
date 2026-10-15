@@ -50,6 +50,16 @@ public class FrameScriptTests
         Assert.Contains("overflow = \"hidden\"", FrameScript.Inject("<body></body>", "abc"));
     }
 
+    // Final review, Important 6: with html, body { height: 100% } the body box follows the viewport, so
+    // growing content (accordion, tabs, a taller slide) never resizes it. Watch the content itself.
+    [Fact]
+    public void Watches_the_content_elements_and_new_ones()
+    {
+        string result = FrameScript.Inject("<body></body>", "abc");
+        Assert.Contains("MutationObserver", result);
+        Assert.Contains("observer.observe(document.body.children[i])", result);
+    }
+
     [Fact]
     public void Embeds_the_nonce_as_a_json_string()
     {

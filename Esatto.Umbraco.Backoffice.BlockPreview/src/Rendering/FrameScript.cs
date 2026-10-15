@@ -29,9 +29,16 @@ public static class FrameScript
             var height = Math.ceil(contentBottom());
             parent.postMessage({ type: "esatto-block-preview:height", id: id, height: height }, "*");
           }
+          // Watch the content elements themselves, not just html/body: with html, body { height: 100% }
+          // the body box follows the frame, so growing content (accordion, tabs) wouldn't resize it.
           var observer = new ResizeObserver(post);
-          observer.observe(document.documentElement);
-          observer.observe(document.body);
+          function observeContent() {
+            observer.observe(document.documentElement);
+            observer.observe(document.body);
+            for (var i = 0; i < document.body.children.length; i++) observer.observe(document.body.children[i]);
+          }
+          observeContent();
+          new MutationObserver(function () { observeContent(); post(); }).observe(document.body, { childList: true });
           window.addEventListener("load", post);
           document.addEventListener("click", function (e) {
             var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
