@@ -16,7 +16,7 @@ describe('burnUp', () => {
     expect(b.projection).toEqual([{ day: 3, value: 6 }, { day: 31, value: 31 }]);
     expect(b.max).toBe(31);
   });
-  it('a budget above the projection raises the axis', () => expect(burnUp(month([1], 31), 31, 50).max).toBe(50));
+  it('max covers the line and the projection', () => expect(burnUp(month([40], 31), 31).max).toBe(40));
 });
 
 const day = (date: string): AICostDay => ({
@@ -84,5 +84,46 @@ describe('tokenSeries', () => {
     const s = tokenSeries([b]);
     expect(s.map((x) => x.label)).toEqual(['Uncached input', 'Cached input', 'Output']);
     expect(s.map((x) => x.values[0])).toEqual([0, 25, 3]);
+  });
+});
+
+// Deferred minor (fixed): the stacked geometry has its own tests.
+describe('segments', () => {
+  it('rounds only the top non-zero segment and leaves a 2px gap below it', async () => {
+    const { segments } = await import('../src/charts');
+    const s = segments(stack([[2], [0], [3]]), (v) => v * 10, 100, 2);
+    expect(s[0][0]).toEqual({ kind: 'rect', y: 82, height: 18 }); // 0..2 → 80..100, top 2px gap
+    expect(s[1][0]).toBeNull(); // zero segment: nothing drawn
+    expect(s[2][0]).toEqual({ kind: 'rounded', base: 80, height: 30 }); // 2..5, the top one
+  });
+  it('a tiny lower segment never gets a negative height', async () => {
+    const { segments } = await import('../src/charts');
+    const s = segments(stack([[0.1], [1]]), (v) => v * 10, 100, 2);
+    expect(s[0][0]).toEqual({ kind: 'rect', y: 101, height: 0 });
+  });
+});
+
+describe('dayToX', () => {
+  it('maps day 1 to the left edge and the last day to the right edge', async () => {
+    const { dayToX } = await import('../src/charts');
+    expect(dayToX(1, 31, 64, 300)).toBe(64);
+    expect(dayToX(31, 31, 64, 300)).toBe(364);
+    expect(dayToX(1, 1, 64, 300)).toBe(64); // a one-day month doesn't divide by zero
+  });
+});
+
+describe('modelSeries boundary', () => {
+  it('exactly the limit: no Other', () => {
+    const one = ['2026-09-28'].map(day);
+    const modelDays = Array.from({ length: 7 }, (_, m) => ({ modelId: `m${m}`, costs: [m + 1] }));
+    expect(modelSeries({ days: one, modelDays } as unknown as AICostReport, toDays(one)).ids).not.toContain('Other');
+  });
+});
+
+describe('burnUp on the first day', () => {
+  it('one point, projection from day 1', () => {
+    const b = burnUp(month([2], 62), 31);
+    expect(b.actual).toEqual([{ day: 1, value: 2 }]);
+    expect(b.projection).toEqual([{ day: 1, value: 2 }, { day: 31, value: 62 }]);
   });
 });

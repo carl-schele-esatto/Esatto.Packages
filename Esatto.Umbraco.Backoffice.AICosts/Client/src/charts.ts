@@ -20,14 +20,15 @@ export interface Point {
 
 /**
  * Cumulative cost per day of the month (day = day of month), and the projection from today's total to
- * the projected month-end cost. `max` covers the line, the projection and the budget (all in base).
+ * the projected month-end cost. `max` covers the line and the projection (the budget line is added by
+ * the caller, in the display currency).
  */
-export function burnUp(month: AICostMonth, daysInMonth: number, budgetInBase?: number): { actual: Point[]; projection: Point[]; max: number } {
+export function burnUp(month: AICostMonth, daysInMonth: number): { actual: Point[]; projection: Point[]; max: number } {
   let sum = 0;
   const actual = month.days.map((d, i) => ({ day: i + 1, value: (sum += d.cost) }));
   const today = actual[actual.length - 1] ?? { day: 0, value: 0 };
   const projection = [today, { day: daysInMonth, value: month.projectedCost }];
-  return { actual, projection, max: Math.max(month.projectedCost, today.value, budgetInBase ?? 0) };
+  return { actual, projection, max: Math.max(month.projectedCost, today.value) };
 }
 
 /**
@@ -83,4 +84,31 @@ export function tokenSeries(buckets: Bucket[]): ChartSeries[] {
     { id: 'cached', label: 'Cached input', color: seriesColor('cached', 1), values: buckets.map((b) => b.cachedInputTokens) },
     { id: 'output', label: 'Output', color: seriesColor('output', 2), values: buckets.map((b) => b.outputTokens) },
   ];
+}
+
+/** x of a day of the month: day 1 at the left edge, the last day at the right edge. */
+export function dayToX(day: number, daysInMonth: number, left: number, width: number): number {
+  return left + ((day - 1) / Math.max(1, daysInMonth - 1)) * width;
+}
+
+/** How one stacked segment is drawn: the top one with a rounded end, the ones below as plain rects. */
+export type Segment = { kind: 'rounded'; base: number; height: number } | { kind: 'rect'; y: number; height: number } | null;
+
+/**
+ * Pixel geometry of stacked columns, result[s][i] for series s in bucket i. Only the top non-zero
+ * segment of a column gets the rounded end; every segment below it leaves a `gap` px surface gap on top
+ * and never a negative height; zero segments aren't drawn.
+ */
+export function segments(stacked: { y0: number; y1: number }[][], scale: (v: number) => number, chartH: number, gap: number): Segment[][] {
+  const buckets = stacked[0]?.length ?? 0;
+  const top = Array.from({ length: buckets }, (_, i) => stacked.map((s) => s[i].y1 > s[i].y0).lastIndexOf(true));
+  return stacked.map((series, s) =>
+    series.map(({ y0, y1 }, i) => {
+      const height = scale(y1) - scale(y0);
+      if (height <= 0) return null;
+      return s === top[i]
+        ? { kind: 'rounded', base: chartH - scale(y0), height }
+        : { kind: 'rect', y: chartH - scale(y1) + gap, height: Math.max(0, height - gap) };
+    }),
+  );
 }

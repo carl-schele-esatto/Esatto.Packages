@@ -22,7 +22,8 @@ import {
   type Dimension,
 } from './api';
 import { budgetInDisplayCurrency } from './budget';
-import { burnUp, failureRate, formatDuration, modelSeries, seriesColor, stack, tokenSeries, type ChartSeries as Series, type Point } from './charts';
+import { burnUp, dayToX, failureRate, formatDuration, modelSeries, segments, seriesColor, stack, tokenSeries, type ChartSeries as Series, type Point } from './charts';
+import { breakdownState, costEmptyMessage, currencyOptions } from './tab-state';
 import { toDays, toWeeks, type Bucket } from './buckets';
 import { change } from './compare';
 import { downloadCsv, toCsv } from './csv';
@@ -98,7 +99,10 @@ export class EsattoAICostsViewElement extends UmbLitElement {
   @state() private _dimension: Dimension = 'model';
   @state() private _breakdowns = new Map<string, AICostBreakdown>();
   @state() private _breakdownLoading = false;
-  @state() private _breakdownError: string | null = null;
+  // Breakdown load errors per `dimension:days`, so one failed view doesn't hide another's rows.
+  @state() private _breakdownErrors = new Map<string, string>();
+  // The day of the month under the pointer in the "This month" chart (crosshair), or null.
+  @state() private _monthHover: number | null = null;
 
   #resizeObserver = new ResizeObserver((entries) => {
     const w = Math.floor(entries[0]?.contentRect.width ?? 0);
@@ -168,15 +172,22 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     if (this._breakdowns.has(key)) return;
     const ticket = this.#breakdownRequests.next();
     this._breakdownLoading = true;
-    this._breakdownError = null;
+    this.#setBreakdownError(key, null);
     const { data, error } = await tryExecute(this, getBreakdown(dimension, this._days), { disableNotifications: true });
     if (!this.#breakdownRequests.isCurrent(ticket)) return;
     this._breakdownLoading = false;
     if (error || !data) {
-      this._breakdownError = 'Could not load the breakdown.';
+      this.#setBreakdownError(key, 'Could not load the breakdown.');
       return;
     }
     this._breakdowns = new Map(this._breakdowns).set(key, data as AICostBreakdown);
+  }
+
+  #setBreakdownError(key: string, message: string | null): void {
+    const errors = new Map(this._breakdownErrors);
+    if (message) errors.set(key, message);
+    else errors.delete(key);
+    this._breakdownErrors = errors;
   }
 
   // ---- preferences & theme ------------------------------------------------------------
@@ -198,6 +209,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     if (days === this._days) return;
     this._days = days;
     this._breakdowns = new Map();
+    this._breakdownErrors = new Map();
     this.#savePrefs();
     void this.#load();
   }
@@ -308,7 +320,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
       <label class="currency">
         <span>Currency</span>
         <select @change=${this.#setCurrency} ?disabled=${ratesMissing} aria-label="Currency">
-          ${currencies.map((c) => html`<option value=${c} ?selected=${c === this.#currency}>${c}</option>`)}
+          ${currencyOptions(currencies, this.#currency).map((c) => html`<option value=${c} ?selected=${c === this.#currency}>${c}</option>`)}
         </select>
       </label>
     </div>`;
@@ -540,7 +552,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const dateFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
     const dayLabelFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     const labelEvery = Math.max(1, Math.ceil(buckets.length / Math.max(2, Math.floor(plotW / 90))));
-    const stacked = stack(series.map((s) => s.values));
+    const shapes = segments(stack(series.map((s) => s.values)), scale, CHART_H, GAP);
 
     return html`<div class="column-chart">
       <svg width=${AXIS_W + plotW} height=${CHART_TOP + CHART_H + AXIS_H} role="img" aria-label="${label}. Use “Show as table” for the values.">
@@ -555,19 +567,17 @@ export class EsattoAICostsViewElement extends UmbLitElement {
             const title = weekly ? `Week of ${dateFmt.format(parseDate(b.start))}` : dayLabelFmt.format(parseDate(b.start));
             const lines = series.map((s) => ({ value: format(s.values[i]), label: s.label.toLowerCase() }));
             if (series.length > 1) lines.push({ value: format(totals[i]), label: 'total' });
-            const topIndex = series.map((s) => s.values[i] > 0).lastIndexOf(true);
             return svg`
               <rect class="hit" x=${AXIS_W + i * slot} y="0" width=${slot} height=${CHART_H}
                 @pointerenter=${(e: Event) => this.#showTip(e, title, lines)}
                 @pointerleave=${this.#hideTip}></rect>
               ${series.map((s, si) => {
-                const { y0, y1 } = stacked[si][i];
-                const h = scale(y1) - scale(y0);
-                if (h <= 0) return nothing;
-                // The top segment gets the rounded end; segments below it leave a 2px surface gap on top.
-                return si === topIndex
-                  ? svg`<path class="bar" style="fill:${s.color}" d=${columnPath(x, CHART_H - scale(y0), barW, h)}></path>`
-                  : svg`<rect class="bar" style="fill:${s.color}" x=${x} y=${CHART_H - scale(y1) + GAP} width=${barW} height=${Math.max(0, h - GAP)}></rect>`;
+                // The top segment gets the rounded end; segments below it leave a 2px surface gap (see segments()).
+                const shape = shapes[si][i];
+                if (!shape) return nothing;
+                return shape.kind === 'rounded'
+                  ? svg`<path class="bar" style="fill:${s.color}" d=${columnPath(x, shape.base, barW, shape.height)}></path>`
+                  : svg`<rect class="bar" style="fill:${s.color}" x=${x} y=${shape.y} width=${barW} height=${shape.height}></rect>`;
               })}
               ${i % labelEvery === 0
                 ? svg`<text class="axis-label" x=${x + barW / 2} y=${CHART_H + 18} text-anchor="middle">${dateFmt.format(parseDate(b.start))}</text>`
@@ -619,7 +629,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1] || 1;
     const plotW = Math.max(200, this._chartWidth - AXIS_W - MONTH_RIGHT);
-    const x = (day: number) => AXIS_W + ((day - 1) / Math.max(1, daysInMonth - 1)) * plotW;
+    const x = (day: number) => dayToX(day, daysInMonth, AXIS_W, plotW);
     const y = (v: number) => MONTH_H - (v / top) * MONTH_H;
     const path = (points: { day: number; value: number }[]) => points.map((p, i) => `${i ? 'L' : 'M'}${x(p.day)},${y(p.value)}`).join(' ');
     const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
@@ -648,6 +658,9 @@ export class EsattoAICostsViewElement extends UmbLitElement {
                     ? svg`<line class="budget-line" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${y(budgetValue)} y2=${y(budgetValue)}></line>
                         <text class="axis-label" x=${AXIS_W + plotW + 6} y=${y(budgetValue) + 4}>Budget</text>`
                     : nothing}
+                  ${this._monthHover !== null
+                    ? svg`<line class="crosshair" x1=${x(this._monthHover)} x2=${x(this._monthHover)} y1="0" y2=${MONTH_H}></line>`
+                    : nothing}
                   <path class="line projection" d=${path(projection)}></path>
                   <path class="line" d=${path(actual)}></path>
                   ${actual.length ? svg`<circle class="dot" cx=${x(actual[actual.length - 1].day)} cy=${y(actual[actual.length - 1].value)} r="4"></circle>` : nothing}
@@ -657,12 +670,17 @@ export class EsattoAICostsViewElement extends UmbLitElement {
                   ${actual.map((p, i) => {
                     const date = parseDate(r.month.days[i].date);
                     return svg`<rect class="hit" x=${x(p.day) - slot / 2} y="0" width=${slot} height=${MONTH_H}
-                      @pointerenter=${(e: Event) =>
+                      @pointerenter=${(e: Event) => {
+                        this._monthHover = p.day;
                         this.#showTip(e, dayFmt.format(date), [
                           { value: this.#moneyValue(p.value), label: 'so far' },
                           { value: this.#money(r.month.days[i].cost), label: 'that day' },
-                        ])}
-                      @pointerleave=${this.#hideTip}></rect>`;
+                        ]);
+                      }}
+                      @pointerleave=${() => {
+                        this._monthHover = null;
+                        this.#hideTip();
+                      }}></rect>`;
                   })}
                   <line class="baseline" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${MONTH_H} y2=${MONTH_H}></line>
                 </g>
@@ -699,7 +717,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
   #renderColumns() {
     const { buckets, weekly } = this.#buckets();
     const series = this.#costSeries(buckets);
-    const allZero = series.every((s) => s.values.every((v) => v === 0));
+    const empty = costEmptyMessage(series.every((s) => s.values.every((v) => v === 0)), this._report!.totals.unpricedTokens);
     const name = `${weekly ? 'Weekly' : 'Daily'} cost`;
     const showTable = this._tables.has('columns');
     const unpriced = this._report!.totals.unpricedTokens > 0;
@@ -716,12 +734,10 @@ export class EsattoAICostsViewElement extends UmbLitElement {
         ${this.#tableButton('columns')}
       </div>
       ${this.#renderLegend(series)}
-      ${showTable
-        ? this.#renderBarTable(buckets, weekly, series, this.#moneyValue, `${name} per ${this._costView === 'total' ? 'period' : 'model'}`)
-        : allZero
-          ? html`<p class="empty">
-              ${unpriced ? 'No cost to show — the models used in this period have no configured price.' : 'No AI usage in this period.'}
-            </p>`
+      ${empty
+        ? html`<p class="empty">${empty}</p>`
+        : showTable
+          ? this.#renderBarTable(buckets, weekly, series, this.#moneyValue, `${name} per ${this._costView === 'total' ? 'period' : 'model'}`)
           : this.#renderBars(buckets, weekly, series, this.#moneyValue, this.#axisMoney, `${name}${this._costView === 'model' ? ' by model' : ''}`)}
       ${this._costView === 'model' && unpriced ? html`<p class="chart-note">Models without a configured price aren’t included.</p>` : nothing}
       ${this.#renderTip('columns')}
@@ -781,17 +797,19 @@ export class EsattoAICostsViewElement extends UmbLitElement {
 
   // ---- cost by ------------------------------------------------------------------------
 
-  /** The rows for the selected dimension, or undefined while a breakdown hasn't loaded. */
-  #costRows(): CostRow[] | undefined {
+  /** The rows for the selected dimension, its load error, or undefined while it is loading. */
+  #costRows(): CostRow[] | { error: string } | undefined {
     if (this._dimension === 'model') {
       return this._report!.models.map((m) => ({ ...m, name: m.modelId }));
     }
-    return this._breakdowns.get(`${this._dimension}:${this._days}`)?.rows;
+    const state = breakdownState(`${this._dimension}:${this._days}`, this._breakdowns, this._breakdownErrors);
+    return state.kind === 'rows' ? state.breakdown.rows : state.kind === 'error' ? { error: state.message } : undefined;
   }
 
   #renderCostBy() {
     const label = DIMENSIONS.find((d) => d.key === this._dimension)!.label;
-    const rows = this.#costRows();
+    const result = this.#costRows();
+    const rows = Array.isArray(result) ? result : undefined;
     const totalCost = this._report!.totals.cost;
     const noPriceTitle =
       this._dimension === 'model'
@@ -814,8 +832,8 @@ export class EsattoAICostsViewElement extends UmbLitElement {
           >Download CSV</uui-button
         >
       </div>
-      ${this._breakdownError && this._dimension !== 'model'
-        ? html`<p class="error">${this._breakdownError}</p>`
+      ${result && 'error' in result
+        ? html`<p class="error">${result.error}</p>`
         : !rows
           ? html`<uui-loader-bar></uui-loader-bar>`
           : rows.length === 0

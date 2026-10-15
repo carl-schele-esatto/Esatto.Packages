@@ -319,6 +319,11 @@ export const styles = css`
         stroke-width: 2;
         pointer-events: none;
     }
+    .crosshair {
+        stroke: var(--viz-axis);
+        stroke-width: 1;
+        pointer-events: none;
+    }
     .budget-line {
         stroke: var(--uui-color-text);
         stroke-width: 1;
