@@ -41,6 +41,15 @@ public class FrameScriptTests
         Assert.DoesNotContain("document.documentElement.getBoundingClientRect().height", result);
     }
 
+    // Live finding (Task 7): sized to the content, the document (content + trailing margin) was still
+    // taller than the iframe, so it scrolled — the mouse wheel over a preview scrolled the block, not the
+    // page. The frame's height is managed by the backoffice; the preview itself must never scroll.
+    [Fact]
+    public void The_preview_document_never_scrolls()
+    {
+        Assert.Contains("overflow = \"hidden\"", FrameScript.Inject("<body></body>", "abc"));
+    }
+
     [Fact]
     public void Embeds_the_nonce_as_a_json_string()
     {

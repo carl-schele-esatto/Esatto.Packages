@@ -12,6 +12,10 @@ public static class FrameScript
         <script>
         (function () {
           var id = __NONCE__;
+          // The backoffice sizes the iframe to the content; the preview itself never scrolls, so the
+          // mouse wheel scrolls the backoffice page and a clipped outer margin can't be scrolled into view.
+          document.documentElement.style.overflow = "hidden";
+          document.body.style.overflow = "hidden";
           // The content's bottom edge, not the document height: a block's outer margin
           // (spacing meant for the page around it) would otherwise show as empty space.
           function contentBottom() {
@@ -22,7 +26,7 @@ public static class FrameScript
             return bottom > 0 ? bottom : document.documentElement.scrollHeight;
           }
           function post() {
-            var height = Math.ceil(contentBottom() + window.scrollY);
+            var height = Math.ceil(contentBottom());
             parent.postMessage({ type: "esatto-block-preview:height", id: id, height: height }, "*");
           }
           var observer = new ResizeObserver(post);
