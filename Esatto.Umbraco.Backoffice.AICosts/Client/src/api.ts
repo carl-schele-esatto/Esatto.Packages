@@ -12,6 +12,8 @@ export interface AICostDay {
   totalTokens: number;
   cost: number;
   unpricedTokens: number;
+  succeededRequests: number;
+  failedRequests: number;
 }
 
 export interface AICostModel {
@@ -49,6 +51,13 @@ export interface AICostMonth {
   projectedCost: number;
   unpricedTokens: number;
   budget: AICostBudget | null;
+  days: { date: string; cost: number }[];
+}
+
+/** A priced model's cost per day; costs[i] belongs to the report's days[i]. */
+export interface AICostModelDays {
+  modelId: string;
+  costs: number[];
 }
 
 export interface AICostPrevious {
@@ -70,6 +79,9 @@ export interface AICostReport {
   totals: AICostTotals;
   month: AICostMonth;
   previous: AICostPrevious | null;
+  modelDays: AICostModelDays[];
+  cachingSavings: number;
+  averageDurationMs: number;
 }
 
 export interface AICostBreakdownRow {

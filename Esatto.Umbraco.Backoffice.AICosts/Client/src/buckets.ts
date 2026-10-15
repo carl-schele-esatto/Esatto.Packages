@@ -12,6 +12,8 @@ export interface Bucket {
   totalTokens: number;
   cost: number;
   unpricedTokens: number;
+  succeededRequests: number;
+  failedRequests: number;
 }
 
 const bucket = (d: AICostDay): Bucket => ({
@@ -24,6 +26,8 @@ const bucket = (d: AICostDay): Bucket => ({
   totalTokens: d.totalTokens,
   cost: d.cost,
   unpricedTokens: d.unpricedTokens,
+  succeededRequests: d.succeededRequests,
+  failedRequests: d.failedRequests,
 });
 
 export const toDays = (days: AICostDay[]): Bucket[] => days.map(bucket);
@@ -45,6 +49,8 @@ export function toWeeks(days: AICostDay[]): Bucket[] {
     current.totalTokens += d.totalTokens;
     current.cost += d.cost;
     current.unpricedTokens += d.unpricedTokens;
+    current.succeededRequests += d.succeededRequests;
+    current.failedRequests += d.failedRequests;
   }
   return weeks;
 }

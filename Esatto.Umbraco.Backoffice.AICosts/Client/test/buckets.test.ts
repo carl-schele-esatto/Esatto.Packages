@@ -3,7 +3,7 @@ import { toWeeks } from '../src/buckets';
 import type { AICostDay } from '../src/api';
 
 const day = (date: string, cost: number): AICostDay =>
-  ({ date, requests: 1, inputTokens: 10, outputTokens: 1, cachedInputTokens: 0, totalTokens: 11, cost, unpricedTokens: 0 });
+  ({ date, requests: 1, inputTokens: 10, outputTokens: 1, cachedInputTokens: 0, totalTokens: 11, cost, unpricedTokens: 0, succeededRequests: 1, failedRequests: 0 });
 
 describe('toWeeks', () => {
   it('starts a new bucket every Monday, across a month end', () => {
