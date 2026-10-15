@@ -8,6 +8,8 @@ Instead of a plain label row, every block shows its **real frontend rendering**.
 - your **JavaScript runs**: a Bootstrap carousel slides, and its arrows and dots work;
 - **edits show up before the page is saved**: the preview refreshes when the block editor's changes are applied (Update).
 
+![A Block List with a carousel block and a video block, each previewed with the site's own markup and CSS](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.BlockPreview/docs/preview.png)
+
 The package also ships two configurable preview elements, **video** and **code**, that you can register for specific block types.
 
 ## Install
@@ -90,6 +92,7 @@ All optional, in `appsettings.json`:
 - **Permissions.** A preview renders draft content, so it requires the same access as opening the document: access to the Content tree and read permission on that document.
 - **Fonts and module scripts.** The preview iframe is sandboxed with an opaque origin, and browsers fetch fonts and `<script type="module">` with CORS even from your own site. The package adds `Access-Control-Allow-Origin: *` to font and script responses requested from a preview (`Origin: null`) and to nothing else. Self-hosted fonts and module bundles work without extra setup.
 - **Viewport units size against the preview, not the browser window.** `100vh` means the height of the preview frame. Previews are capped at 3000px tall.
+- **The preview grows to fit, and never scrolls vertically.** Content wider than the block (a wide table, for example) scrolls sideways, as it would on the page.
 
 ### Limitations (1.0)
 
