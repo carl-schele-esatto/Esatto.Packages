@@ -22,6 +22,7 @@ import {
   type Dimension,
 } from './api';
 import { budgetInDisplayCurrency } from './budget';
+import { burnUp, failureRate, formatDuration, modelSeries, stack, type Point } from './charts';
 import { toDays, toWeeks, type Bucket } from './buckets';
 import { change } from './compare';
 import { downloadCsv, toCsv } from './csv';
@@ -51,8 +52,12 @@ const GAP = 2;
 const HEAT_LEFT = 30;
 const HEAT_TOP = 18;
 
-// Column chart geometry.
+// Column chart geometry. CHART_TOP leaves room for the top tick label above the plot.
+const CHART_TOP = 10;
 const CHART_H = 220;
+// "This month" line chart: plot height and room on the right for the "Budget" label.
+const MONTH_H = 200;
+const MONTH_RIGHT = 56;
 const AXIS_W = 64;
 const AXIS_H = 26;
 const MAX_BAR = 24;
@@ -66,6 +71,16 @@ interface CostRow {
   outputTokens: number;
   totalTokens: number;
   cost: number | null;
+}
+
+/** One series of a column chart; values are already in display units (currency or count). */
+interface Series {
+  id: string;
+  label: string;
+  color: string;
+  values: number[];
+  /** Shown instead of a swatch in the legend (status series carry an icon, never colour alone). */
+  icon?: string;
 }
 
 interface Tooltip {
@@ -84,7 +99,9 @@ export class EsattoAICostsViewElement extends UmbLitElement {
   @state() private _days: number;
   @state() private _currency: string | null;
   @state() private _metric: Metric;
-  @state() private _showTable = false;
+  // Cards showing their table instead of their chart.
+  @state() private _tables = new Set<string>();
+  @state() private _costView: 'total' | 'model' = 'total';
   @state() private _tooltip: Tooltip | null = null;
   @state() private _dark = false;
   @state() private _chartWidth = 900;
@@ -273,7 +290,8 @@ export class EsattoAICostsViewElement extends UmbLitElement {
       ${this._error ? html`<uui-box><p class="error">${this._error}</p></uui-box>` : nothing}
       ${this._report
         ? html`<div class="content ${this._loading ? 'is-loading' : ''}">
-            ${this.#renderTiles()} ${this.#renderHeatmap()} ${this.#renderColumns()} ${this.#renderCostBy()}
+            ${this.#renderTiles()} ${this.#renderMonthChart()} ${this.#renderHeatmap()} ${this.#renderColumns()}
+            ${this.#renderTokens()} ${this.#renderReliability()} ${this.#renderCostBy()}
             ${this.#renderFootnote()}
           </div>`
         : !this._error
@@ -471,107 +489,308 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     </uui-box>`;
   }
 
-  // Single-series column chart of cost. Daily for ≤ 92 days, weekly beyond (365 daily columns would be
-  // sub-pixel with the 2px surface gap).
+  // ---- charts -------------------------------------------------------------------------
+
+  // Daily for ≤ 92 days, weekly beyond (365 daily columns would be sub-pixel with the 2px surface gap).
   #buckets(): { buckets: Bucket[]; weekly: boolean } {
     const weekly = this._report!.days.length > 92;
     return { buckets: weekly ? toWeeks(this._report!.days) : toDays(this._report!.days), weekly };
   }
 
-  #renderColumns() {
-    const { buckets, weekly } = this.#buckets();
-    const max = Math.max(0, ...buckets.map((b) => b.cost));
-    const ticks = niceTicks(this.#convert(max));
+  #moneyValue = (v: number): string => formatMoney(v, this.#currency);
+
+  #axisMoney = (t: number): string =>
+    new Intl.NumberFormat(undefined, { style: 'currency', currency: this.#currency, notation: 'compact', maximumFractionDigits: t < 10 ? 2 : 0 }).format(t);
+
+  #axisNumber = (t: number): string => formatNumber(t, { compact: true });
+
+  #toggleTable(card: string): void {
+    const tables = new Set(this._tables);
+    if (tables.has(card)) tables.delete(card);
+    else tables.add(card);
+    this._tables = tables;
+  }
+
+  #tableButton(card: string) {
+    return html`<uui-button compact look="secondary" @click=${() => this.#toggleTable(card)}>
+      ${this._tables.has(card) ? 'Show chart' : 'Show as table'}
+    </uui-button>`;
+  }
+
+  /** The cost chart's series: one total, or one per model (in the display currency). */
+  #costSeries(buckets: Bucket[]): Series[] {
+    if (this._costView === 'total') {
+      return [{ id: 'cost', label: 'Cost', color: 'var(--viz-cat-1)', values: buckets.map((b) => this.#convert(b.cost)) }];
+    }
+    const { ids, values } = modelSeries(this._report!, buckets);
+    return ids.map((id, s) => ({ id, label: id, color: `var(--viz-cat-${s + 1})`, values: values[s].map((v) => this.#convert(v)) }));
+  }
+
+  #renderLegend(series: Series[]) {
+    if (series.length < 2) return nothing;
+    return html`<div class="legend">
+      ${series.map(
+        (s) => html`<span class="legend-item"
+          >${s.icon ? html`<uui-icon name=${s.icon} style="color:${s.color}"></uui-icon>` : html`<span class="legend-swatch" style="background:${s.color}"></span>`}${s.label}</span
+        >`,
+      )}
+    </div>`;
+  }
+
+  /** Stacked columns (one series = plain columns) with a shared y-axis, per-bucket hover and labels. */
+  #renderBars(buckets: Bucket[], weekly: boolean, series: Series[], format: (v: number) => string, axis: (t: number) => string, label: string) {
+    const totals = buckets.map((_, i) => series.reduce((sum, s) => sum + s.values[i], 0));
+    const max = Math.max(0, ...totals);
+    const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1] || 1;
     const plotW = Math.max(200, this._chartWidth - AXIS_W);
     const slot = plotW / buckets.length;
     const barW = Math.max(1, Math.min(MAX_BAR, slot - GAP));
-    const y = (v: number) => CHART_H - (this.#convert(v) / top) * CHART_H;
+    const scale = (v: number) => (v / top) * CHART_H;
     const dateFmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
     const dayLabelFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
     const labelEvery = Math.max(1, Math.ceil(buckets.length / Math.max(2, Math.floor(plotW / 90))));
-    const allZero = max === 0;
+    const stacked = stack(series.map((s) => s.values));
 
-    return html`<uui-box class="card" data-card="columns" headline=${weekly ? 'Weekly cost' : 'Daily cost'}>
-      <div slot="header-actions" class="header-actions">
-        <uui-button compact look="secondary" @click=${() => this.#downloadPeriodCsv(buckets, weekly)}>Download CSV</uui-button>
-        <uui-button compact look="secondary" @click=${() => (this._showTable = !this._showTable)}>
-          ${this._showTable ? 'Show chart' : 'Show as table'}
-        </uui-button>
-      </div>
-      ${this._showTable
-        ? this.#renderPeriodTable(buckets, weekly)
-        : html`<div class="column-chart">
-            ${allZero
-              ? html`<p class="empty">
-                  ${this._report!.totals.unpricedTokens > 0
-                    ? 'No cost to show — the models used in this period have no configured price.'
-                    : 'No AI usage in this period.'}
-                </p>`
-              : html`<svg
-                  width=${AXIS_W + plotW}
-                  height=${CHART_H + AXIS_H}
-                  role="img"
-                  aria-label="${weekly ? 'Weekly' : 'Daily'} estimated cost. Use “Show as table” for the values.">
-                  ${ticks.map(
-                    (t) => svg`
-                      <line class="grid" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${CHART_H - (t / top) * CHART_H} y2=${CHART_H - (t / top) * CHART_H}></line>
-                      <text class="axis-label tick" x=${AXIS_W - 8} y=${CHART_H - (t / top) * CHART_H + 4}>${new Intl.NumberFormat(undefined, {
-                        style: 'currency',
-                        currency: this.#currency,
-                        notation: 'compact',
-                        maximumFractionDigits: t < 10 ? 2 : 0,
-                      }).format(t)}</text>`,
-                  )}
-                  ${buckets.map((b, i) => {
-                    const x = AXIS_W + i * slot + (slot - barW) / 2;
-                    const h = CHART_H - y(b.cost);
-                    const label = weekly ? `Week of ${dateFmt.format(parseDate(b.start))}` : dayLabelFmt.format(parseDate(b.start));
-                    return svg`
-                      <rect class="hit" x=${AXIS_W + i * slot} y="0" width=${slot} height=${CHART_H}
-                        @pointerenter=${(e: Event) =>
-                          this.#showTip(e, label, [
-                            { value: this.#money(b.cost), label: 'cost' },
-                            { value: formatNumber(b.totalTokens), label: 'tokens' },
-                            { value: formatNumber(b.requests), label: b.requests === 1 ? 'request' : 'requests' },
-                          ])}
-                        @pointerleave=${this.#hideTip}></rect>
-                      ${h > 0 ? svg`<path class="bar" d=${columnPath(x, CHART_H, barW, h)}></path>` : nothing}
-                      ${i % labelEvery === 0
-                        ? svg`<text class="axis-label" x=${x + barW / 2} y=${CHART_H + 18} text-anchor="middle">${dateFmt.format(parseDate(b.start))}</text>`
-                        : nothing}`;
-                  })}
-                  <line class="baseline" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${CHART_H} y2=${CHART_H}></line>
-                </svg>`}
-          </div>`}
-      ${this.#renderTip('columns')}
-    </uui-box>`;
+    return html`<div class="column-chart">
+      <svg width=${AXIS_W + plotW} height=${CHART_TOP + CHART_H + AXIS_H} role="img" aria-label="${label}. Use “Show as table” for the values.">
+        <g transform="translate(0 ${CHART_TOP})">
+          ${ticks.map(
+            (t) => svg`
+              <line class="grid" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${CHART_H - scale(t)} y2=${CHART_H - scale(t)}></line>
+              <text class="axis-label tick" x=${AXIS_W - 8} y=${CHART_H - scale(t) + 4}>${axis(t)}</text>`,
+          )}
+          ${buckets.map((b, i) => {
+            const x = AXIS_W + i * slot + (slot - barW) / 2;
+            const title = weekly ? `Week of ${dateFmt.format(parseDate(b.start))}` : dayLabelFmt.format(parseDate(b.start));
+            const lines = series.map((s) => ({ value: format(s.values[i]), label: s.label.toLowerCase() }));
+            if (series.length > 1) lines.push({ value: format(totals[i]), label: 'total' });
+            const topIndex = series.map((s) => s.values[i] > 0).lastIndexOf(true);
+            return svg`
+              <rect class="hit" x=${AXIS_W + i * slot} y="0" width=${slot} height=${CHART_H}
+                @pointerenter=${(e: Event) => this.#showTip(e, title, lines)}
+                @pointerleave=${this.#hideTip}></rect>
+              ${series.map((s, si) => {
+                const { y0, y1 } = stacked[si][i];
+                const h = scale(y1) - scale(y0);
+                if (h <= 0) return nothing;
+                // The top segment gets the rounded end; segments below it leave a 2px surface gap on top.
+                return si === topIndex
+                  ? svg`<path class="bar" style="fill:${s.color}" d=${columnPath(x, CHART_H - scale(y0), barW, h)}></path>`
+                  : svg`<rect class="bar" style="fill:${s.color}" x=${x} y=${CHART_H - scale(y1) + GAP} width=${barW} height=${Math.max(0, h - GAP)}></rect>`;
+              })}
+              ${i % labelEvery === 0
+                ? svg`<text class="axis-label" x=${x + barW / 2} y=${CHART_H + 18} text-anchor="middle">${dateFmt.format(parseDate(b.start))}</text>`
+                : nothing}`;
+          })}
+          <line class="baseline" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${CHART_H} y2=${CHART_H}></line>
+        </g>
+      </svg>
+    </div>`;
   }
 
-  #renderPeriodTable(buckets: Bucket[], weekly: boolean) {
+  #renderBarTable(buckets: Bucket[], weekly: boolean, series: Series[], format: (v: number) => string, label: string) {
     const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-    const rows = buckets.filter((b) => b.requests > 0).reverse();
+    const rows = buckets.map((b, i) => ({ b, i })).filter(({ i }) => series.some((s) => s.values[i] > 0)).reverse();
     if (!rows.length) return html`<p class="empty">No AI usage in this period.</p>`;
     return html`<div class="table-scroll">
-      <uui-table aria-label="${weekly ? 'Weekly' : 'Daily'} usage and cost">
+      <uui-table aria-label=${label}>
         <uui-table-head>
           <uui-table-head-cell>${weekly ? 'Week of' : 'Date'}</uui-table-head-cell>
-          <uui-table-head-cell class="num">Requests</uui-table-head-cell>
-          <uui-table-head-cell class="num">Input tokens</uui-table-head-cell>
-          <uui-table-head-cell class="num">Output tokens</uui-table-head-cell>
-          <uui-table-head-cell class="num">Cost</uui-table-head-cell>
+          ${series.map((s) => html`<uui-table-head-cell class="num">${s.label}</uui-table-head-cell>`)}
+          ${series.length > 1 ? html`<uui-table-head-cell class="num">Total</uui-table-head-cell>` : nothing}
         </uui-table-head>
         ${rows.map(
-          (b) => html`<uui-table-row>
+          ({ b, i }) => html`<uui-table-row>
             <uui-table-cell>${fmt.format(parseDate(b.start))}</uui-table-cell>
-            <uui-table-cell class="num">${formatNumber(b.requests)}</uui-table-cell>
-            <uui-table-cell class="num">${formatNumber(b.inputTokens)}</uui-table-cell>
-            <uui-table-cell class="num">${formatNumber(b.outputTokens)}</uui-table-cell>
-            <uui-table-cell class="num">${this.#money(b.cost)}</uui-table-cell>
+            ${series.map((s) => html`<uui-table-cell class="num">${format(s.values[i])}</uui-table-cell>`)}
+            ${series.length > 1 ? html`<uui-table-cell class="num">${format(series.reduce((sum, s) => sum + s.values[i], 0))}</uui-table-cell>` : nothing}
           </uui-table-row>`,
         )}
       </uui-table>
     </div>`;
+  }
+
+  // ---- this month ---------------------------------------------------------------------
+
+  // Cumulative cost this month (solid), the projection to month end (dashed, same hue) and the budget
+  // as a labelled reference line. One y-axis: money in the display currency.
+  #renderMonthChart() {
+    const r = this._report!;
+    const to = parseDate(r.month.to);
+    const daysInMonth = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth() + 1, 0)).getUTCDate();
+    const budget = budgetInDisplayCurrency(r, this.#currency);
+    const budgetValue = budget.kind === 'set' ? budget.amount : undefined;
+    const b = burnUp(r.month, daysInMonth);
+    const toDisplay = (p: Point) => ({ day: p.day, value: this.#convert(p.value) });
+    const actual = b.actual.map(toDisplay);
+    const projection = b.projection.map(toDisplay);
+    const max = Math.max(this.#convert(b.max), budgetValue ?? 0);
+    const ticks = niceTicks(max);
+    const top = ticks[ticks.length - 1] || 1;
+    const plotW = Math.max(200, this._chartWidth - AXIS_W - MONTH_RIGHT);
+    const x = (day: number) => AXIS_W + ((day - 1) / Math.max(1, daysInMonth - 1)) * plotW;
+    const y = (v: number) => MONTH_H - (v / top) * MONTH_H;
+    const path = (points: { day: number; value: number }[]) => points.map((p, i) => `${i ? 'L' : 'M'}${x(p.day)},${y(p.value)}`).join(' ');
+    const dayFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+    const slot = plotW / Math.max(1, daysInMonth - 1);
+    const showTable = this._tables.has('month');
+
+    return html`<uui-box class="card" data-card="month" headline="This month">
+      <div slot="header-actions" class="header-actions">${this.#tableButton('month')}</div>
+      ${showTable
+        ? this.#renderMonthTable()
+        : html`<div class="legend">
+              <span class="legend-item"><span class="legend-line"></span>Cost so far</span>
+              <span class="legend-item"><span class="legend-line dashed"></span>Projected ${this.#money(r.month.projectedCost)}</span>
+              ${budgetValue !== undefined ? html`<span class="legend-item"><span class="legend-line budget"></span>Budget ${this.#moneyValue(budgetValue)}</span>` : nothing}
+            </div>
+            <div class="column-chart">
+              <svg width=${AXIS_W + plotW + MONTH_RIGHT} height=${CHART_TOP + MONTH_H + AXIS_H} role="img"
+                aria-label="Cumulative cost this month with the projection to month end. Use “Show as table” for the values.">
+                <g transform="translate(0 ${CHART_TOP})">
+                  ${ticks.map(
+                    (t) => svg`
+                      <line class="grid" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${y(t)} y2=${y(t)}></line>
+                      <text class="axis-label tick" x=${AXIS_W - 8} y=${y(t) + 4}>${this.#axisMoney(t)}</text>`,
+                  )}
+                  ${budgetValue !== undefined
+                    ? svg`<line class="budget-line" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${y(budgetValue)} y2=${y(budgetValue)}></line>
+                        <text class="axis-label" x=${AXIS_W + plotW + 6} y=${y(budgetValue) + 4}>Budget</text>`
+                    : nothing}
+                  <path class="line projection" d=${path(projection)}></path>
+                  <path class="line" d=${path(actual)}></path>
+                  ${actual.length ? svg`<circle class="dot" cx=${x(actual[actual.length - 1].day)} cy=${y(actual[actual.length - 1].value)} r="4"></circle>` : nothing}
+                  ${[1, 8, 15, 22, daysInMonth].map(
+                    (d) => svg`<text class="axis-label" x=${x(d)} y=${MONTH_H + 18} text-anchor="middle">${d}</text>`,
+                  )}
+                  ${actual.map((p, i) => {
+                    const date = parseDate(r.month.days[i].date);
+                    return svg`<rect class="hit" x=${x(p.day) - slot / 2} y="0" width=${slot} height=${MONTH_H}
+                      @pointerenter=${(e: Event) =>
+                        this.#showTip(e, dayFmt.format(date), [
+                          { value: this.#moneyValue(p.value), label: 'so far' },
+                          { value: this.#money(r.month.days[i].cost), label: 'that day' },
+                        ])}
+                      @pointerleave=${this.#hideTip}></rect>`;
+                  })}
+                  <line class="baseline" x1=${AXIS_W} x2=${AXIS_W + plotW} y1=${MONTH_H} y2=${MONTH_H}></line>
+                </g>
+              </svg>
+            </div>`}
+      ${this.#renderTip('month')}
+    </uui-box>`;
+  }
+
+  #renderMonthTable() {
+    const fmt = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    let sum = 0;
+    const rows = this._report!.month.days.map((d) => ({ d, total: (sum += d.cost) })).reverse();
+    return html`<div class="table-scroll">
+      <uui-table aria-label="Cost this month per day">
+        <uui-table-head>
+          <uui-table-head-cell>Date</uui-table-head-cell>
+          <uui-table-head-cell class="num">Cost</uui-table-head-cell>
+          <uui-table-head-cell class="num">So far</uui-table-head-cell>
+        </uui-table-head>
+        ${rows.map(
+          ({ d, total }) => html`<uui-table-row>
+            <uui-table-cell>${fmt.format(parseDate(d.date))}</uui-table-cell>
+            <uui-table-cell class="num">${this.#money(d.cost)}</uui-table-cell>
+            <uui-table-cell class="num">${this.#money(total)}</uui-table-cell>
+          </uui-table-row>`,
+        )}
+      </uui-table>
+    </div>`;
+  }
+
+  // ---- daily cost (total or by model) -------------------------------------------------
+
+  #renderColumns() {
+    const { buckets, weekly } = this.#buckets();
+    const series = this.#costSeries(buckets);
+    const allZero = series.every((s) => s.values.every((v) => v === 0));
+    const name = `${weekly ? 'Weekly' : 'Daily'} cost`;
+    const showTable = this._tables.has('columns');
+    const unpriced = this._report!.totals.unpricedTokens > 0;
+
+    return html`<uui-box class="card" data-card="columns" headline=${name}>
+      <div slot="header-actions" class="header-actions">
+        <uui-button-group aria-label="Cost per">
+          ${(['total', 'model'] as const).map(
+            (v) => html`<uui-button compact look=${v === this._costView ? 'primary' : 'secondary'} aria-pressed=${v === this._costView}
+              @click=${() => (this._costView = v)}>${v === 'total' ? 'Total' : 'By model'}</uui-button>`,
+          )}
+        </uui-button-group>
+        <uui-button compact look="secondary" @click=${() => this.#downloadPeriodCsv(buckets, weekly, series)}>Download CSV</uui-button>
+        ${this.#tableButton('columns')}
+      </div>
+      ${this.#renderLegend(series)}
+      ${showTable
+        ? this.#renderBarTable(buckets, weekly, series, this.#moneyValue, `${name} per ${this._costView === 'total' ? 'period' : 'model'}`)
+        : allZero
+          ? html`<p class="empty">
+              ${unpriced ? 'No cost to show — the models used in this period have no configured price.' : 'No AI usage in this period.'}
+            </p>`
+          : this.#renderBars(buckets, weekly, series, this.#moneyValue, this.#axisMoney, `${name}${this._costView === 'model' ? ' by model' : ''}`)}
+      ${this._costView === 'model' && unpriced ? html`<p class="chart-note">Models without a configured price aren’t included.</p>` : nothing}
+      ${this.#renderTip('columns')}
+    </uui-box>`;
+  }
+
+  // ---- tokens by type -----------------------------------------------------------------
+
+  #renderTokens() {
+    const { buckets, weekly } = this.#buckets();
+    const series: Series[] = [
+      { id: 'input', label: 'Input', color: 'var(--viz-cat-1)', values: buckets.map((b) => b.inputTokens - b.cachedInputTokens) },
+      { id: 'cached', label: 'Cached input', color: 'var(--viz-cat-2)', values: buckets.map((b) => b.cachedInputTokens) },
+      { id: 'output', label: 'Output', color: 'var(--viz-cat-3)', values: buckets.map((b) => b.outputTokens) },
+    ];
+    const tokens = (v: number) => formatNumber(v);
+    const name = `Tokens by type${weekly ? ' per week' : ''}`;
+    return html`<uui-box class="card" data-card="tokens" headline=${name}>
+      <div slot="header-actions" class="header-actions">${this.#tableButton('tokens')}</div>
+      <div class="figures">
+        <div><div class="tile-label">Caching saved</div><div class="figure">${this.#money(this._report!.cachingSavings)}</div></div>
+      </div>
+      ${this.#renderLegend(series)}
+      ${this._tables.has('tokens')
+        ? this.#renderBarTable(buckets, weekly, series, tokens, name)
+        : series.every((s) => s.values.every((v) => v === 0))
+          ? html`<p class="empty">No AI usage in this period.</p>`
+          : this.#renderBars(buckets, weekly, series, tokens, this.#axisNumber, name)}
+      ${this.#renderTip('tokens')}
+    </uui-box>`;
+  }
+
+  // ---- reliability --------------------------------------------------------------------
+
+  #renderReliability() {
+    const r = this._report!;
+    const { buckets, weekly } = this.#buckets();
+    const succeeded = r.days.reduce((s, d) => s + d.succeededRequests, 0);
+    const failed = r.days.reduce((s, d) => s + d.failedRequests, 0);
+    const series: Series[] = [
+      { id: 'succeeded', label: 'Succeeded', color: 'var(--viz-cat-1)', values: buckets.map((b) => b.succeededRequests) },
+      { id: 'failed', label: 'Failed', color: 'var(--viz-critical)', icon: 'icon-alert', values: buckets.map((b) => b.failedRequests) },
+    ];
+    const requests = (v: number) => formatNumber(v);
+    const name = `Requests${weekly ? ' per week' : ''}`;
+    return html`<uui-box class="card" data-card="reliability" headline="Reliability">
+      <div slot="header-actions" class="header-actions">${this.#tableButton('reliability')}</div>
+      <div class="figures">
+        <div><div class="tile-label">Failed requests</div><div class="figure">${formatNumber(failed)} <span class="figure-note">(${formatNumber(failureRate(succeeded, failed) * 100)} %)</span></div></div>
+        <div><div class="tile-label">Average response time</div><div class="figure">${r.averageDurationMs > 0 ? formatDuration(r.averageDurationMs) : '–'}</div></div>
+      </div>
+      ${this.#renderLegend(series)}
+      ${this._tables.has('reliability')
+        ? this.#renderBarTable(buckets, weekly, series, requests, name)
+        : succeeded + failed === 0
+          ? html`<p class="empty">No AI usage in this period.</p>`
+          : this.#renderBars(buckets, weekly, series, requests, this.#axisNumber, name)}
+      ${this.#renderTip('reliability')}
+    </uui-box>`;
   }
 
   // ---- cost by ------------------------------------------------------------------------
@@ -659,11 +878,15 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     return Number(this.#convert(baseAmount).toFixed(4));
   }
 
-  #downloadPeriodCsv(buckets: Bucket[], weekly: boolean): void {
+  // The cost chart's rows; "By model" adds a cost column per model (as charted, incl. "Other").
+  #downloadPeriodCsv(buckets: Bucket[], weekly: boolean, series: Series[]): void {
     const r = this._report!;
-    const header = [weekly ? 'Week of' : 'Date', 'Requests', 'Input tokens', 'Cached input tokens', 'Output tokens', 'Total tokens', `Cost (${this.#currency})`, 'Unpriced tokens'];
-    const rows = buckets.map((b) => [b.start, b.requests, b.inputTokens, b.cachedInputTokens, b.outputTokens, b.totalTokens, this.#csvCost(b.cost), b.unpricedTokens]);
-    downloadCsv(`ai-costs-${r.from}-${r.to}.csv`, toCsv(header, rows));
+    const byModel = this._costView === 'model';
+    const header = [weekly ? 'Week of' : 'Date', 'Requests', 'Input tokens', 'Cached input tokens', 'Output tokens', 'Total tokens', `Cost (${this.#currency})`, 'Unpriced tokens',
+      ...(byModel ? series.map((s) => `${s.label} (${this.#currency})`) : [])];
+    const rows = buckets.map((b, i) => [b.start, b.requests, b.inputTokens, b.cachedInputTokens, b.outputTokens, b.totalTokens, this.#csvCost(b.cost), b.unpricedTokens,
+      ...(byModel ? series.map((s) => Number(s.values[i].toFixed(4))) : [])]);
+    downloadCsv(`ai-costs-${r.from}-${r.to}${byModel ? '-by-model' : ''}.csv`, toCsv(header, rows));
   }
 
   #downloadCostByCsv(label: string, rows: CostRow[]): void {

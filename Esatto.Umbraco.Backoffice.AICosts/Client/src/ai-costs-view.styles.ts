@@ -19,6 +19,17 @@ export const styles = css`
         --viz-grid: var(--uui-color-divider);
         --viz-axis: var(--uui-color-border-emphasis);
         --viz-muted: var(--uui-color-text-alt);
+        /* Categorical slots in fixed order (dataviz reference palette, validated light on #fff and dark on
+           Umbraco's #2d333b), and the reserved status colour for failures. */
+        --viz-cat-1: #2a78d6;
+        --viz-cat-2: #eb6834;
+        --viz-cat-3: #1baf7a;
+        --viz-cat-4: #eda100;
+        --viz-cat-5: #e87ba4;
+        --viz-cat-6: #008300;
+        --viz-cat-7: #6250d6;
+        --viz-cat-8: #e34948;
+        --viz-critical: #d03b3b;
     }
     :host([dark]) {
         --viz-column: #3987e5;
@@ -26,6 +37,14 @@ export const styles = css`
         --viz-heat-1: #3987e5;
         --viz-heat-2: #86b6ef;
         --viz-heat-3: #cde2fb;
+        --viz-cat-1: #3987e5;
+        --viz-cat-2: #d95926;
+        --viz-cat-3: #199e70;
+        --viz-cat-4: #c98500;
+        --viz-cat-5: #d55181;
+        --viz-cat-6: #008300;
+        --viz-cat-7: #9085e9;
+        --viz-cat-8: #e66767;
     }
     .theme-probe {
         position: absolute;
@@ -250,6 +269,77 @@ export const styles = css`
     }
     .budget-over .budget-fill {
         background: var(--uui-color-danger-standalone);
+    }
+    /* Charts: legend, lines, figures. */
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--uui-size-space-2) var(--uui-size-space-5);
+        margin-bottom: var(--uui-size-space-3);
+        color: var(--uui-color-text-alt);
+        font-size: var(--uui-type-small-size);
+    }
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--uui-size-space-2);
+    }
+    .legend-swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+    }
+    .legend-line {
+        width: 18px;
+        border-top: 2px solid var(--viz-cat-1);
+    }
+    .legend-line.dashed {
+        border-top-style: dashed;
+    }
+    .legend-line.budget {
+        border-top: 1px solid var(--uui-color-text);
+    }
+    .line {
+        fill: none;
+        stroke: var(--viz-cat-1);
+        stroke-width: 2;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        pointer-events: none;
+    }
+    .line.projection {
+        stroke-dasharray: 5 4;
+    }
+    .dot {
+        fill: var(--viz-cat-1);
+        stroke: var(--uui-color-surface);
+        stroke-width: 2;
+        pointer-events: none;
+    }
+    .budget-line {
+        stroke: var(--uui-color-text);
+        stroke-width: 1;
+    }
+    .figures {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--uui-size-space-6);
+        margin-bottom: var(--uui-size-space-4);
+    }
+    .figure {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--uui-color-text);
+    }
+    .figure-note {
+        font-size: var(--uui-type-small-size);
+        font-weight: 400;
+        color: var(--uui-color-text-alt);
+    }
+    .chart-note {
+        margin: var(--uui-size-space-3) 0 0;
+        color: var(--uui-color-text-alt);
+        font-size: var(--uui-type-small-size);
     }
     .header-actions {
         display: flex;

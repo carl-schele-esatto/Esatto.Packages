@@ -1,22 +1,22 @@
-import { css as Ot, state as f, customElement as Pt, nothing as k, html as c, svg as z } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as Wt } from "@umbraco-cms/backoffice/lit-element";
-import { tryExecute as it } from "@umbraco-cms/backoffice/resources";
-import { umbHttpClient as ot } from "@umbraco-cms/backoffice/http-client";
-const rt = "/umbraco/management/api/v1/esatto/ai-costs", nt = () => [{ scheme: "bearer", type: "http" }], Lt = (t) => ot.get({ url: `${rt}/report?days=${t}`, security: nt() }), Bt = (t, e) => ot.get({ url: `${rt}/breakdown?dimension=${t}&days=${e}`, security: nt() });
-function Ht(t) {
+import { css as ue, state as z, customElement as de, nothing as _, html as n, svg as M } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as he } from "@umbraco-cms/backoffice/lit-element";
+import { tryExecute as xt } from "@umbraco-cms/backoffice/resources";
+import { umbHttpClient as wt } from "@umbraco-cms/backoffice/http-client";
+const zt = "/umbraco/management/api/v1/esatto/ai-costs", Tt = () => [{ scheme: "bearer", type: "http" }], pe = (t) => wt.get({ url: `${zt}/report?days=${t}`, security: Tt() }), me = (t, e) => wt.get({ url: `${zt}/breakdown?dimension=${t}&days=${e}`, security: Tt() });
+function ve(t) {
   if (!t.rates) return t;
   const e = Object.fromEntries(
     Object.entries(t.rates.perBaseUnit).map(([s, i]) => [s.toUpperCase(), i])
   );
   return { ...t, rates: { ...t.rates, perBaseUnit: e } };
 }
-function jt(t, e) {
+function be(t, e) {
   return e && (e === t.baseCurrency || t.rates?.perBaseUnit[e]) ? e : t.baseCurrency;
 }
-function lt(t, e, s) {
+function Ct(t, e, s) {
   return s === t.baseCurrency ? e : e * (t.rates?.perBaseUnit[s] ?? 1);
 }
-function ct(t, e, { compact: s = !1 } = {}) {
+function dt(t, e, { compact: s = !1 } = {}) {
   const i = Math.abs(t) > 0 && Math.abs(t) < 1;
   return new Intl.NumberFormat(void 0, {
     style: "currency",
@@ -26,23 +26,50 @@ function ct(t, e, { compact: s = !1 } = {}) {
     maximumFractionDigits: s ? 1 : i ? 4 : 2
   }).format(t);
 }
-function h(t, { compact: e = !1 } = {}) {
+function f(t, { compact: e = !1 } = {}) {
   return new Intl.NumberFormat(void 0, { notation: e ? "compact" : "standard", maximumFractionDigits: 1 }).format(t);
 }
-function Vt(t, e) {
+function Mt(t, e) {
   const s = t.month.budget;
   if (!s) return { kind: "none" };
   const i = s.currency === t.baseCurrency ? 1 : t.rates?.perBaseUnit[s.currency];
   if (!i)
     return { kind: "unavailable", reason: `Exchange rates are unavailable, so the ${s.currency} budget can’t be compared right now.` };
-  const a = s.amount / i, r = a > 0 ? t.month.cost / a : 0, u = t.month.cost > a ? "over" : r >= 0.8 || t.month.projectedCost > a ? "warning" : "ok";
-  return { kind: "set", amount: lt(t, a, e), spentShare: r, level: u };
+  const a = s.amount / i, r = a > 0 ? t.month.cost / a : 0, d = t.month.cost > a ? "over" : r >= 0.8 || t.month.projectedCost > a ? "warning" : "ok";
+  return { kind: "set", amount: Ct(t, a, e), spentShare: r, level: d };
 }
-function $(t) {
+function fe(t, e, s) {
+  let i = 0;
+  const a = t.days.map((c, u) => ({ day: u + 1, value: i += c.cost })), r = a[a.length - 1] ?? { day: 0, value: 0 }, d = [r, { day: e, value: t.projectedCost }];
+  return { actual: a, projection: d, max: Math.max(t.projectedCost, r.value, 0) };
+}
+function $e(t, e, s = 8) {
+  const i = (u) => e.map((v) => t.days.reduce((b, T, x) => T.date >= v.start && T.date <= v.end ? b + u[x] : b, 0)), a = t.modelDays.map((u) => ({ id: u.modelId, values: i(u.costs), total: u.costs.reduce((v, b) => v + b, 0) })).sort((u, v) => v.total - u.total);
+  if (a.length <= s) return { ids: a.map((u) => u.id), values: a.map((u) => u.values) };
+  const r = a.slice(0, s - 1), d = a.slice(s - 1), c = e.map((u, v) => d.reduce((b, T) => b + T.values[v], 0));
+  return { ids: [...r.map((u) => u.id), "Other"], values: [...r.map((u) => u.values), c] };
+}
+function ye(t) {
+  const e = new Array(t[0]?.length ?? 0).fill(0);
+  return t.map(
+    (s) => s.map((i, a) => {
+      const r = e[a];
+      return e[a] += i, { y0: r, y1: e[a] };
+    })
+  );
+}
+function ge(t, e) {
+  const s = t + e;
+  return s === 0 ? 0 : e / s;
+}
+function ke(t) {
+  return t < 1e3 ? `${Math.round(t)} ms` : `${new Intl.NumberFormat(void 0, { maximumFractionDigits: 1 }).format(t / 1e3)} s`;
+}
+function I(t) {
   const [e, s, i] = t.split("-").map(Number);
   return new Date(Date.UTC(e, s - 1, i));
 }
-const ut = (t) => ({
+const It = (t) => ({
   start: t.date,
   end: t.date,
   requests: t.requests,
@@ -51,40 +78,42 @@ const ut = (t) => ({
   cachedInputTokens: t.cachedInputTokens,
   totalTokens: t.totalTokens,
   cost: t.cost,
-  unpricedTokens: t.unpricedTokens
-}), Gt = (t) => t.map(ut);
-function Xt(t) {
+  unpricedTokens: t.unpricedTokens,
+  succeededRequests: t.succeededRequests,
+  failedRequests: t.failedRequests
+}), _e = (t) => t.map(It);
+function xe(t) {
   const e = [];
   for (const s of t) {
     const i = e[e.length - 1];
-    if (!i || $(s.date).getUTCDay() === 1) {
-      e.push(ut(s));
+    if (!i || I(s.date).getUTCDay() === 1) {
+      e.push(It(s));
       continue;
     }
-    i.end = s.date, i.requests += s.requests, i.inputTokens += s.inputTokens, i.outputTokens += s.outputTokens, i.cachedInputTokens += s.cachedInputTokens, i.totalTokens += s.totalTokens, i.cost += s.cost, i.unpricedTokens += s.unpricedTokens;
+    i.end = s.date, i.requests += s.requests, i.inputTokens += s.inputTokens, i.outputTokens += s.outputTokens, i.cachedInputTokens += s.cachedInputTokens, i.totalTokens += s.totalTokens, i.cost += s.cost, i.unpricedTokens += s.unpricedTokens, i.succeededRequests += s.succeededRequests, i.failedRequests += s.failedRequests;
   }
   return e;
 }
-function Jt(t, e) {
+function we(t, e) {
   return e == null ? { kind: "none" } : e === 0 ? t === 0 ? { kind: "change", percent: 0 } : { kind: "new" } : { kind: "change", percent: Math.round((t - e) / e * 100) };
 }
-function Qt(t) {
+function ze(t) {
   return new Intl.NumberFormat(t).formatToParts(1.5).find((s) => s.type === "decimal")?.value === "," ? { field: ";", decimal: "," } : { field: ",", decimal: "." };
 }
-const Zt = /^[=+\-@\t\r]/;
-function ht(t, e, s) {
-  const { field: i, decimal: a } = Qt(s), r = (u) => {
-    const v = typeof u == "number" ? String(u).replace(".", a) : Zt.test(u) ? `'${u}` : u;
-    return /["\r\n]/.test(v) || v.includes(i) ? `"${v.replace(/"/g, '""')}"` : v;
+const Te = /^[=+\-@\t\r]/;
+function qt(t, e, s) {
+  const { field: i, decimal: a } = ze(s), r = (d) => {
+    const c = typeof d == "number" ? String(d).replace(".", a) : Te.test(d) ? `'${d}` : d;
+    return /["\r\n]/.test(c) || c.includes(i) ? `"${c.replace(/"/g, '""')}"` : c;
   };
-  return "\uFEFF" + [t, ...e].map((u) => u.map(r).join(i)).join(`\r
+  return "\uFEFF" + [t, ...e].map((d) => d.map(r).join(i)).join(`\r
 `);
 }
-function dt(t, e) {
+function Dt(t, e) {
   const s = URL.createObjectURL(new Blob([e], { type: "text/csv;charset=utf-8" }));
   Object.assign(document.createElement("a"), { href: s, download: t }).click(), URL.revokeObjectURL(s);
 }
-class st {
+class gt {
   #t = 0;
   next() {
     return ++this.#t;
@@ -93,47 +122,47 @@ class st {
     return e === this.#t;
   }
 }
-const pt = "esatto.aiCosts.prefs", mt = () => {
+const Rt = "esatto.aiCosts.prefs", St = () => {
   try {
     return globalThis.localStorage;
   } catch {
     return;
   }
 };
-function Kt(t = mt()) {
+function Ce(t = St()) {
   try {
-    const e = JSON.parse(t?.getItem(pt) ?? "{}");
+    const e = JSON.parse(t?.getItem(Rt) ?? "{}");
     return e && typeof e == "object" && !Array.isArray(e) ? e : {};
   } catch {
     return {};
   }
 }
-function Yt(t, e = mt()) {
+function Me(t, e = St()) {
   try {
-    e?.setItem(pt, JSON.stringify(t));
+    e?.setItem(Rt, JSON.stringify(t));
   } catch {
   }
 }
-function te(t) {
+function Ie(t) {
   if (!t.length) return [];
   const e = [...t].sort((s, i) => s - i);
   return [0.25, 0.5, 0.75].map((s) => e[Math.min(e.length - 1, Math.floor(s * e.length))]);
 }
-function ee(t, e) {
+function qe(t, e) {
   for (let s = 0; s < e.length; s++) if (t <= e[s]) return s;
   return 3;
 }
-function se(t) {
+function Ft(t) {
   if (t <= 0) return [0, 1];
   const e = t / 4, s = 10 ** Math.floor(Math.log10(e)), i = [1, 2, 2.5, 5, 10].map((r) => r * s).find((r) => r >= e) ?? 10 * s, a = [];
   for (let r = 0; r <= t + i * 0.999; r += i) a.push(Number(r.toFixed(10)));
   return a;
 }
-function ae(t, e, s, i) {
+function De(t, e, s, i) {
   const a = Math.min(4, s / 2, i), r = e - i;
   return `M${t},${e} V${r + a} Q${t},${r} ${t + a},${r} H${t + s - a} Q${t + s},${r} ${t + s},${r + a} V${e} Z`;
 }
-const g = 12, ie = Ot`
+const S = 12, Re = ue`
     :host {
         display: block;
         padding: var(--uui-size-layout-1);
@@ -146,6 +175,17 @@ const g = 12, ie = Ot`
         --viz-grid: var(--uui-color-divider);
         --viz-axis: var(--uui-color-border-emphasis);
         --viz-muted: var(--uui-color-text-alt);
+        /* Categorical slots in fixed order (dataviz reference palette, validated light on #fff and dark on
+           Umbraco's #2d333b), and the reserved status colour for failures. */
+        --viz-cat-1: #2a78d6;
+        --viz-cat-2: #eb6834;
+        --viz-cat-3: #1baf7a;
+        --viz-cat-4: #eda100;
+        --viz-cat-5: #e87ba4;
+        --viz-cat-6: #008300;
+        --viz-cat-7: #6250d6;
+        --viz-cat-8: #e34948;
+        --viz-critical: #d03b3b;
     }
     :host([dark]) {
         --viz-column: #3987e5;
@@ -153,6 +193,14 @@ const g = 12, ie = Ot`
         --viz-heat-1: #3987e5;
         --viz-heat-2: #86b6ef;
         --viz-heat-3: #cde2fb;
+        --viz-cat-1: #3987e5;
+        --viz-cat-2: #d95926;
+        --viz-cat-3: #199e70;
+        --viz-cat-4: #c98500;
+        --viz-cat-5: #d55181;
+        --viz-cat-6: #008300;
+        --viz-cat-7: #9085e9;
+        --viz-cat-8: #e66767;
     }
     .theme-probe {
         position: absolute;
@@ -258,8 +306,8 @@ const g = 12, ie = Ot`
     }
     .swatch {
         display: inline-block;
-        width: ${g}px;
-        height: ${g}px;
+        width: ${S}px;
+        height: ${S}px;
         border-radius: 2px;
     }
     .scale-gap {
@@ -378,6 +426,77 @@ const g = 12, ie = Ot`
     .budget-over .budget-fill {
         background: var(--uui-color-danger-standalone);
     }
+    /* Charts: legend, lines, figures. */
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--uui-size-space-2) var(--uui-size-space-5);
+        margin-bottom: var(--uui-size-space-3);
+        color: var(--uui-color-text-alt);
+        font-size: var(--uui-type-small-size);
+    }
+    .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--uui-size-space-2);
+    }
+    .legend-swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+    }
+    .legend-line {
+        width: 18px;
+        border-top: 2px solid var(--viz-cat-1);
+    }
+    .legend-line.dashed {
+        border-top-style: dashed;
+    }
+    .legend-line.budget {
+        border-top: 1px solid var(--uui-color-text);
+    }
+    .line {
+        fill: none;
+        stroke: var(--viz-cat-1);
+        stroke-width: 2;
+        stroke-linejoin: round;
+        stroke-linecap: round;
+        pointer-events: none;
+    }
+    .line.projection {
+        stroke-dasharray: 5 4;
+    }
+    .dot {
+        fill: var(--viz-cat-1);
+        stroke: var(--uui-color-surface);
+        stroke-width: 2;
+        pointer-events: none;
+    }
+    .budget-line {
+        stroke: var(--uui-color-text);
+        stroke-width: 1;
+    }
+    .figures {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--uui-size-space-6);
+        margin-bottom: var(--uui-size-space-4);
+    }
+    .figure {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--uui-color-text);
+    }
+    .figure-note {
+        font-size: var(--uui-type-small-size);
+        font-weight: 400;
+        color: var(--uui-color-text-alt);
+    }
+    .chart-note {
+        margin: var(--uui-size-space-3) 0 0;
+        color: var(--uui-color-text-alt);
+        font-size: var(--uui-type-small-size);
+    }
     .header-actions {
         display: flex;
         flex-wrap: wrap;
@@ -385,87 +504,88 @@ const g = 12, ie = Ot`
         gap: var(--uui-size-space-3);
     }
 `;
-var oe = Object.defineProperty, re = Object.getOwnPropertyDescriptor, bt = (t) => {
+var Se = Object.defineProperty, Fe = Object.getOwnPropertyDescriptor, Et = (t) => {
   throw TypeError(t);
-}, b = (t, e, s, i) => {
-  for (var a = i > 1 ? void 0 : i ? re(e, s) : e, r = t.length - 1, u; r >= 0; r--)
-    (u = t[r]) && (a = (i ? u(e, s, a) : u(a)) || a);
-  return i && a && oe(e, s, a), a;
-}, G = (t, e, s) => e.has(t) || bt("Cannot " + s), d = (t, e, s) => (G(t, e, "read from private field"), s ? s.call(t) : e.get(t)), q = (t, e, s) => e.has(t) ? bt("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, s), ne = (t, e, s, i) => (G(t, e, "write to private field"), e.set(t, s), s), n = (t, e, s) => (G(t, e, "access private method"), s), S, A, N, O, o, X, J, P, Q, vt, ft, yt, gt, x, R, _, kt, $t, _t, Z, W, K, wt, F, xt, Tt, Ct, zt, qt, Mt, It, Dt, Et, Y, St, Ft, Rt;
-const Ut = [30, 90, 180, 365], At = [
+}, w = (t, e, s, i) => {
+  for (var a = i > 1 ? void 0 : i ? Fe(e, s) : e, r = t.length - 1, d; r >= 0; r--)
+    (d = t[r]) && (a = (i ? d(e, s, a) : d(a)) || a);
+  return i && a && Se(e, s, a), a;
+}, ht = (t, e, s) => e.has(t) || Et("Cannot " + s), m = (t, e, s) => (ht(t, e, "read from private field"), s ? s.call(t) : e.get(t)), U = (t, e, s) => e.has(t) ? Et("Cannot add the same private member more than once") : e instanceof WeakSet ? e.add(t) : e.set(t, s), Ee = (t, e, s, i) => (ht(t, e, "write to private field"), e.set(t, s), s), l = (t, e, s) => (ht(t, e, "access private method"), s), V, Q, Y, Z, o, pt, mt, tt, vt, Ut, Nt, At, Ot, D, W, q, Wt, Bt, Pt, et, G, j, Lt, H, jt, Vt, Ht, Gt, st, L, at, it, Xt, X, Jt, ot, lt, rt, Qt, Yt, Zt, Kt, te, ee, se, bt, ae, ie, oe;
+const le = [30, 90, 180, 365], re = [
   { key: "cost", label: "Cost" },
   { key: "tokens", label: "Tokens" },
   { key: "requests", label: "Requests" }
-], at = [
+], kt = [
   { key: "model", label: "Model" },
   { key: "profile", label: "Profile" },
   { key: "user", label: "User" },
   { key: "provider", label: "Provider" }
-], C = 2, j = 30, V = 18, m = 220, w = 64, le = 26, ce = 24;
-let p = class extends Wt {
+], N = 2, ct = 30, ut = 18, K = 10, R = 220, O = 200, _t = 56, y = 64, ne = 26, Ue = 24;
+let k = class extends he {
   constructor() {
-    super(), q(this, o), this._loading = !1, this._error = null, this._showTable = !1, this._tooltip = null, this._dark = !1, this._chartWidth = 900, this._dimension = "model", this._breakdowns = /* @__PURE__ */ new Map(), this._breakdownLoading = !1, this._breakdownError = null, q(this, S, new ResizeObserver((e) => {
+    super(), U(this, o), this._loading = !1, this._error = null, this._tables = /* @__PURE__ */ new Set(), this._costView = "total", this._tooltip = null, this._dark = !1, this._chartWidth = 900, this._dimension = "model", this._breakdowns = /* @__PURE__ */ new Map(), this._breakdownLoading = !1, this._breakdownError = null, U(this, V, new ResizeObserver((e) => {
       const s = Math.floor(e[0]?.contentRect.width ?? 0);
       s > 0 && s !== this._chartWidth && (this._chartWidth = s);
-    })), q(this, A), q(this, N, new st()), q(this, O, new st()), q(this, W, () => {
+    })), U(this, Q), U(this, Y, new gt()), U(this, Z, new gt()), U(this, G, () => {
       this._tooltip = null;
-    });
-    const t = Kt();
-    this._days = Ut.includes(t.days ?? 0) ? t.days : 365, this._currency = t.currency ?? null, this._metric = At.some((e) => e.key === t.metric) ? t.metric : "cost";
+    }), U(this, L, (e) => dt(e, m(this, o, D))), U(this, at, (e) => new Intl.NumberFormat(void 0, { style: "currency", currency: m(this, o, D), notation: "compact", maximumFractionDigits: e < 10 ? 2 : 0 }).format(e)), U(this, it, (e) => f(e, { compact: !0 }));
+    const t = Ce();
+    this._days = le.includes(t.days ?? 0) ? t.days : 365, this._currency = t.currency ?? null, this._metric = re.some((e) => e.key === t.metric) ? t.metric : "cost";
   }
   connectedCallback() {
-    super.connectedCallback(), n(this, o, X).call(this);
+    super.connectedCallback(), l(this, o, pt).call(this);
   }
   disconnectedCallback() {
-    d(this, S).disconnect(), super.disconnectedCallback();
+    m(this, V).disconnect(), super.disconnectedCallback();
   }
   firstUpdated() {
-    n(this, o, Q).call(this);
+    l(this, o, vt).call(this);
   }
   willUpdate(t) {
     t.has("_dark") && this.toggleAttribute("dark", this._dark);
   }
   updated() {
     const t = this.shadowRoot?.querySelector(".column-chart");
-    t && t !== d(this, A) && (d(this, S).disconnect(), d(this, S).observe(t), ne(this, A, t));
+    t && t !== m(this, Q) && (m(this, V).disconnect(), m(this, V).observe(t), Ee(this, Q, t));
   }
   // ---- render -------------------------------------------------------------------------
   render() {
-    return c`
+    return n`
       <span class="theme-probe" aria-hidden="true"></span>
-      ${n(this, o, wt).call(this)}
-      ${this._error ? c`<uui-box><p class="error">${this._error}</p></uui-box>` : k}
-      ${this._report ? c`<div class="content ${this._loading ? "is-loading" : ""}">
-            ${n(this, o, Tt).call(this)} ${n(this, o, zt).call(this)} ${n(this, o, Mt).call(this)} ${n(this, o, Et).call(this)}
-            ${n(this, o, Rt).call(this)}
-          </div>` : this._error ? k : c`<uui-loader-bar></uui-loader-bar>`}
+      ${l(this, o, Lt).call(this)}
+      ${this._error ? n`<uui-box><p class="error">${this._error}</p></uui-box>` : _}
+      ${this._report ? n`<div class="content ${this._loading ? "is-loading" : ""}">
+            ${l(this, o, Vt).call(this)} ${l(this, o, Qt).call(this)} ${l(this, o, Gt).call(this)} ${l(this, o, Zt).call(this)}
+            ${l(this, o, Kt).call(this)} ${l(this, o, te).call(this)} ${l(this, o, se).call(this)}
+            ${l(this, o, oe).call(this)}
+          </div>` : this._error ? _ : n`<uui-loader-bar></uui-loader-bar>`}
     `;
   }
 };
-S = /* @__PURE__ */ new WeakMap();
-A = /* @__PURE__ */ new WeakMap();
-N = /* @__PURE__ */ new WeakMap();
-O = /* @__PURE__ */ new WeakMap();
+V = /* @__PURE__ */ new WeakMap();
+Q = /* @__PURE__ */ new WeakMap();
+Y = /* @__PURE__ */ new WeakMap();
+Z = /* @__PURE__ */ new WeakMap();
 o = /* @__PURE__ */ new WeakSet();
-X = async function() {
-  const t = d(this, N).next();
-  this._loading = !0, n(this, o, Q).call(this);
-  const { data: e, error: s } = await it(this, Lt(this._days), { disableNotifications: !0 });
-  if (d(this, N).isCurrent(t)) {
+pt = async function() {
+  const t = m(this, Y).next();
+  this._loading = !0, l(this, o, vt).call(this);
+  const { data: e, error: s } = await xt(this, pe(this._days), { disableNotifications: !0 });
+  if (m(this, Y).isCurrent(t)) {
     if (this._loading = !1, s || !e) {
       this._error = "Could not load AI cost data.";
       return;
     }
-    this._error = null, this._report = Ht(e), (!this._currency || !this._report.currencies.includes(this._currency)) && (this._currency = this._report.defaultCurrency), this._dimension !== "model" && n(this, o, J).call(this, this._dimension);
+    this._error = null, this._report = ve(e), (!this._currency || !this._report.currencies.includes(this._currency)) && (this._currency = this._report.defaultCurrency), this._dimension !== "model" && l(this, o, mt).call(this, this._dimension);
   }
 };
-J = async function(t) {
+mt = async function(t) {
   const e = `${t}:${this._days}`;
   if (this._breakdowns.has(e)) return;
-  const s = d(this, O).next();
+  const s = m(this, Z).next();
   this._breakdownLoading = !0, this._breakdownError = null;
-  const { data: i, error: a } = await it(this, Bt(t, this._days), { disableNotifications: !0 });
-  if (d(this, O).isCurrent(s)) {
+  const { data: i, error: a } = await xt(this, me(t, this._days), { disableNotifications: !0 });
+  if (m(this, Z).isCurrent(s)) {
     if (this._breakdownLoading = !1, a || !i) {
       this._breakdownError = "Could not load the breakdown.";
       return;
@@ -473,10 +593,10 @@ J = async function(t) {
     this._breakdowns = new Map(this._breakdowns).set(e, i);
   }
 };
-P = function() {
-  Yt({ days: this._days, currency: this._currency ?? void 0, metric: this._metric });
+tt = function() {
+  Me({ days: this._days, currency: this._currency ?? void 0, metric: this._metric });
 };
-Q = function() {
+vt = function() {
   const t = this.shadowRoot?.querySelector(".theme-probe");
   if (!t) return;
   const e = getComputedStyle(t).color.match(/\d+(\.\d+)?/g);
@@ -484,84 +604,84 @@ Q = function() {
   const [s, i, a] = e.map(Number);
   this._dark = (0.2126 * s + 0.7152 * i + 0.0722 * a) / 255 < 0.45;
 };
-vt = function(t) {
-  t !== this._days && (this._days = t, this._breakdowns = /* @__PURE__ */ new Map(), n(this, o, P).call(this), n(this, o, X).call(this));
+Ut = function(t) {
+  t !== this._days && (this._days = t, this._breakdowns = /* @__PURE__ */ new Map(), l(this, o, tt).call(this), l(this, o, pt).call(this));
 };
-ft = function(t) {
-  this._currency = t.target.value, n(this, o, P).call(this);
+Nt = function(t) {
+  this._currency = t.target.value, l(this, o, tt).call(this);
 };
-yt = function(t) {
-  this._metric = t, n(this, o, P).call(this);
+At = function(t) {
+  this._metric = t, l(this, o, tt).call(this);
 };
-gt = function(t) {
-  this._dimension = t, t !== "model" && n(this, o, J).call(this, t);
+Ot = function(t) {
+  this._dimension = t, t !== "model" && l(this, o, mt).call(this, t);
 };
-x = function() {
-  return this._report ? jt(this._report, this._currency) : "USD";
+D = function() {
+  return this._report ? be(this._report, this._currency) : "USD";
 };
-R = function(t) {
-  return this._report ? lt(this._report, t, d(this, o, x)) : t;
+W = function(t) {
+  return this._report ? Ct(this._report, t, m(this, o, D)) : t;
 };
-_ = function(t, e = {}) {
-  return ct(n(this, o, R).call(this, t), d(this, o, x), e);
+q = function(t, e = {}) {
+  return dt(l(this, o, W).call(this, t), m(this, o, D), e);
 };
-kt = function(t) {
+Wt = function(t) {
   return this._metric === "tokens" ? t.totalTokens : this._metric === "requests" ? t.requests : t.cost;
 };
-$t = function(t) {
-  return this._metric === "cost" ? n(this, o, _).call(this, t) : this._metric === "tokens" ? `${h(t)} tokens` : `${h(t)} ${t === 1 ? "request" : "requests"}`;
+Bt = function(t) {
+  return this._metric === "cost" ? l(this, o, q).call(this, t) : this._metric === "tokens" ? `${f(t)} tokens` : `${f(t)} ${t === 1 ? "request" : "requests"}`;
 };
-_t = function() {
+Pt = function() {
   return this._days === 365 ? "12 months" : `${this._days} days`;
 };
-Z = function(t, e, s) {
+et = function(t, e, s) {
   const i = t.currentTarget, a = i.closest(".card");
   if (!a) return;
-  const r = a.getBoundingClientRect(), u = i.getBoundingClientRect();
-  this._tooltip = { card: a, x: u.left - r.left + u.width / 2, y: u.top - r.top, title: e, lines: s };
+  const r = a.getBoundingClientRect(), d = i.getBoundingClientRect();
+  this._tooltip = { card: a, x: d.left - r.left + d.width / 2, y: d.top - r.top, title: e, lines: s };
 };
-W = /* @__PURE__ */ new WeakMap();
-K = function(t) {
+G = /* @__PURE__ */ new WeakMap();
+j = function(t) {
   const e = this._tooltip;
-  return !e || e.card.dataset.card !== t ? k : c`<div class="tooltip" style="left:${e.x}px;top:${e.y}px" role="status">
+  return !e || e.card.dataset.card !== t ? _ : n`<div class="tooltip" style="left:${e.x}px;top:${e.y}px" role="status">
       <div class="tooltip-title">${e.title}</div>
-      ${e.lines.map((s) => c`<div class="tooltip-line"><strong>${s.value}</strong><span>${s.label}</span></div>`)}
+      ${e.lines.map((s) => n`<div class="tooltip-line"><strong>${s.value}</strong><span>${s.label}</span></div>`)}
     </div>`;
 };
-wt = function() {
+Lt = function() {
   const t = this._report?.currencies ?? [], e = !!this._report && !this._report.rates;
-  return c`<div class="filters">
+  return n`<div class="filters">
       <uui-button-group aria-label="Period">
-        ${Ut.map(
-    (s) => c`<uui-button
+        ${le.map(
+    (s) => n`<uui-button
             compact
             look=${s === this._days ? "primary" : "secondary"}
             aria-pressed=${s === this._days}
-            @click=${() => n(this, o, vt).call(this, s)}
+            @click=${() => l(this, o, Ut).call(this, s)}
             >${s === 365 ? "12 months" : `${s} days`}</uui-button
           >`
   )}
       </uui-button-group>
       <label class="currency">
         <span>Currency</span>
-        <select @change=${n(this, o, ft)} ?disabled=${e} aria-label="Currency">
-          ${t.map((s) => c`<option value=${s} ?selected=${s === d(this, o, x)}>${s}</option>`)}
+        <select @change=${l(this, o, Nt)} ?disabled=${e} aria-label="Currency">
+          ${t.map((s) => n`<option value=${s} ?selected=${s === m(this, o, D)}>${s}</option>`)}
         </select>
       </label>
     </div>`;
 };
-F = function(t, e) {
-  if (!this._report?.previous || e === void 0) return k;
-  const s = Jt(t, e), i = `vs previous ${n(this, o, _t).call(this)}`;
-  return s.kind === "new" ? c`<div class="tile-change">New ${i}</div>` : s.kind === "change" ? c`<div class="tile-change">${s.percent > 0 ? "+" : ""}${s.percent} % ${i}</div>` : k;
+H = function(t, e) {
+  if (!this._report?.previous || e === void 0) return _;
+  const s = we(t, e), i = `vs previous ${l(this, o, Pt).call(this)}`;
+  return s.kind === "new" ? n`<div class="tile-change">New ${i}</div>` : s.kind === "change" ? n`<div class="tile-change">${s.percent > 0 ? "+" : ""}${s.percent} % ${i}</div>` : _;
 };
-xt = function() {
-  const t = this._report, e = Vt(t, d(this, o, x));
-  return c`<uui-box class="tile">
+jt = function() {
+  const t = this._report, e = Mt(t, m(this, o, D));
+  return n`<uui-box class="tile">
       <div class="tile-label">This month</div>
-      <div class="tile-value">${n(this, o, _).call(this, t.month.cost)}</div>
-      <div class="tile-note">Projected ${n(this, o, _).call(this, t.month.projectedCost)} by month end</div>
-      ${e.kind === "set" ? c`<div
+      <div class="tile-value">${l(this, o, q).call(this, t.month.cost)}</div>
+      <div class="tile-note">Projected ${l(this, o, q).call(this, t.month.projectedCost)} by month end</div>
+      ${e.kind === "set" ? n`<div
               class="budget budget-${e.level}"
               role="meter"
               aria-valuemin="0"
@@ -570,75 +690,75 @@ xt = function() {
               aria-label="Share of the monthly budget used">
               <span class="budget-fill" style="width:${Math.min(100, e.spentShare * 100)}%"></span>
             </div>
-            <div class="tile-note">${h(e.spentShare * 100)} % of ${ct(e.amount, d(this, o, x))}</div>` : e.kind === "unavailable" ? c`<div class="tile-note">${e.reason}</div>` : k}
+            <div class="tile-note">${f(e.spentShare * 100)} % of ${dt(e.amount, m(this, o, D))}</div>` : e.kind === "unavailable" ? n`<div class="tile-note">${e.reason}</div>` : _}
     </uui-box>`;
 };
-Tt = function() {
-  const t = this._report, e = t.totals, s = t.previous?.totals, i = t.days.reduce((v, T) => v + T.inputTokens, 0), a = t.days.reduce((v, T) => v + T.outputTokens, 0), r = e.requests > 0 ? e.cost / e.requests : 0, u = s && s.requests > 0 && e.requests > 0 ? s.cost / s.requests : void 0;
-  return c`<div class="tiles">
-      ${n(this, o, xt).call(this)}
+Vt = function() {
+  const t = this._report, e = t.totals, s = t.previous?.totals, i = t.days.reduce((c, u) => c + u.inputTokens, 0), a = t.days.reduce((c, u) => c + u.outputTokens, 0), r = e.requests > 0 ? e.cost / e.requests : 0, d = s && s.requests > 0 && e.requests > 0 ? s.cost / s.requests : void 0;
+  return n`<div class="tiles">
+      ${l(this, o, jt).call(this)}
       <uui-box class="tile tile-hero">
         <div class="tile-label">Estimated cost</div>
-        <div class="tile-value hero">${n(this, o, _).call(this, e.cost)}</div>
-        ${e.unpricedTokens > 0 ? c`<div class="tile-note">
-              <uui-icon name="icon-alert"></uui-icon> ${h(e.unpricedTokens)} tokens from models without a price
-            </div>` : c`<div class="tile-note">${n(this, o, Ct).call(this)}</div>`}
-        ${n(this, o, F).call(this, e.cost, s?.cost)}
+        <div class="tile-value hero">${l(this, o, q).call(this, e.cost)}</div>
+        ${e.unpricedTokens > 0 ? n`<div class="tile-note">
+              <uui-icon name="icon-alert"></uui-icon> ${f(e.unpricedTokens)} tokens from models without a price
+            </div>` : n`<div class="tile-note">${l(this, o, Ht).call(this)}</div>`}
+        ${l(this, o, H).call(this, e.cost, s?.cost)}
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Tokens</div>
-        <div class="tile-value">${h(e.totalTokens, { compact: !0 })}</div>
-        <div class="tile-note">${h(i, { compact: !0 })} in · ${h(a, { compact: !0 })} out</div>
-        ${n(this, o, F).call(this, e.totalTokens, s?.totalTokens)}
+        <div class="tile-value">${f(e.totalTokens, { compact: !0 })}</div>
+        <div class="tile-note">${f(i, { compact: !0 })} in · ${f(a, { compact: !0 })} out</div>
+        ${l(this, o, H).call(this, e.totalTokens, s?.totalTokens)}
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Requests</div>
-        <div class="tile-value">${h(e.requests)}</div>
-        <div class="tile-note">${h(e.requests / t.days.length)} per day on average</div>
-        ${n(this, o, F).call(this, e.requests, s?.requests)}
+        <div class="tile-value">${f(e.requests)}</div>
+        <div class="tile-note">${f(e.requests / t.days.length)} per day on average</div>
+        ${l(this, o, H).call(this, e.requests, s?.requests)}
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Cost per request</div>
-        <div class="tile-value">${e.requests > 0 ? n(this, o, _).call(this, r) : "–"}</div>
+        <div class="tile-value">${e.requests > 0 ? l(this, o, q).call(this, r) : "–"}</div>
         <div class="tile-note">Priced models only</div>
-        ${n(this, o, F).call(this, r, u)}
+        ${l(this, o, H).call(this, r, d)}
       </uui-box>
     </div>`;
 };
-Ct = function() {
+Ht = function() {
   const t = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" });
-  return `${t.format($(this._report.from))} – ${t.format($(this._report.to))}`;
+  return `${t.format(I(this._report.from))} – ${t.format(I(this._report.to))}`;
 };
-zt = function() {
-  const t = this._report.days, e = t.map((l) => n(this, o, kt).call(this, l)), s = te(e.filter((l) => l > 0)), i = ($(t[0].date).getUTCDay() + 6) % 7, a = Math.ceil((i + t.length) / 7), r = j + a * (g + C), u = V + 7 * (g + C), v = new Intl.DateTimeFormat(void 0, { month: "short" }), T = new Intl.DateTimeFormat(void 0, { weekday: "short", day: "numeric", month: "short", year: "numeric" }), U = new Intl.DateTimeFormat(void 0, { weekday: "short" }), M = [], L = t.map((l, y) => {
-    const I = i + y, D = Math.floor(I / 7), H = I % 7, E = $(l.date);
-    (E.getUTCDate() === 1 || y === 0) && M.push({ col: D, label: v.format(E) });
-    const tt = e[y], et = tt > 0 ? ee(tt, s) : -1;
-    return z`<rect
-        class="cell ${et < 0 ? "cell-empty" : `cell-${et}`}"
-        x=${j + D * (g + C)}
-        y=${V + H * (g + C)}
-        width=${g}
-        height=${g}
+Gt = function() {
+  const t = this._report.days, e = t.map((h) => l(this, o, Wt).call(this, h)), s = Ie(e.filter((h) => h > 0)), i = (I(t[0].date).getUTCDay() + 6) % 7, a = Math.ceil((i + t.length) / 7), r = ct + a * (S + N), d = ut + 7 * (S + N), c = new Intl.DateTimeFormat(void 0, { month: "short" }), u = new Intl.DateTimeFormat(void 0, { weekday: "short", day: "numeric", month: "short", year: "numeric" }), v = new Intl.DateTimeFormat(void 0, { weekday: "short" }), b = [], T = t.map((h, $) => {
+    const A = i + $, B = Math.floor(A / 7), P = A % 7, g = I(h.date);
+    (g.getUTCDate() === 1 || $ === 0) && b.push({ col: B, label: c.format(g) });
+    const p = e[$], C = p > 0 ? qe(p, s) : -1;
+    return M`<rect
+        class="cell ${C < 0 ? "cell-empty" : `cell-${C}`}"
+        x=${ct + B * (S + N)}
+        y=${ut + P * (S + N)}
+        width=${S}
+        height=${S}
         rx="2"
-        @pointerenter=${(Nt) => n(this, o, Z).call(this, Nt, T.format(E), [
-      { value: n(this, o, _).call(this, l.cost), label: "cost" },
-      { value: h(l.totalTokens), label: "tokens" },
-      { value: h(l.requests), label: l.requests === 1 ? "request" : "requests" }
+        @pointerenter=${(F) => l(this, o, et).call(this, F, u.format(g), [
+      { value: l(this, o, q).call(this, h.cost), label: "cost" },
+      { value: f(h.totalTokens), label: "tokens" },
+      { value: f(h.requests), label: h.requests === 1 ? "request" : "requests" }
     ])}
-        @pointerleave=${d(this, W)}
+        @pointerleave=${m(this, G)}
       ></rect>`;
-  }), B = M.filter((l, y) => y === 0 || l.col - M[y - 1].col >= 3);
-  return c`<uui-box class="card" data-card="heatmap" headline="Usage calendar">
+  }), x = b.filter((h, $) => $ === 0 || h.col - b[$ - 1].col >= 3);
+  return n`<uui-box class="card" data-card="heatmap" headline="Usage calendar">
       <div slot="header-actions">
         <uui-button-group aria-label="Heatmap metric">
-          ${At.map(
-    (l) => c`<uui-button
+          ${re.map(
+    (h) => n`<uui-button
               compact
-              look=${l.key === this._metric ? "primary" : "secondary"}
-              aria-pressed=${l.key === this._metric}
-              @click=${() => n(this, o, yt).call(this, l.key)}
-              >${l.label}</uui-button
+              look=${h.key === this._metric ? "primary" : "secondary"}
+              aria-pressed=${h.key === this._metric}
+              @click=${() => l(this, o, At).call(this, h.key)}
+              >${h.label}</uui-button
             >`
   )}
         </uui-button-group>
@@ -647,125 +767,247 @@ zt = function() {
         <svg
           class="heatmap"
           width=${r}
-          height=${u}
-          viewBox="0 0 ${r} ${u}"
+          height=${d}
+          viewBox="0 0 ${r} ${d}"
           role="img"
           aria-label="Daily ${this._metric} over the selected period. The table under the cost chart lists every value.">
-          ${B.map((l) => z`<text class="axis-label" x=${j + l.col * (g + C)} y="11">${l.label}</text>`)}
-          ${[0, 2, 4].map((l) => {
-    const y = U.format(new Date(Date.UTC(2024, 0, 1 + l)));
-    return z`<text class="axis-label" x="0" y=${V + l * (g + C) + g - 2}>${y}</text>`;
+          ${x.map((h) => M`<text class="axis-label" x=${ct + h.col * (S + N)} y="11">${h.label}</text>`)}
+          ${[0, 2, 4].map((h) => {
+    const $ = v.format(new Date(Date.UTC(2024, 0, 1 + h)));
+    return M`<text class="axis-label" x="0" y=${ut + h * (S + N) + S - 2}>${$}</text>`;
   })}
-          ${L}
+          ${T}
         </svg>
       </div>
       <div class="scale-legend" aria-hidden="true">
         <span class="swatch cell-empty"></span><span>No usage</span>
         <span class="scale-gap"></span>
         <span>Less</span>
-        ${[0, 1, 2, 3].map((l) => c`<span class="swatch cell-${l}"></span>`)}
+        ${[0, 1, 2, 3].map((h) => n`<span class="swatch cell-${h}"></span>`)}
         <span>More</span>
-        ${s.length ? c`<span class="scale-range">up to ${n(this, o, $t).call(this, Math.max(...e))} a day</span>` : k}
+        ${s.length ? n`<span class="scale-range">up to ${l(this, o, Bt).call(this, Math.max(...e))} a day</span>` : _}
       </div>
-      ${n(this, o, K).call(this, "heatmap")}
+      ${l(this, o, j).call(this, "heatmap")}
     </uui-box>`;
 };
-qt = function() {
+st = function() {
   const t = this._report.days.length > 92;
-  return { buckets: t ? Xt(this._report.days) : Gt(this._report.days), weekly: t };
+  return { buckets: t ? xe(this._report.days) : _e(this._report.days), weekly: t };
 };
-Mt = function() {
-  const { buckets: t, weekly: e } = n(this, o, qt).call(this), s = Math.max(0, ...t.map((l) => l.cost)), i = se(n(this, o, R).call(this, s)), a = i[i.length - 1] || 1, r = Math.max(200, this._chartWidth - w), u = r / t.length, v = Math.max(1, Math.min(ce, u - C)), T = (l) => m - n(this, o, R).call(this, l) / a * m, U = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short" }), M = new Intl.DateTimeFormat(void 0, { weekday: "short", day: "numeric", month: "short" }), L = Math.max(1, Math.ceil(t.length / Math.max(2, Math.floor(r / 90)))), B = s === 0;
-  return c`<uui-box class="card" data-card="columns" headline=${e ? "Weekly cost" : "Daily cost"}>
-      <div slot="header-actions" class="header-actions">
-        <uui-button compact look="secondary" @click=${() => n(this, o, St).call(this, t, e)}>Download CSV</uui-button>
-        <uui-button compact look="secondary" @click=${() => this._showTable = !this._showTable}>
-          ${this._showTable ? "Show chart" : "Show as table"}
-        </uui-button>
-      </div>
-      ${this._showTable ? n(this, o, It).call(this, t, e) : c`<div class="column-chart">
-            ${B ? c`<p class="empty">
-                  ${this._report.totals.unpricedTokens > 0 ? "No cost to show — the models used in this period have no configured price." : "No AI usage in this period."}
-                </p>` : c`<svg
-                  width=${w + r}
-                  height=${m + le}
-                  role="img"
-                  aria-label="${e ? "Weekly" : "Daily"} estimated cost. Use “Show as table” for the values.">
-                  ${i.map(
-    (l) => z`
-                      <line class="grid" x1=${w} x2=${w + r} y1=${m - l / a * m} y2=${m - l / a * m}></line>
-                      <text class="axis-label tick" x=${w - 8} y=${m - l / a * m + 4}>${new Intl.NumberFormat(void 0, {
-      style: "currency",
-      currency: d(this, o, x),
-      notation: "compact",
-      maximumFractionDigits: l < 10 ? 2 : 0
-    }).format(l)}</text>`
+L = /* @__PURE__ */ new WeakMap();
+at = /* @__PURE__ */ new WeakMap();
+it = /* @__PURE__ */ new WeakMap();
+Xt = function(t) {
+  const e = new Set(this._tables);
+  e.has(t) ? e.delete(t) : e.add(t), this._tables = e;
+};
+X = function(t) {
+  return n`<uui-button compact look="secondary" @click=${() => l(this, o, Xt).call(this, t)}>
+      ${this._tables.has(t) ? "Show chart" : "Show as table"}
+    </uui-button>`;
+};
+Jt = function(t) {
+  if (this._costView === "total")
+    return [{ id: "cost", label: "Cost", color: "var(--viz-cat-1)", values: t.map((i) => l(this, o, W).call(this, i.cost)) }];
+  const { ids: e, values: s } = $e(this._report, t);
+  return e.map((i, a) => ({ id: i, label: i, color: `var(--viz-cat-${a + 1})`, values: s[a].map((r) => l(this, o, W).call(this, r)) }));
+};
+ot = function(t) {
+  return t.length < 2 ? _ : n`<div class="legend">
+      ${t.map(
+    (e) => n`<span class="legend-item"
+          >${e.icon ? n`<uui-icon name=${e.icon} style="color:${e.color}"></uui-icon>` : n`<span class="legend-swatch" style="background:${e.color}"></span>`}${e.label}</span
+        >`
   )}
-                  ${t.map((l, y) => {
-    const I = w + y * u + (u - v) / 2, D = m - T(l.cost), H = e ? `Week of ${U.format($(l.start))}` : M.format($(l.start));
-    return z`
-                      <rect class="hit" x=${w + y * u} y="0" width=${u} height=${m}
-                        @pointerenter=${(E) => n(this, o, Z).call(this, E, H, [
-      { value: n(this, o, _).call(this, l.cost), label: "cost" },
-      { value: h(l.totalTokens), label: "tokens" },
-      { value: h(l.requests), label: l.requests === 1 ? "request" : "requests" }
-    ])}
-                        @pointerleave=${d(this, W)}></rect>
-                      ${D > 0 ? z`<path class="bar" d=${ae(I, m, v, D)}></path>` : k}
-                      ${y % L === 0 ? z`<text class="axis-label" x=${I + v / 2} y=${m + 18} text-anchor="middle">${U.format($(l.start))}</text>` : k}`;
-  })}
-                  <line class="baseline" x1=${w} x2=${w + r} y1=${m} y2=${m}></line>
-                </svg>`}
-          </div>`}
-      ${n(this, o, K).call(this, "columns")}
-    </uui-box>`;
+    </div>`;
 };
-It = function(t, e) {
-  const s = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" }), i = t.filter((a) => a.requests > 0).reverse();
-  return i.length ? c`<div class="table-scroll">
-      <uui-table aria-label="${e ? "Weekly" : "Daily"} usage and cost">
+lt = function(t, e, s, i, a, r) {
+  const d = t.map((g, p) => s.reduce((C, F) => C + F.values[p], 0)), c = Math.max(0, ...d), u = Ft(c), v = u[u.length - 1] || 1, b = Math.max(200, this._chartWidth - y), T = b / t.length, x = Math.max(1, Math.min(Ue, T - N)), h = (g) => g / v * R, $ = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short" }), A = new Intl.DateTimeFormat(void 0, { weekday: "short", day: "numeric", month: "short" }), B = Math.max(1, Math.ceil(t.length / Math.max(2, Math.floor(b / 90)))), P = ye(s.map((g) => g.values));
+  return n`<div class="column-chart">
+      <svg width=${y + b} height=${K + R + ne} role="img" aria-label="${r}. Use “Show as table” for the values.">
+        <g transform="translate(0 ${K})">
+          ${u.map(
+    (g) => M`
+              <line class="grid" x1=${y} x2=${y + b} y1=${R - h(g)} y2=${R - h(g)}></line>
+              <text class="axis-label tick" x=${y - 8} y=${R - h(g) + 4}>${a(g)}</text>`
+  )}
+          ${t.map((g, p) => {
+    const C = y + p * T + (T - x) / 2, F = e ? `Week of ${$.format(I(g.start))}` : A.format(I(g.start)), J = s.map((E) => ({ value: i(E.values[p]), label: E.label.toLowerCase() }));
+    s.length > 1 && J.push({ value: i(d[p]), label: "total" });
+    const ce = s.map((E) => E.values[p] > 0).lastIndexOf(!0);
+    return M`
+              <rect class="hit" x=${y + p * T} y="0" width=${T} height=${R}
+                @pointerenter=${(E) => l(this, o, et).call(this, E, F, J)}
+                @pointerleave=${m(this, G)}></rect>
+              ${s.map((E, ft) => {
+      const { y0: $t, y1: yt } = P[ft][p], nt = h(yt) - h($t);
+      return nt <= 0 ? _ : ft === ce ? M`<path class="bar" style="fill:${E.color}" d=${De(C, R - h($t), x, nt)}></path>` : M`<rect class="bar" style="fill:${E.color}" x=${C} y=${R - h(yt) + N} width=${x} height=${Math.max(0, nt - N)}></rect>`;
+    })}
+              ${p % B === 0 ? M`<text class="axis-label" x=${C + x / 2} y=${R + 18} text-anchor="middle">${$.format(I(g.start))}</text>` : _}`;
+  })}
+          <line class="baseline" x1=${y} x2=${y + b} y1=${R} y2=${R}></line>
+        </g>
+      </svg>
+    </div>`;
+};
+rt = function(t, e, s, i, a) {
+  const r = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" }), d = t.map((c, u) => ({ b: c, i: u })).filter(({ i: c }) => s.some((u) => u.values[c] > 0)).reverse();
+  return d.length ? n`<div class="table-scroll">
+      <uui-table aria-label=${a}>
         <uui-table-head>
           <uui-table-head-cell>${e ? "Week of" : "Date"}</uui-table-head-cell>
-          <uui-table-head-cell class="num">Requests</uui-table-head-cell>
-          <uui-table-head-cell class="num">Input tokens</uui-table-head-cell>
-          <uui-table-head-cell class="num">Output tokens</uui-table-head-cell>
-          <uui-table-head-cell class="num">Cost</uui-table-head-cell>
+          ${s.map((c) => n`<uui-table-head-cell class="num">${c.label}</uui-table-head-cell>`)}
+          ${s.length > 1 ? n`<uui-table-head-cell class="num">Total</uui-table-head-cell>` : _}
         </uui-table-head>
-        ${i.map(
-    (a) => c`<uui-table-row>
-            <uui-table-cell>${s.format($(a.start))}</uui-table-cell>
-            <uui-table-cell class="num">${h(a.requests)}</uui-table-cell>
-            <uui-table-cell class="num">${h(a.inputTokens)}</uui-table-cell>
-            <uui-table-cell class="num">${h(a.outputTokens)}</uui-table-cell>
-            <uui-table-cell class="num">${n(this, o, _).call(this, a.cost)}</uui-table-cell>
+        ${d.map(
+    ({ b: c, i: u }) => n`<uui-table-row>
+            <uui-table-cell>${r.format(I(c.start))}</uui-table-cell>
+            ${s.map((v) => n`<uui-table-cell class="num">${i(v.values[u])}</uui-table-cell>`)}
+            ${s.length > 1 ? n`<uui-table-cell class="num">${i(s.reduce((v, b) => v + b.values[u], 0))}</uui-table-cell>` : _}
           </uui-table-row>`
   )}
       </uui-table>
-    </div>` : c`<p class="empty">No AI usage in this period.</p>`;
+    </div>` : n`<p class="empty">No AI usage in this period.</p>`;
 };
-Dt = function() {
+Qt = function() {
+  const t = this._report, e = I(t.month.to), s = new Date(Date.UTC(e.getUTCFullYear(), e.getUTCMonth() + 1, 0)).getUTCDate(), i = Mt(t, m(this, o, D)), a = i.kind === "set" ? i.amount : void 0, r = fe(t.month, s), d = (p) => ({ day: p.day, value: l(this, o, W).call(this, p.value) }), c = r.actual.map(d), u = r.projection.map(d), v = Math.max(l(this, o, W).call(this, r.max), a ?? 0), b = Ft(v), T = b[b.length - 1] || 1, x = Math.max(200, this._chartWidth - y - _t), h = (p) => y + (p - 1) / Math.max(1, s - 1) * x, $ = (p) => O - p / T * O, A = (p) => p.map((C, F) => `${F ? "L" : "M"}${h(C.day)},${$(C.value)}`).join(" "), B = new Intl.DateTimeFormat(void 0, { weekday: "short", day: "numeric", month: "short" }), P = x / Math.max(1, s - 1), g = this._tables.has("month");
+  return n`<uui-box class="card" data-card="month" headline="This month">
+      <div slot="header-actions" class="header-actions">${l(this, o, X).call(this, "month")}</div>
+      ${g ? l(this, o, Yt).call(this) : n`<div class="legend">
+              <span class="legend-item"><span class="legend-line"></span>Cost so far</span>
+              <span class="legend-item"><span class="legend-line dashed"></span>Projected ${l(this, o, q).call(this, t.month.projectedCost)}</span>
+              ${a !== void 0 ? n`<span class="legend-item"><span class="legend-line budget"></span>Budget ${m(this, L).call(this, a)}</span>` : _}
+            </div>
+            <div class="column-chart">
+              <svg width=${y + x + _t} height=${K + O + ne} role="img"
+                aria-label="Cumulative cost this month with the projection to month end. Use “Show as table” for the values.">
+                <g transform="translate(0 ${K})">
+                  ${b.map(
+    (p) => M`
+                      <line class="grid" x1=${y} x2=${y + x} y1=${$(p)} y2=${$(p)}></line>
+                      <text class="axis-label tick" x=${y - 8} y=${$(p) + 4}>${m(this, at).call(this, p)}</text>`
+  )}
+                  ${a !== void 0 ? M`<line class="budget-line" x1=${y} x2=${y + x} y1=${$(a)} y2=${$(a)}></line>
+                        <text class="axis-label" x=${y + x + 6} y=${$(a) + 4}>Budget</text>` : _}
+                  <path class="line projection" d=${A(u)}></path>
+                  <path class="line" d=${A(c)}></path>
+                  ${c.length ? M`<circle class="dot" cx=${h(c[c.length - 1].day)} cy=${$(c[c.length - 1].value)} r="4"></circle>` : _}
+                  ${[1, 8, 15, 22, s].map(
+    (p) => M`<text class="axis-label" x=${h(p)} y=${O + 18} text-anchor="middle">${p}</text>`
+  )}
+                  ${c.map((p, C) => {
+    const F = I(t.month.days[C].date);
+    return M`<rect class="hit" x=${h(p.day) - P / 2} y="0" width=${P} height=${O}
+                      @pointerenter=${(J) => l(this, o, et).call(this, J, B.format(F), [
+      { value: m(this, L).call(this, p.value), label: "so far" },
+      { value: l(this, o, q).call(this, t.month.days[C].cost), label: "that day" }
+    ])}
+                      @pointerleave=${m(this, G)}></rect>`;
+  })}
+                  <line class="baseline" x1=${y} x2=${y + x} y1=${O} y2=${O}></line>
+                </g>
+              </svg>
+            </div>`}
+      ${l(this, o, j).call(this, "month")}
+    </uui-box>`;
+};
+Yt = function() {
+  const t = new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" });
+  let e = 0;
+  const s = this._report.month.days.map((i) => ({ d: i, total: e += i.cost })).reverse();
+  return n`<div class="table-scroll">
+      <uui-table aria-label="Cost this month per day">
+        <uui-table-head>
+          <uui-table-head-cell>Date</uui-table-head-cell>
+          <uui-table-head-cell class="num">Cost</uui-table-head-cell>
+          <uui-table-head-cell class="num">So far</uui-table-head-cell>
+        </uui-table-head>
+        ${s.map(
+    ({ d: i, total: a }) => n`<uui-table-row>
+            <uui-table-cell>${t.format(I(i.date))}</uui-table-cell>
+            <uui-table-cell class="num">${l(this, o, q).call(this, i.cost)}</uui-table-cell>
+            <uui-table-cell class="num">${l(this, o, q).call(this, a)}</uui-table-cell>
+          </uui-table-row>`
+  )}
+      </uui-table>
+    </div>`;
+};
+Zt = function() {
+  const { buckets: t, weekly: e } = l(this, o, st).call(this), s = l(this, o, Jt).call(this, t), i = s.every((c) => c.values.every((u) => u === 0)), a = `${e ? "Weekly" : "Daily"} cost`, r = this._tables.has("columns"), d = this._report.totals.unpricedTokens > 0;
+  return n`<uui-box class="card" data-card="columns" headline=${a}>
+      <div slot="header-actions" class="header-actions">
+        <uui-button-group aria-label="Cost per">
+          ${["total", "model"].map(
+    (c) => n`<uui-button compact look=${c === this._costView ? "primary" : "secondary"} aria-pressed=${c === this._costView}
+              @click=${() => this._costView = c}>${c === "total" ? "Total" : "By model"}</uui-button>`
+  )}
+        </uui-button-group>
+        <uui-button compact look="secondary" @click=${() => l(this, o, ae).call(this, t, e, s)}>Download CSV</uui-button>
+        ${l(this, o, X).call(this, "columns")}
+      </div>
+      ${l(this, o, ot).call(this, s)}
+      ${r ? l(this, o, rt).call(this, t, e, s, m(this, L), `${a} per ${this._costView === "total" ? "period" : "model"}`) : i ? n`<p class="empty">
+              ${d ? "No cost to show — the models used in this period have no configured price." : "No AI usage in this period."}
+            </p>` : l(this, o, lt).call(this, t, e, s, m(this, L), m(this, at), `${a}${this._costView === "model" ? " by model" : ""}`)}
+      ${this._costView === "model" && d ? n`<p class="chart-note">Models without a configured price aren’t included.</p>` : _}
+      ${l(this, o, j).call(this, "columns")}
+    </uui-box>`;
+};
+Kt = function() {
+  const { buckets: t, weekly: e } = l(this, o, st).call(this), s = [
+    { id: "input", label: "Input", color: "var(--viz-cat-1)", values: t.map((r) => r.inputTokens - r.cachedInputTokens) },
+    { id: "cached", label: "Cached input", color: "var(--viz-cat-2)", values: t.map((r) => r.cachedInputTokens) },
+    { id: "output", label: "Output", color: "var(--viz-cat-3)", values: t.map((r) => r.outputTokens) }
+  ], i = (r) => f(r), a = `Tokens by type${e ? " per week" : ""}`;
+  return n`<uui-box class="card" data-card="tokens" headline=${a}>
+      <div slot="header-actions" class="header-actions">${l(this, o, X).call(this, "tokens")}</div>
+      <div class="figures">
+        <div><div class="tile-label">Caching saved</div><div class="figure">${l(this, o, q).call(this, this._report.cachingSavings)}</div></div>
+      </div>
+      ${l(this, o, ot).call(this, s)}
+      ${this._tables.has("tokens") ? l(this, o, rt).call(this, t, e, s, i, a) : s.every((r) => r.values.every((d) => d === 0)) ? n`<p class="empty">No AI usage in this period.</p>` : l(this, o, lt).call(this, t, e, s, i, m(this, it), a)}
+      ${l(this, o, j).call(this, "tokens")}
+    </uui-box>`;
+};
+te = function() {
+  const t = this._report, { buckets: e, weekly: s } = l(this, o, st).call(this), i = t.days.reduce((u, v) => u + v.succeededRequests, 0), a = t.days.reduce((u, v) => u + v.failedRequests, 0), r = [
+    { id: "succeeded", label: "Succeeded", color: "var(--viz-cat-1)", values: e.map((u) => u.succeededRequests) },
+    { id: "failed", label: "Failed", color: "var(--viz-critical)", icon: "icon-alert", values: e.map((u) => u.failedRequests) }
+  ], d = (u) => f(u), c = `Requests${s ? " per week" : ""}`;
+  return n`<uui-box class="card" data-card="reliability" headline="Reliability">
+      <div slot="header-actions" class="header-actions">${l(this, o, X).call(this, "reliability")}</div>
+      <div class="figures">
+        <div><div class="tile-label">Failed requests</div><div class="figure">${f(a)} <span class="figure-note">(${f(ge(i, a) * 100)} %)</span></div></div>
+        <div><div class="tile-label">Average response time</div><div class="figure">${t.averageDurationMs > 0 ? ke(t.averageDurationMs) : "–"}</div></div>
+      </div>
+      ${l(this, o, ot).call(this, r)}
+      ${this._tables.has("reliability") ? l(this, o, rt).call(this, e, s, r, d, c) : i + a === 0 ? n`<p class="empty">No AI usage in this period.</p>` : l(this, o, lt).call(this, e, s, r, d, m(this, it), c)}
+      ${l(this, o, j).call(this, "reliability")}
+    </uui-box>`;
+};
+ee = function() {
   return this._dimension === "model" ? this._report.models.map((t) => ({ ...t, name: t.modelId })) : this._breakdowns.get(`${this._dimension}:${this._days}`)?.rows;
 };
-Et = function() {
-  const t = at.find((a) => a.key === this._dimension).label, e = n(this, o, Dt).call(this), s = this._report.totals.cost, i = this._dimension === "model" ? "Add this model to Esatto:AICosts:PricesPerMillionTokens in appsettings" : "Some of this usage is from models without a configured price";
-  return c`<uui-box class="card" headline="Cost by">
+se = function() {
+  const t = kt.find((a) => a.key === this._dimension).label, e = l(this, o, ee).call(this), s = this._report.totals.cost, i = this._dimension === "model" ? "Add this model to Esatto:AICosts:PricesPerMillionTokens in appsettings" : "Some of this usage is from models without a configured price";
+  return n`<uui-box class="card" headline="Cost by">
       <div slot="header-actions" class="header-actions">
         <uui-button-group aria-label="Group cost by">
-          ${at.map(
-    (a) => c`<uui-button
+          ${kt.map(
+    (a) => n`<uui-button
               compact
               look=${a.key === this._dimension ? "primary" : "secondary"}
               aria-pressed=${a.key === this._dimension}
-              @click=${() => n(this, o, gt).call(this, a.key)}
+              @click=${() => l(this, o, Ot).call(this, a.key)}
               >${a.label}</uui-button
             >`
   )}
         </uui-button-group>
-        <uui-button compact look="secondary" ?disabled=${!e?.length} @click=${() => n(this, o, Ft).call(this, t, e ?? [])}
+        <uui-button compact look="secondary" ?disabled=${!e?.length} @click=${() => l(this, o, ie).call(this, t, e ?? [])}
           >Download CSV</uui-button
         >
       </div>
-      ${this._breakdownError && this._dimension !== "model" ? c`<p class="error">${this._breakdownError}</p>` : e ? e.length === 0 ? c`<p class="empty">No AI usage in this period.</p>` : c`<div class="table-scroll">
+      ${this._breakdownError && this._dimension !== "model" ? n`<p class="error">${this._breakdownError}</p>` : e ? e.length === 0 ? n`<p class="empty">No AI usage in this period.</p>` : n`<div class="table-scroll">
                 <uui-table aria-label="Cost by ${t.toLowerCase()}">
                   <uui-table-head>
                     <uui-table-head-cell>${t}</uui-table-head-cell>
@@ -777,98 +1019,121 @@ Et = function() {
                     <uui-table-head-cell class="num">Share</uui-table-head-cell>
                   </uui-table-head>
                   ${e.map(
-    (a) => c`<uui-table-row>
+    (a) => n`<uui-table-row>
                       <uui-table-cell>${a.name}</uui-table-cell>
-                      <uui-table-cell class="num">${h(a.requests)}</uui-table-cell>
-                      <uui-table-cell class="num">${h(a.inputTokens)}</uui-table-cell>
-                      <uui-table-cell class="num">${h(a.cachedInputTokens)}</uui-table-cell>
-                      <uui-table-cell class="num">${h(a.outputTokens)}</uui-table-cell>
+                      <uui-table-cell class="num">${f(a.requests)}</uui-table-cell>
+                      <uui-table-cell class="num">${f(a.inputTokens)}</uui-table-cell>
+                      <uui-table-cell class="num">${f(a.cachedInputTokens)}</uui-table-cell>
+                      <uui-table-cell class="num">${f(a.outputTokens)}</uui-table-cell>
                       <uui-table-cell class="num">
-                        ${a.cost === null ? c`<uui-tag look="secondary" title=${i}>No price</uui-tag>` : n(this, o, _).call(this, a.cost)}
+                        ${a.cost === null ? n`<uui-tag look="secondary" title=${i}>No price</uui-tag>` : l(this, o, q).call(this, a.cost)}
                       </uui-table-cell>
                       <uui-table-cell class="num">
-                        ${a.cost !== null && s > 0 ? c`<span class="share"
+                        ${a.cost !== null && s > 0 ? n`<span class="share"
                               ><span class="share-track"
                                 ><span class="share-fill" style="width:${a.cost / s * 100}%"></span></span
-                              >${h(a.cost / s * 100)}%</span
+                              >${f(a.cost / s * 100)}%</span
                             >` : "–"}
                       </uui-table-cell>
                     </uui-table-row>`
   )}
                 </uui-table>
-              </div>` : c`<uui-loader-bar></uui-loader-bar>`}
-      ${this._breakdownLoading && e ? c`<uui-loader-bar></uui-loader-bar>` : k}
+              </div>` : n`<uui-loader-bar></uui-loader-bar>`}
+      ${this._breakdownLoading && e ? n`<uui-loader-bar></uui-loader-bar>` : _}
     </uui-box>`;
 };
-Y = function(t) {
-  return Number(n(this, o, R).call(this, t).toFixed(4));
+bt = function(t) {
+  return Number(l(this, o, W).call(this, t).toFixed(4));
 };
-St = function(t, e) {
-  const s = this._report, i = [e ? "Week of" : "Date", "Requests", "Input tokens", "Cached input tokens", "Output tokens", "Total tokens", `Cost (${d(this, o, x)})`, "Unpriced tokens"], a = t.map((r) => [r.start, r.requests, r.inputTokens, r.cachedInputTokens, r.outputTokens, r.totalTokens, n(this, o, Y).call(this, r.cost), r.unpricedTokens]);
-  dt(`ai-costs-${s.from}-${s.to}.csv`, ht(i, a));
+ae = function(t, e, s) {
+  const i = this._report, a = this._costView === "model", r = [
+    e ? "Week of" : "Date",
+    "Requests",
+    "Input tokens",
+    "Cached input tokens",
+    "Output tokens",
+    "Total tokens",
+    `Cost (${m(this, o, D)})`,
+    "Unpriced tokens",
+    ...a ? s.map((c) => `${c.label} (${m(this, o, D)})`) : []
+  ], d = t.map((c, u) => [
+    c.start,
+    c.requests,
+    c.inputTokens,
+    c.cachedInputTokens,
+    c.outputTokens,
+    c.totalTokens,
+    l(this, o, bt).call(this, c.cost),
+    c.unpricedTokens,
+    ...a ? s.map((v) => Number(v.values[u].toFixed(4))) : []
+  ]);
+  Dt(`ai-costs-${i.from}-${i.to}${a ? "-by-model" : ""}.csv`, qt(r, d));
 };
-Ft = function(t, e) {
-  const s = this._report, i = [t, "Requests", "Input tokens", "Cached input tokens", "Output tokens", "Total tokens", `Cost (${d(this, o, x)})`], a = e.map((r) => [r.name, r.requests, r.inputTokens, r.cachedInputTokens, r.outputTokens, r.totalTokens, r.cost === null ? "" : n(this, o, Y).call(this, r.cost)]);
-  dt(`ai-costs-${s.from}-${s.to}-${this._dimension}.csv`, ht(i, a));
+ie = function(t, e) {
+  const s = this._report, i = [t, "Requests", "Input tokens", "Cached input tokens", "Output tokens", "Total tokens", `Cost (${m(this, o, D)})`], a = e.map((r) => [r.name, r.requests, r.inputTokens, r.cachedInputTokens, r.outputTokens, r.totalTokens, r.cost === null ? "" : l(this, o, bt).call(this, r.cost)]);
+  Dt(`ai-costs-${s.from}-${s.to}-${this._dimension}.csv`, qt(i, a));
 };
-Rt = function() {
-  const t = this._report, e = t.rates ? new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" }).format($(t.rates.date)) : null;
-  return c`<p class="footnote">
-      Estimates: tokens × list prices per model${t.pricesSource ? c` (${t.pricesSource})` : k}, in ${t.baseCurrency}.
+oe = function() {
+  const t = this._report, e = t.rates ? new Intl.DateTimeFormat(void 0, { day: "numeric", month: "short", year: "numeric" }).format(I(t.rates.date)) : null;
+  return n`<p class="footnote">
+      Estimates: tokens × list prices per model${t.pricesSource ? n` (${t.pricesSource})` : _}, in ${t.baseCurrency}.
       Cached input tokens are billed at the cache-read price. Excludes taxes, discounts and provider surcharges.
-      ${t.rates ? c`Converted with ${t.rates.source} reference rates of ${e}.` : c`<strong>Exchange rates are unavailable right now — amounts are shown in ${t.baseCurrency}.</strong>`}
+      ${t.rates ? n`Converted with ${t.rates.source} reference rates of ${e}.` : n`<strong>Exchange rates are unavailable right now — amounts are shown in ${t.baseCurrency}.</strong>`}
       Times are UTC.
     </p>`;
 };
-p.styles = [ie];
-b([
-  f()
-], p.prototype, "_report", 2);
-b([
-  f()
-], p.prototype, "_loading", 2);
-b([
-  f()
-], p.prototype, "_error", 2);
-b([
-  f()
-], p.prototype, "_days", 2);
-b([
-  f()
-], p.prototype, "_currency", 2);
-b([
-  f()
-], p.prototype, "_metric", 2);
-b([
-  f()
-], p.prototype, "_showTable", 2);
-b([
-  f()
-], p.prototype, "_tooltip", 2);
-b([
-  f()
-], p.prototype, "_dark", 2);
-b([
-  f()
-], p.prototype, "_chartWidth", 2);
-b([
-  f()
-], p.prototype, "_dimension", 2);
-b([
-  f()
-], p.prototype, "_breakdowns", 2);
-b([
-  f()
-], p.prototype, "_breakdownLoading", 2);
-b([
-  f()
-], p.prototype, "_breakdownError", 2);
-p = b([
-  Pt("esatto-ai-costs-view")
-], p);
-const me = p;
+k.styles = [Re];
+w([
+  z()
+], k.prototype, "_report", 2);
+w([
+  z()
+], k.prototype, "_loading", 2);
+w([
+  z()
+], k.prototype, "_error", 2);
+w([
+  z()
+], k.prototype, "_days", 2);
+w([
+  z()
+], k.prototype, "_currency", 2);
+w([
+  z()
+], k.prototype, "_metric", 2);
+w([
+  z()
+], k.prototype, "_tables", 2);
+w([
+  z()
+], k.prototype, "_costView", 2);
+w([
+  z()
+], k.prototype, "_tooltip", 2);
+w([
+  z()
+], k.prototype, "_dark", 2);
+w([
+  z()
+], k.prototype, "_chartWidth", 2);
+w([
+  z()
+], k.prototype, "_dimension", 2);
+w([
+  z()
+], k.prototype, "_breakdowns", 2);
+w([
+  z()
+], k.prototype, "_breakdownLoading", 2);
+w([
+  z()
+], k.prototype, "_breakdownError", 2);
+k = w([
+  de("esatto-ai-costs-view")
+], k);
+const Be = k;
 export {
-  p as EsattoAICostsViewElement,
-  me as default
+  k as EsattoAICostsViewElement,
+  Be as default
 };
 //# sourceMappingURL=ai-costs-view.js.map
