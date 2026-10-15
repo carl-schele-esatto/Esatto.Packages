@@ -1,0 +1,6 @@
+@model Esatto.Umbraco.Backoffice.BlockPreview.Rendering.FrameModel
+@{
+    // The site's preview layout (or the built-in one) provides <head>, scripts and @RenderBody().
+    Layout = Model.LayoutPath;
+}
+@await Html.PartialAsync(Model.PartialPath, Model.Item)

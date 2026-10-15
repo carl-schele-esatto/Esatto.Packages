@@ -1,4 +1,5 @@
 using Esatto.Umbraco.Backoffice.BlockPreview.Manifest;
+using Esatto.Umbraco.Backoffice.BlockPreview.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Umbraco.Cms.Infrastructure.Manifest;
 
@@ -32,6 +33,10 @@ public static class BlockPreviewServiceCollectionExtensions
         {
             services.Insert(firstReader, descriptor);
         }
+
+        services.AddScoped<IBlockItemFactory, BlockItemFactory>();
+        services.AddScoped<IViewRenderer, RazorViewRenderer>();
+        services.AddScoped<BlockPreviewRenderer>();
 
         return services;
     }

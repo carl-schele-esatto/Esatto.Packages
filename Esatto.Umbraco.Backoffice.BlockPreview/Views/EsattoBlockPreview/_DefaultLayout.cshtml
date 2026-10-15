@@ -1,0 +1,19 @@
+@model Esatto.Umbraco.Backoffice.BlockPreview.Rendering.FrameModel
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    @foreach (string href in Model.Stylesheets)
+    {
+        <link rel="stylesheet" href="@href" />
+    }
+</head>
+<body>
+    @RenderBody()
+    @foreach (string src in Model.Scripts)
+    {
+        <script src="@src"></script>
+    }
+</body>
+</html>
