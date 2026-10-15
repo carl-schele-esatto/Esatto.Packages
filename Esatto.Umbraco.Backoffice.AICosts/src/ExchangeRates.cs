@@ -66,6 +66,13 @@ public sealed class EcbExchangeRateProvider : IExchangeRateProvider
                 _eurRates = ParseEcbXml(xml);
                 _expiresAt = _timeProvider.GetUtcNow() + SuccessTtl;
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The caller went away (e.g. the browser aborted the page load): not an ECB outage, so
+                // nothing is cached and the next request fetches again. A 10 s HttpClient timeout still
+                // lands below, because the caller's token isn't cancelled then.
+                throw;
+            }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or FormatException or XmlException)
             {
                 // Keep serving the last good rates if we have them; otherwise the Costs tab falls

@@ -90,6 +90,17 @@ public class AICostReportServiceTests
         Assert.Equal(AICostOptions.DefaultCurrencies, (await Sut().GetReportAsync(7, CancellationToken.None)).Currencies);
     }
 
+    // Deferred minor (fixed): "sek" must come back as the list's "SEK", or the client (which matches
+    // currency codes exactly) opens the tab in the base currency.
+    [Fact]
+    public async Task Default_currency_is_returned_as_written_in_the_currency_list()
+    {
+        _options.Currencies = ["SEK", "EUR"];
+        _options.DefaultCurrency = "sek";
+
+        Assert.Equal("SEK", (await Sut().GetReportAsync(7, CancellationToken.None)).DefaultCurrency);
+    }
+
     // Ported.
     [Fact]
     public async Task Clamps_days_to_the_retention_window() =>

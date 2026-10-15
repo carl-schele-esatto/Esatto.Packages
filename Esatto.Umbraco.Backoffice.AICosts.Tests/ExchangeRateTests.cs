@@ -96,4 +96,25 @@ public class ExchangeRateTests
         await provider.GetRatesAsync("USD", CancellationToken.None);
         Assert.Equal(2, handler.Calls);
     }
+
+    // Deferred minor (fixed): a page load the browser cancels must not be cached as an ECB outage,
+    // or every user sees "rates unavailable" for 15 minutes.
+    [Fact]
+    public async Task A_cancelled_request_is_not_cached_as_a_failure()
+    {
+        using var pageLoad = new CancellationTokenSource();
+        var calls = 0;
+        // The browser aborts while the ECB request is in flight; the next load succeeds.
+        var (provider, handler, _) = Provider(() =>
+        {
+            if (++calls > 1) return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(Feed) };
+            pageLoad.Cancel();
+            throw new TaskCanceledException();
+        });
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.GetRatesAsync("USD", pageLoad.Token));
+
+        Assert.NotNull(await provider.GetRatesAsync("USD", CancellationToken.None));
+        Assert.Equal(2, handler.Calls);
+    }
 }

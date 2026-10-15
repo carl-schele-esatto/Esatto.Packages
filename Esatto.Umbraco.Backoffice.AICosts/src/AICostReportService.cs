@@ -61,9 +61,9 @@ public sealed class AICostReportService
             .Distinct()
             .ToList();
         if (currencies.Count == 0) currencies = [.. AICostOptions.DefaultCurrencies];
-        var defaultCurrency = currencies.Contains(options.DefaultCurrency, StringComparer.OrdinalIgnoreCase)
-            ? options.DefaultCurrency
-            : currencies[0];
+        // As written in the list ("sek" → "SEK"): the client matches currency codes exactly.
+        var defaultCurrency = currencies.FirstOrDefault(c => c.Equals(options.DefaultCurrency?.Trim(), StringComparison.OrdinalIgnoreCase))
+            ?? currencies[0];
 
         var month = await GetMonthAsync(today, now, options, defaultCurrency, cancellationToken);
         var previous = await GetPreviousAsync(firstDay, days, today, now, options, cancellationToken);
