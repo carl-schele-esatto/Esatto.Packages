@@ -25,6 +25,7 @@ import { budgetInDisplayCurrency } from './budget';
 import { toDays, toWeeks, type Bucket } from './buckets';
 import { change } from './compare';
 import { downloadCsv, toCsv } from './csv';
+import { Latest } from './latest';
 import { parseDate } from './dates';
 import { convert, displayCurrency, formatMoney, formatNumber } from './money';
 import { readPrefs, writePrefs } from './prefs';
@@ -97,6 +98,9 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     if (w > 0 && w !== this._chartWidth) this._chartWidth = w;
   });
   #observedChart?: Element;
+  // Only the newest report/breakdown request may update the tab (see Latest).
+  #reports = new Latest();
+  #breakdownRequests = new Latest();
 
   constructor() {
     super();
@@ -134,9 +138,11 @@ export class EsattoAICostsViewElement extends UmbLitElement {
   }
 
   async #load(): Promise<void> {
+    const ticket = this.#reports.next();
     this._loading = true;
     this.#detectTheme();
     const { data, error } = await tryExecute(this, getReport(this._days), { disableNotifications: true });
+    if (!this.#reports.isCurrent(ticket)) return;
     this._loading = false;
     if (error || !data) {
       this._error = 'Could not load AI cost data.';
@@ -153,9 +159,11 @@ export class EsattoAICostsViewElement extends UmbLitElement {
   async #loadBreakdown(dimension: Exclude<Dimension, 'model'>): Promise<void> {
     const key = `${dimension}:${this._days}`;
     if (this._breakdowns.has(key)) return;
+    const ticket = this.#breakdownRequests.next();
     this._breakdownLoading = true;
     this._breakdownError = null;
     const { data, error } = await tryExecute(this, getBreakdown(dimension, this._days), { disableNotifications: true });
+    if (!this.#breakdownRequests.isCurrent(ticket)) return;
     this._breakdownLoading = false;
     if (error || !data) {
       this._breakdownError = 'Could not load the breakdown.';
