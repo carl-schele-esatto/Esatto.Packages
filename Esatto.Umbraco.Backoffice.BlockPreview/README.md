@@ -1,29 +1,104 @@
-# Backoffice.BlockPreview
+# Esatto.Umbraco.Backoffice.BlockPreview
 
-Frontend-styled previews for Umbraco block editors, rendered directly in the backoffice.
+Live frontend previews for Umbraco 17/18 **Block List** blocks in the backoffice.
 
-Instead of the default block "chip", your editors see a meaningful, styled preview of the block. The previews are **generic and configurable** — you register them against your own content types and tell them which property aliases to read, so the package makes no assumptions about your content model or your site's CSS.
+Instead of a plain label row, every block shows its **real frontend rendering**. Your own Razor partial is rendered on the server inside your own `<head>` and shown in a sandboxed iframe, so:
 
-Requires Umbraco 17+.
+- your **CSS applies exactly**: the preview has its own `:root`, `rem` and media queries, at the block's width;
+- your **JavaScript runs**: a Bootstrap carousel slides, and its arrows and dots work;
+- **edits show up before the page is saved**: the preview refreshes when the block editor's changes are applied (Update).
 
-## Included previews
+The package also ships two configurable preview elements, **video** and **code**, that you can register for specific block types.
+
+## Install
+
+```bash
+dotnet add package Esatto.Umbraco.Backoffice.BlockPreview
+```
+
+Restart the site and hard-refresh the backoffice.
+
+## Live frontend preview
+
+### 1. Add a preview layout
+
+Create `Views/BlockPreview.cshtml` with the `<head>` (stylesheets, fonts) and scripts your blocks need, and `@RenderBody()` where the block goes:
+
+```cshtml
+@{
+    Layout = null;
+}
+<!doctype html>
+<html lang="@System.Globalization.CultureInfo.CurrentCulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
+</head>
+<body>
+    @RenderBody()
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</body>
+</html>
+```
+
+The layout must be plain Razor: **no `@model` and no `@inherits UmbracoViewPage`**. It receives the package's own frame model, not a content page. Keep menus, headers and footers out of it: the preview shows one block, not a page.
+
+Without this file, a built-in layout loads the `Stylesheets` and `Scripts` listed in the settings below.
+
+### 2. That's it
+
+Every Block List block whose partial exists at `Views/Partials/blocklist/Components/<content type alias>.cshtml` shows its real rendering. This is the same partial Umbraco's `blocklist/default.cshtml` uses on the website, and it receives the same `BlockListItem<TContent, TSettings>` model. Works with InMemoryAuto models too.
+
+- **Blocks without a partial** keep a plain label row.
+- **A custom view you register yourself** for a block type (for example the video preview below) takes precedence over the live preview.
+- **Click the label bar** above a preview to open the block editor. The preview itself is interactive.
+- **A new page that has never been saved** shows "Save the page once to see a preview."
+
+**Partials should depend only on their model.** A partial that reads page context (`Umbraco.AssignedContentItem`, `ViewData` set by a page controller) shows an error line in the preview instead of the block.
+
+### Settings
+
+All optional, in `appsettings.json`:
+
+```json
+{
+  "Esatto": {
+    "BlockPreview": {
+      "BlockList": {
+        "Enabled": true,
+        "IgnoredContentTypes": [ "someBlock" ]
+      },
+      "Layout": "~/Views/BlockPreview.cshtml",
+      "Stylesheets": [ "/css/site.css" ],
+      "Scripts": [ "/js/site.js" ]
+    }
+  }
+}
+```
+
+| Key | Default | Description |
+|---|---|---|
+| `BlockList.Enabled` | `true` | `false` switches the live preview off (its script isn't loaded) |
+| `BlockList.IgnoredContentTypes` | `[]` | Block content type aliases that keep the plain label row |
+| `Layout` | `~/Views/BlockPreview.cshtml` | Your preview layout |
+| `Stylesheets` / `Scripts` | `[]` | Used by the built-in layout when your layout file doesn't exist |
+
+### Limitations (1.0)
+
+- **Block List only.** Block Grid and blocks in the Rich Text editor are planned.
+- **A refresh starts the preview over.** For example, a carousel goes back to its first slide.
+- **One request and one iframe per block.** That's fine for typical pages.
+
+## Video and code previews
+
+These elements don't register themselves, because they can't know your content types. Register a `blockEditorCustomView` for your block type and pass your property aliases via `meta`.
 
 | Element (`elementName`) | Served path | Purpose |
 |---|---|---|
 | `backoffice-blockpreview-video` | `/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/video-preview.element.js` | YouTube video preview (thumbnail + play overlay) |
 | `backoffice-blockpreview-code` | `/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/code-preview.element.js` | Syntax-highlighted code preview with copy button (bundled highlight.js) |
-
-## Install
-
-```
-dotnet add package Backoffice.BlockPreview
-```
-
-The package ships its elements as static web assets; it does **not** register any block views itself (it can't know your content types). You register them — see below.
-
-## Usage
-
-Register a `blockEditorCustomView` extension pointing at the element you want, set `forContentTypeAlias` to your block's content type, and pass your property aliases via `meta`.
 
 ### From a TypeScript bundle
 
@@ -70,23 +145,26 @@ const videoPreview: ManifestBlockEditorCustomView = {
 | `captionAlias` | `caption` | Property alias holding an optional caption/title |
 | `themeUrl` | bundled VS2015 dark | URL of a highlight.js theme stylesheet to use instead of the bundled default |
 
-The code preview bundles [highlight.js](https://highlightjs.org) (v11.8.0, BSD-3-Clause) and a VS2015 dark theme, so it highlights without depending on the consuming site. Language is auto-detected. A copy-to-clipboard button appears on hover.
+The code preview bundles [highlight.js](https://highlightjs.org) (v11.8.0, BSD-3-Clause) and a VS2015 dark theme, so it highlights without depending on the consuming site. The language is auto-detected, and a copy-to-clipboard button appears on hover.
 
-## Notes
+These two previews render in shadow DOM with their own styling. They approximate a typical frontend look rather than mirroring your stylesheet. Use the live preview when it has to be exact.
 
-- The previews render in shadow DOM with **self-contained styling**, so they look consistent regardless of your site's CSS. They approximate a typical frontend look rather than mirroring your exact stylesheet.
-- An unmatched `forContentTypeAlias` simply renders nothing — safe to ship broadly.
+## Migrating from Backoffice.BlockPreview
 
-## Developing this package
+This package replaces the private `Backoffice.BlockPreview`:
 
-When you're actively changing this package's elements, use a **`ProjectReference`** from the consuming project rather than the published `PackageReference`:
+- **New package ID:** `Esatto.Umbraco.Backoffice.BlockPreview`.
+- **New element path:** `/App_Plugins/Backoffice.BlockPreview/…` becomes `/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/…`. Update the `element` path in your registrations.
+- **Unchanged:** element names (`backoffice-blockpreview-video`, `backoffice-blockpreview-code`) and their `meta` keys.
+- **New:** the live frontend preview is on for every Block List block. Set `BlockList.Enabled` to `false` if you only want the video and code previews.
 
-```xml
-<ProjectReference Include="..\path\to\Backoffice.BlockPreview\Backoffice.BlockPreview.csproj" />
-```
+## Compatibility
 
-Why: a `ProjectReference` compiles this project from its current source on every build and wires the fresh output (DLL + static web assets) straight into the consumer — edit, rebuild, done.
+| Umbraco | Status |
+|---------|--------|
+| 17.x    | Supported |
+| 18.x    | Verified |
 
-A `PackageReference`, by contrast, consumes a **frozen, published `.nupkg`** from the NuGet cache; it has no link to your working copy, so edits here won't show up downstream. And because NuGet versions are immutable (re-pushing the same version is skipped), every change would otherwise require: `dotnet pack` → push → bump the version → restore.
+## License
 
-So: **`ProjectReference` while developing the package, `PackageReference` once it's stable and you're just consuming it.** Remember to bump `VersionPrefix` in the csproj for each published change.
+MIT.
