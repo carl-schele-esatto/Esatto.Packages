@@ -59,3 +59,30 @@ describe('reliability', () => {
     expect(formatDuration(1234)).toMatch(/^1[.,]2 s$/);
   });
 });
+
+// Review 2 (re-graded): red is reserved for "Failed"; "Other" is neutral and slot 8 (red) is never used.
+describe('seriesColor', () => {
+  it('categorical slots in order, Other neutral', async () => {
+    const { seriesColor } = await import('../src/charts');
+    expect(seriesColor('a', 0)).toBe('var(--viz-cat-1)');
+    expect(seriesColor('Other', 6)).toBe('var(--viz-other)');
+  });
+  it('at most 7 named models, so the red slot 8 never appears', () => {
+    const many = ['2026-09-28'].map(day);
+    const modelDays = Array.from({ length: 8 }, (_, m) => ({ modelId: `m${m}`, costs: [m + 1] }));
+    const s = modelSeries({ days: many, modelDays } as unknown as AICostReport, toDays(many));
+    expect(s.ids).toHaveLength(7);
+    expect(s.ids[6]).toBe('Other');
+  });
+});
+
+// Review 2 (re-graded): the chart's blue series is uncached input, and says so; never negative.
+describe('tokenSeries', () => {
+  it('labels uncached input and clamps it at zero', async () => {
+    const { tokenSeries } = await import('../src/charts');
+    const b = { ...toDays([day('2026-09-28')])[0], inputTokens: 10, cachedInputTokens: 25, outputTokens: 3 };
+    const s = tokenSeries([b]);
+    expect(s.map((x) => x.label)).toEqual(['Uncached input', 'Cached input', 'Output']);
+    expect(s.map((x) => x.values[0])).toEqual([0, 25, 3]);
+  });
+});

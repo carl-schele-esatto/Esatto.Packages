@@ -30,6 +30,8 @@ export const styles = css`
         --viz-cat-7: #6250d6;
         --viz-cat-8: #e34948;
         --viz-critical: #d03b3b;
+        /* "Other" (folded models): neutral, so it never reads as a series hue or a status. */
+        --viz-other: #a3a29e;
     }
     :host([dark]) {
         --viz-column: #3987e5;
@@ -45,6 +47,7 @@ export const styles = css`
         --viz-cat-6: #008300;
         --viz-cat-7: #9085e9;
         --viz-cat-8: #e66767;
+        --viz-other: #6b6a66;
     }
     .theme-probe {
         position: absolute;

@@ -3,6 +3,16 @@
 import type { AICostMonth, AICostReport } from './api';
 import type { Bucket } from './buckets';
 
+/** One series of a column chart; values are in display units (currency or count). */
+export interface ChartSeries {
+  id: string;
+  label: string;
+  color: string;
+  values: number[];
+  /** Shown instead of a swatch in the legend (status series carry an icon, never colour alone). */
+  icon?: string;
+}
+
 export interface Point {
   day: number;
   value: number;
@@ -22,9 +32,10 @@ export function burnUp(month: AICostMonth, daysInMonth: number, budgetInBase?: n
 
 /**
  * Cost per model per bucket, models by total cost (most expensive first). Beyond `limit` series the
- * cheapest fold into "Other", so the palette's fixed slots are never cycled.
+ * cheapest fold into "Other", so the palette's fixed slots are never cycled. 7 by default: slot 8 is
+ * red, which is reserved for "Failed" on this tab.
  */
-export function modelSeries(report: AICostReport, buckets: Bucket[], limit = 8): { ids: string[]; values: number[][] } {
+export function modelSeries(report: AICostReport, buckets: Bucket[], limit = 7): { ids: string[]; values: number[][] } {
   const perBucket = (costs: number[]) =>
     buckets.map((b) => report.days.reduce((s, d, i) => (d.date >= b.start && d.date <= b.end ? s + costs[i] : s), 0));
   const series = report.modelDays
@@ -58,4 +69,18 @@ export function failureRate(succeeded: number, failed: number): number {
 
 export function formatDuration(ms: number): string {
   return ms < 1000 ? `${Math.round(ms)} ms` : `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(ms / 1000)} s`;
+}
+
+/** Fixed categorical slot by position; "Other" is neutral, never a hue of its own. */
+export function seriesColor(id: string, index: number): string {
+  return id === 'Other' ? 'var(--viz-other)' : `var(--viz-cat-${index + 1})`;
+}
+
+/** Tokens by type. "Uncached input" is input minus cached (cached is part of input); never negative. */
+export function tokenSeries(buckets: Bucket[]): ChartSeries[] {
+  return [
+    { id: 'uncached', label: 'Uncached input', color: seriesColor('uncached', 0), values: buckets.map((b) => Math.max(0, b.inputTokens - b.cachedInputTokens)) },
+    { id: 'cached', label: 'Cached input', color: seriesColor('cached', 1), values: buckets.map((b) => b.cachedInputTokens) },
+    { id: 'output', label: 'Output', color: seriesColor('output', 2), values: buckets.map((b) => b.outputTokens) },
+  ];
 }

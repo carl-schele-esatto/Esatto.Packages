@@ -22,7 +22,7 @@ import {
   type Dimension,
 } from './api';
 import { budgetInDisplayCurrency } from './budget';
-import { burnUp, failureRate, formatDuration, modelSeries, stack, type Point } from './charts';
+import { burnUp, failureRate, formatDuration, modelSeries, seriesColor, stack, tokenSeries, type ChartSeries as Series, type Point } from './charts';
 import { toDays, toWeeks, type Bucket } from './buckets';
 import { change } from './compare';
 import { downloadCsv, toCsv } from './csv';
@@ -71,16 +71,6 @@ interface CostRow {
   outputTokens: number;
   totalTokens: number;
   cost: number | null;
-}
-
-/** One series of a column chart; values are already in display units (currency or count). */
-interface Series {
-  id: string;
-  label: string;
-  color: string;
-  values: number[];
-  /** Shown instead of a swatch in the legend (status series carry an icon, never colour alone). */
-  icon?: string;
 }
 
 interface Tooltip {
@@ -523,7 +513,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
       return [{ id: 'cost', label: 'Cost', color: 'var(--viz-cat-1)', values: buckets.map((b) => this.#convert(b.cost)) }];
     }
     const { ids, values } = modelSeries(this._report!, buckets);
-    return ids.map((id, s) => ({ id, label: id, color: `var(--viz-cat-${s + 1})`, values: values[s].map((v) => this.#convert(v)) }));
+    return ids.map((id, s) => ({ id, label: id, color: seriesColor(id, s), values: values[s].map((v) => this.#convert(v)) }));
   }
 
   #renderLegend(series: Series[]) {
@@ -742,11 +732,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
 
   #renderTokens() {
     const { buckets, weekly } = this.#buckets();
-    const series: Series[] = [
-      { id: 'input', label: 'Input', color: 'var(--viz-cat-1)', values: buckets.map((b) => b.inputTokens - b.cachedInputTokens) },
-      { id: 'cached', label: 'Cached input', color: 'var(--viz-cat-2)', values: buckets.map((b) => b.cachedInputTokens) },
-      { id: 'output', label: 'Output', color: 'var(--viz-cat-3)', values: buckets.map((b) => b.outputTokens) },
-    ];
+    const series = tokenSeries(buckets);
     const tokens = (v: number) => formatNumber(v);
     const name = `Tokens by type${weekly ? ' per week' : ''}`;
     return html`<uui-box class="card" data-card="tokens" headline=${name}>
