@@ -236,3 +236,30 @@ generated with dummy data; source-code link. `icon.png` like the other packages.
   fall back to the base currency.
 - **Wrong prices in a site's config** show wrong costs. Mitigation: the footnote shows `PricesSource`
   and the README stresses that prices are the site's responsibility.
+
+## Charts (added 2026-10-15, approved by Carl)
+
+Four charts, following the dataviz method (one y-axis per chart, fixed-order categorical colours from
+the reference palette, legend + direct labels for ≥ 2 series, hover tooltips, dark mode stepped
+separately, palette validated with `validate_palette.js`, a table view per chart).
+
+1. **This month** (card under the tiles): solid cumulative-cost line 1st → today, dashed projection
+   (same hue) to the projected month-end cost, the budget as a thin labelled horizontal line when set.
+   Crosshair + tooltip per day. Server: `month.days[]` (`date`, `cost`), each day priced per model per
+   data point like the report; the month's cost is the sum of those days.
+2. **Daily cost by model** (existing cost card): a **Total · By model** switch; "By model" stacks each
+   day/week by model, most expensive first, fixed categorical order; beyond 8 models the rest fold into
+   "Other". Unpriced models aren't in the stack (noted under the chart). Table view and CSV get a
+   column per model. Server: `modelDays[]` (`modelId`, `costs[]` aligned with `days`, priced models only).
+   Stacking by profile/user is out of scope (per-row time series per model is too expensive).
+3. **Tokens by type** (new card): stacked columns of uncached input, cached input and output tokens
+   per day/week; "Caching saved X" = Σ cached tokens × (input price − cache price) for priced models.
+   Server: `cachingSavings` (base currency).
+4. **Reliability** (new card): requests per day stacked as succeeded + **failed** (status "critical"
+   red with icon + label in the legend), above it the failure rate and the period's **average response
+   time** (Umbraco.AI only has an average per summary, so it's a figure, not a series). Server:
+   `days[].succeededRequests`, `days[].failedRequests`, `averageDurationMs` (request-weighted over the
+   Daily + Hourly summaries).
+
+Card order: tiles → This month → usage calendar → daily cost → tokens by type → reliability → cost by →
+footnote. Each chart's geometry and data shaping live in a small pure module with vitest tests.
