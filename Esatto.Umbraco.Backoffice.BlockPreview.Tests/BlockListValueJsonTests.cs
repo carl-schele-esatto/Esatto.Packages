@@ -10,12 +10,13 @@ public class BlockListValueJsonTests
     private static readonly Guid ContentKey = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid SettingsKey = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
-    private static RenderRequest Request(string? culture = "sv", bool withSettings = false) => new()
+    private static RenderRequest Request(string? culture = "sv", bool withSettings = false, string? segment = null) => new()
     {
         DocumentKey = Guid.NewGuid(),
         DocumentTypeKey = Guid.NewGuid(),
         PropertyAlias = "carouselList",
         Culture = culture,
+        Segment = segment,
         Nonce = "n1",
         Content = new BlockDataDto
         {
@@ -86,5 +87,15 @@ public class BlockListValueJsonTests
     public void Invariant_document_gets_a_single_invariant_expose_entry()
     {
         Assert.Single(Parse(Request(culture: null))["expose"]!.AsArray());
+    }
+
+    // Deferred minor (1.0.1): a segment on a document without languages was never exposed, so a
+    // segment-varying element type converted to nothing.
+    [Fact]
+    public void Segment_on_an_invariant_document_gets_its_own_expose_entry()
+    {
+        var expose = Parse(Request(culture: null, segment: "vip"))["expose"]!.AsArray();
+        Assert.Contains(expose, e => e!["culture"] is null && e["segment"]?.GetValue<string>() == "vip");
+        Assert.Contains(expose, e => e!["culture"] is null && e["segment"] is null);
     }
 }

@@ -37,7 +37,7 @@ public sealed class BlockPreviewRenderer
         string alias = "(unknown)";
         try
         {
-            BlockPreviewOptions options = _options.Value;
+            BlockPreviewOptions options = _options.ValueOrDefaults(_logger);
             alias = _items.GetContentTypeAlias(request.Content.ContentTypeKey);
 
             // Checked before converting: an ignored block must show the plain row even if it can't convert.
@@ -76,11 +76,12 @@ public sealed class BlockPreviewRenderer
         }
     }
 
-    // Dictionary lookups, number/date formatting and variant property values must follow the
-    // culture being edited, not the backoffice user's. Restored afterwards.
+    // Variant property values follow the culture and segment being edited; dictionary lookups and
+    // number/date formatting follow its culture, not the backoffice user's. Restored afterwards.
+    // A document without languages can still vary by segment, so either one sets the variation.
     private async Task<T> InCultureAsync<T>(RenderRequest request, Func<Task<T>> render)
     {
-        if (request.Culture is null)
+        if (request.Culture is null && request.Segment is null)
         {
             return await render();
         }
@@ -91,7 +92,11 @@ public sealed class BlockPreviewRenderer
         try
         {
             _variation.VariationContext = new VariationContext(request.Culture, request.Segment);
-            CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(request.Culture);
+            if (request.Culture is not null)
+            {
+                CultureInfo.CurrentCulture = CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(request.Culture);
+            }
+
             return await render();
         }
         finally

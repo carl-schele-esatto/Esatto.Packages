@@ -37,7 +37,7 @@ public sealed class BlockPreviewManifestReader : IPackageManifestReader
 
     public Task<IEnumerable<PackageManifest>> ReadPackageManifestsAsync()
     {
-        if (!ReadOptions().BlockList.Enabled)
+        if (!_options.ValueOrDefaults(_logger).BlockList.Enabled)
         {
             return Task.FromResult(Enumerable.Empty<PackageManifest>());
         }
@@ -64,19 +64,5 @@ public sealed class BlockPreviewManifestReader : IPackageManifestReader
             },
         ];
         return Task.FromResult<IEnumerable<PackageManifest>>(manifests);
-    }
-
-    // The manifest endpoint feeds the whole backoffice; a bad appsettings value must not take it down.
-    private BlockPreviewOptions ReadOptions()
-    {
-        try
-        {
-            return _options.Value;
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Invalid '{Section}' configuration; using defaults.", BlockPreviewOptions.SectionName);
-            return new BlockPreviewOptions();
-        }
     }
 }

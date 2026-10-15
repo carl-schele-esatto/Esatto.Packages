@@ -26,12 +26,10 @@ public sealed class BlockItemFactory : IBlockItemFactory
 
     public BlockItemResult Create(RenderRequest request)
     {
-        string alias = GetContentTypeAlias(request.Content.ContentTypeKey);
-
         IPublishedContent? owner = _contentCache.GetById(preview: true, request.DocumentKey);
         if (owner is null)
         {
-            return new BlockItemResult(null, alias, NotPreviewableReason: "unsavedDocument");
+            return new BlockItemResult(null, NotPreviewableReason: "unsavedDocument");
         }
 
         // From the owner itself, so the property type always matches the document being previewed.
@@ -39,7 +37,7 @@ public sealed class BlockItemFactory : IBlockItemFactory
         IPublishedPropertyType? propertyType = owner.ContentType.GetPropertyType(request.PropertyAlias);
         if (propertyType is null)
         {
-            return new BlockItemResult(null, alias, NotPreviewableReason: "unsupported");
+            return new BlockItemResult(null, NotPreviewableReason: "unsupported");
         }
 
         string source = BlockListValueJson.Build(request);
@@ -48,7 +46,7 @@ public sealed class BlockItemFactory : IBlockItemFactory
         BlockListItem item = ExtractItem(converted)
             ?? throw new InvalidOperationException("The block could not be converted (is it allowed in this Block List?).");
 
-        return new BlockItemResult(item, alias, NotPreviewableReason: null);
+        return new BlockItemResult(item, NotPreviewableReason: null);
     }
 
     /// <summary>

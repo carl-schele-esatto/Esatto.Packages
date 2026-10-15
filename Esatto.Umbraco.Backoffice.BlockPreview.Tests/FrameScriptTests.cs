@@ -45,9 +45,28 @@ public class FrameScriptTests
     // taller than the iframe, so it scrolled — the mouse wheel over a preview scrolled the block, not the
     // page. The frame's height is managed by the backoffice; the preview itself must never scroll.
     [Fact]
-    public void The_preview_document_never_scrolls()
+    public void The_preview_document_never_scrolls_vertically()
     {
-        Assert.Contains("overflow = \"hidden\"", FrameScript.Inject("<body></body>", "abc"));
+        Assert.Contains("overflowY = \"hidden\"", FrameScript.Inject("<body></body>", "abc"));
+    }
+
+    // Deferred minor (1.0.1): overflow hidden on both axes clipped content wider than the preview.
+    // It scrolls sideways like the page would, and the scrollbar's height is added so it doesn't
+    // cover the block's bottom edge.
+    [Fact]
+    public void Wide_content_scrolls_sideways_and_the_scrollbar_is_measured()
+    {
+        string result = FrameScript.Inject("<body></body>", "abc");
+        Assert.Contains("overflowX = \"auto\"", result);
+        Assert.Contains("window.innerHeight - document.documentElement.clientHeight", result);
+    }
+
+    // Deferred minor (1.0.1): a # link or focus scrolls the document programmatically, and the
+    // viewport-relative bottom edge then came out short by the scroll offset.
+    [Fact]
+    public void Height_adds_back_the_scroll_offset()
+    {
+        Assert.Contains("window.scrollY", FrameScript.Inject("<body></body>", "abc"));
     }
 
     // Final review, Important 6: with html, body { height: 100% } the body box follows the viewport, so

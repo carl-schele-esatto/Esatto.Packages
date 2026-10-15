@@ -52,13 +52,13 @@ public static class BlockListValueJson
     }
 
     // The converter only keeps blocks exposed for the variation being rendered. Expose the block
-    // invariantly and, for a culture-variant document, for the requested culture/segment too, so it
+    // invariantly and, when a culture or segment is being edited, for that variation too, so it
     // converts whether or not the element type itself varies.
     private static JsonArray Expose(RenderRequest request)
     {
         string contentKey = request.Content.Key.ToString();
         var expose = new JsonArray(new JsonObject { ["contentKey"] = contentKey, ["culture"] = null, ["segment"] = null });
-        if (request.Culture is not null)
+        if (request.Culture is not null || request.Segment is not null)
         {
             expose.Add(new JsonObject { ["contentKey"] = contentKey, ["culture"] = request.Culture, ["segment"] = request.Segment });
         }

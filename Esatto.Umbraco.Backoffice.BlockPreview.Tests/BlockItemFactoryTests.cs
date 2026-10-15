@@ -2,6 +2,7 @@ using Esatto.Umbraco.Backoffice.BlockPreview.Rendering;
 using NSubstitute;
 using Umbraco.Cms.Core.Models.Blocks;
 using Umbraco.Cms.Core.Models.PublishedContent;
+using Umbraco.Cms.Core.PublishedCache;
 using Xunit;
 
 namespace Esatto.Umbraco.Backoffice.BlockPreview.Tests;
@@ -31,5 +32,20 @@ public class BlockItemFactoryTests
     {
         Assert.Null(BlockItemFactory.ExtractItem(new BlockListModel([])));
         Assert.Null(BlockItemFactory.ExtractItem(null));
+    }
+
+    // Deferred minor (1.0.1): the renderer already resolved the block type; Create looked it up again.
+    [Fact]
+    public void Create_does_not_look_up_the_block_type_again()
+    {
+        var contentTypes = Substitute.For<IPublishedContentTypeCache>();
+        var contents = Substitute.For<IPublishedContentCache>();
+        contents.GetById(true, Arg.Any<Guid>()).Returns((IPublishedContent?)null);
+        var factory = new BlockItemFactory(contents, contentTypes);
+
+        BlockItemResult result = factory.Create(new RenderRequest { DocumentKey = Guid.NewGuid() });
+
+        Assert.Equal("unsavedDocument", result.NotPreviewableReason);
+        contentTypes.DidNotReceiveWithAnyArgs().Get(default, default(Guid));
     }
 }

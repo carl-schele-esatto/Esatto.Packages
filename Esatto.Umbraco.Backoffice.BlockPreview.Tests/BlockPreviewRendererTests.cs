@@ -28,12 +28,13 @@ public class BlockPreviewRendererTests
     private BlockPreviewRenderer Renderer(BlockPreviewOptions? options = null) =>
         new(_items, _views, _variation, Options.Create(options ?? new BlockPreviewOptions()), NullLogger<BlockPreviewRenderer>.Instance);
 
-    private static RenderRequest Request(string? culture = null) => new() { Nonce = "n1", Culture = culture, Content = new() { ContentTypeKey = Guid.NewGuid() } };
+    private static RenderRequest Request(string? culture = null, string? segment = null) =>
+        new() { Nonce = "n1", Culture = culture, Segment = segment, Content = new() { ContentTypeKey = Guid.NewGuid() } };
 
     private void ItemConverts()
     {
         _items.GetContentTypeAlias(Arg.Any<Guid>()).Returns("carouselBlock");
-        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(_item, "carouselBlock", NotPreviewableReason: null));
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(_item, NotPreviewableReason: null));
     }
 
     [Fact]
@@ -57,7 +58,7 @@ public class BlockPreviewRendererTests
     [Fact]
     public async Task Unsaved_document_is_not_previewable()
     {
-        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, "carouselBlock", NotPreviewableReason: "unsavedDocument"));
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, NotPreviewableReason: "unsavedDocument"));
         Assert.Equal(RenderOutcome.NotPreviewable("unsavedDocument"), await Renderer().RenderAsync(Request(), new ActionContext()));
     }
 
@@ -118,7 +119,7 @@ public class BlockPreviewRendererTests
     [Fact]
     public async Task Unsupported_context_is_not_previewable()
     {
-        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, "carouselBlock", NotPreviewableReason: "unsupported"));
+        _items.Create(Arg.Any<RenderRequest>()).Returns(new BlockItemResult(null, NotPreviewableReason: "unsupported"));
         Assert.Equal(RenderOutcome.NotPreviewable("unsupported"), await Renderer().RenderAsync(Request(), new ActionContext()));
     }
 
@@ -132,7 +133,7 @@ public class BlockPreviewRendererTests
         _items.Create(Arg.Any<RenderRequest>()).Returns(_ =>
         {
             variationDuringConvert = _variation.VariationContext?.Culture;
-            return new BlockItemResult(_item, "carouselBlock", NotPreviewableReason: null);
+            return new BlockItemResult(_item, NotPreviewableReason: null);
         });
         _views.ViewExists(Arg.Any<string>()).Returns(true);
         _views.RenderAsync(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<ActionContext>()).Returns("<body></body>");
@@ -164,5 +165,52 @@ public class BlockPreviewRendererTests
         Assert.Equal("sv", cultureDuringRender);
         Assert.Equal("sv", variationDuringRender);
         Assert.Equal(before, CultureInfo.CurrentUICulture);
+    }
+
+    // Deferred minor (1.0.1): the segment was only applied together with a culture.
+    [Fact]
+    public async Task Sets_the_segment_on_a_document_without_languages()
+    {
+        ItemConverts();
+        _views.ViewExists(Arg.Any<string>()).Returns(true);
+        string? segmentDuringConvert = null;
+        string? segmentDuringRender = null;
+        _items.Create(Arg.Any<RenderRequest>()).Returns(_ =>
+        {
+            segmentDuringConvert = _variation.VariationContext?.Segment;
+            return new BlockItemResult(_item, NotPreviewableReason: null);
+        });
+        _views.RenderAsync(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<ActionContext>()).Returns(_ =>
+        {
+            segmentDuringRender = _variation.VariationContext?.Segment;
+            return "<body></body>";
+        });
+        var before = CultureInfo.CurrentUICulture;
+
+        await Renderer().RenderAsync(Request(culture: null, segment: "vip"), new ActionContext());
+
+        Assert.Equal("vip", segmentDuringConvert);
+        Assert.Equal("vip", segmentDuringRender);
+        Assert.Null(_variation.VariationContext);
+        Assert.Equal(before, CultureInfo.CurrentUICulture);
+    }
+
+    // Deferred minor (1.0.1): a bad Esatto:BlockPreview value made every render fail while the
+    // manifest reader carried on with defaults. Both now degrade the same way.
+    [Fact]
+    public async Task Invalid_configuration_renders_with_the_defaults()
+    {
+        ItemConverts();
+        _views.ViewExists(Arg.Any<string>()).Returns(true);
+        _views.RenderAsync(Arg.Any<string>(), Arg.Any<object>(), Arg.Any<ActionContext>()).Returns("<body></body>");
+        var options = Substitute.For<IOptions<BlockPreviewOptions>>();
+        options.Value.Throws(new InvalidOperationException("Failed to convert configuration value"));
+        var renderer = new BlockPreviewRenderer(_items, _views, _variation, options, NullLogger<BlockPreviewRenderer>.Instance);
+
+        var outcome = await renderer.RenderAsync(Request(), new ActionContext());
+
+        Assert.Equal("rendered", outcome.Status);
+        await _views.Received().RenderAsync(BlockPreviewRenderer.FrameView,
+            Arg.Is<FrameModel>(m => m.LayoutPath == "~/Views/BlockPreview.cshtml"), Arg.Any<ActionContext>());
     }
 }

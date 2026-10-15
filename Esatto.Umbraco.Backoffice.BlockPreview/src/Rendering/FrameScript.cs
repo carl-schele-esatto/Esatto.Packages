@@ -12,21 +12,27 @@ public static class FrameScript
         <script>
         (function () {
           var id = __NONCE__;
-          // The backoffice sizes the iframe to the content; the preview itself never scrolls, so the
-          // mouse wheel scrolls the backoffice page and a clipped outer margin can't be scrolled into view.
-          document.documentElement.style.overflow = "hidden";
-          document.body.style.overflow = "hidden";
+          // The backoffice sizes the iframe to the content; the preview itself never scrolls vertically,
+          // so the mouse wheel scrolls the backoffice page and a clipped outer margin can't be scrolled
+          // into view. Content wider than the frame scrolls sideways, as it would on the page.
+          document.documentElement.style.overflowY = "hidden";
+          document.documentElement.style.overflowX = "auto";
           // The content's bottom edge, not the document height: a block's outer margin
           // (spacing meant for the page around it) would otherwise show as empty space.
+          // Rects are viewport-relative, so add back any scroll (a # link, focus) to get document space.
           function contentBottom() {
             var bottom = 0;
             for (var i = 0; i < document.body.children.length; i++) {
               bottom = Math.max(bottom, document.body.children[i].getBoundingClientRect().bottom);
             }
-            return bottom > 0 ? bottom : document.documentElement.scrollHeight;
+            return bottom > 0 ? bottom + window.scrollY : document.documentElement.scrollHeight;
+          }
+          // A horizontal scrollbar takes height from the frame; include it so it doesn't cover the content.
+          function scrollbarHeight() {
+            return Math.max(0, window.innerHeight - document.documentElement.clientHeight);
           }
           function post() {
-            var height = Math.ceil(contentBottom());
+            var height = Math.ceil(contentBottom() + scrollbarHeight());
             parent.postMessage({ type: "esatto-block-preview:height", id: id, height: height }, "*");
           }
           // Watch the content elements themselves, not just html/body: with html, body { height: 100% }
