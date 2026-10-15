@@ -9,10 +9,21 @@ public sealed record UsageTotals(long Requests, long InputTokens, long OutputTok
     public UsageTotals Plus(UsageTotals o) => new(
         Requests + o.Requests, InputTokens + o.InputTokens, OutputTokens + o.OutputTokens,
         CachedInputTokens + o.CachedInputTokens, TotalTokens + o.TotalTokens);
+
+    public UsageTotals Minus(UsageTotals o) => new(
+        Requests - o.Requests, InputTokens - o.InputTokens, OutputTokens - o.OutputTokens,
+        CachedInputTokens - o.CachedInputTokens, TotalTokens - o.TotalTokens);
 }
 
 /// <param name="PricedTokens">Tokens from models with a configured price.</param>
-public sealed record PricedUsage(UsageTotals Totals, decimal Cost, long PricedTokens, long UnpricedTokens);
+public sealed record PricedUsage(UsageTotals Totals, decimal Cost, long PricedTokens, long UnpricedTokens)
+{
+    public static readonly PricedUsage Empty = new(UsageTotals.Empty, 0, 0, 0);
+
+    public PricedUsage Plus(PricedUsage o) => new(Totals.Plus(o.Totals), Cost + o.Cost, PricedTokens + o.PricedTokens, UnpricedTokens + o.UnpricedTokens);
+
+    public PricedUsage Minus(PricedUsage o) => new(Totals.Minus(o.Totals), Cost - o.Cost, PricedTokens - o.PricedTokens, UnpricedTokens - o.UnpricedTokens);
+}
 
 /// <summary>Reads Umbraco.AI's usage statistics for a <see cref="UsageWindow"/> (Daily + Hourly parts).</summary>
 public sealed class AICostQueries

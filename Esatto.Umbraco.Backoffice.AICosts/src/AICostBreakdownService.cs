@@ -32,18 +32,31 @@ public sealed class AICostBreakdownService
         var modelIds = await _queries.GetModelIdsAsync(window, ct);
 
         var rows = new List<AICostBreakdownRow>();
+        var identified = PricedUsage.Empty;
+        AIUsageBreakdownItem? anonymous = null;
         foreach (var item in await _queries.GetBreakdownAsync(window, dimension, ct))
         {
+            // Umbraco.AI reports usage without a backoffice user (frontend, API, scheduled agents, or all
+            // of it when the user dimension is turned off) as one row, "Anonymous", which can't be
+            // filtered on: it's priced below as the usage no user row claims.
+            if (dimension == AICostDimension.User && !Guid.TryParse(item.Dimension, out _))
+            {
+                anonymous = item;
+                continue;
+            }
+
             if (Filter(dimension, item.Dimension, modelId: null) is null) continue;
 
             var priced = await _queries.PriceByModelAsync(window, modelIds, modelId => Filter(dimension, item.Dimension, modelId)!, prices, ct);
-            var t = priced.Totals;
-            rows.Add(new AICostBreakdownRow(
-                item.Dimension,
-                string.IsNullOrWhiteSpace(item.DimensionName) ? item.Dimension : item.DimensionName,
-                t.Requests, t.InputTokens, t.CachedInputTokens, t.OutputTokens, t.TotalTokens,
-                priced.PricedTokens == 0 && priced.UnpricedTokens > 0 ? null : priced.Cost,
-                priced.UnpricedTokens));
+            identified = identified.Plus(priced);
+            rows.Add(Row(item, priced));
+        }
+
+        if (anonymous is not null)
+        {
+            // Pricing is linear in tokens, so all usage minus the identified users' is exactly the rest.
+            var all = await _queries.PriceByModelAsync(window, modelIds, modelId => new AIUsageFilter { ModelId = modelId }, prices, ct);
+            rows.Add(Row(anonymous, all.Minus(identified)));
         }
 
         return new AICostBreakdown(
@@ -51,8 +64,19 @@ public sealed class AICostBreakdownService
             rows.OrderByDescending(r => r.Cost ?? -1).ThenByDescending(r => r.TotalTokens).ToList());
     }
 
-    // A profile row's ID is the profile's GUID; one that isn't (a deleted or legacy row) can't be
-    // filtered on, so it's left out rather than failing the whole card.
+    private static AICostBreakdownRow Row(AIUsageBreakdownItem item, PricedUsage priced)
+    {
+        var t = priced.Totals;
+        return new AICostBreakdownRow(
+            item.Dimension,
+            string.IsNullOrWhiteSpace(item.DimensionName) ? item.Dimension : item.DimensionName,
+            t.Requests, t.InputTokens, t.CachedInputTokens, t.OutputTokens, t.TotalTokens,
+            priced.PricedTokens == 0 && priced.UnpricedTokens > 0 ? null : priced.Cost,
+            priced.UnpricedTokens);
+    }
+
+    // A profile row's ID is the profile's GUID; one that isn't can't be filtered on, so it's left out
+    // rather than failing the whole card (ProfileId is a required Guid in Umbraco.AI, so this is a guard).
     private static AIUsageFilter? Filter(AICostDimension dimension, string id, string? modelId) => dimension switch
     {
         AICostDimension.Profile => Guid.TryParse(id, out var profileId) ? new AIUsageFilter { ProfileId = profileId, ModelId = modelId } : null,
