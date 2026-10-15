@@ -14,11 +14,13 @@ public sealed class BlockItemFactory : IBlockItemFactory
 {
     private readonly IPublishedContentCache _contentCache;
     private readonly IPublishedContentTypeCache _contentTypeCache;
+    private readonly EditorValueConverter _values;
 
-    public BlockItemFactory(IPublishedContentCache contentCache, IPublishedContentTypeCache contentTypeCache)
+    public BlockItemFactory(IPublishedContentCache contentCache, IPublishedContentTypeCache contentTypeCache, EditorValueConverter values)
     {
         _contentCache = contentCache;
         _contentTypeCache = contentTypeCache;
+        _values = values;
     }
 
     public string GetContentTypeAlias(Guid elementTypeKey) =>
@@ -38,6 +40,13 @@ public sealed class BlockItemFactory : IBlockItemFactory
         if (propertyType is null)
         {
             return new BlockItemResult(null, NotPreviewableReason: "unsupported");
+        }
+
+        // Editor values → stored values, as saving would; the converter reads the stored format.
+        _values.ToStoredFormat(request.Content);
+        if (request.Settings is not null)
+        {
+            _values.ToStoredFormat(request.Settings);
         }
 
         string source = BlockListValueJson.Build(request);

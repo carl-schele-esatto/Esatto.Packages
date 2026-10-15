@@ -165,7 +165,7 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   #renderBody() {
     switch (this._view.kind) {
       case 'loading':
-        return html`<div class="placeholder"></div>`;
+        return html`<div class="placeholder"><uui-loader label="Loading preview"></uui-loader></div>`;
       case 'rendered':
         return html`<iframe
           title=${this.label ?? 'Block preview'}
@@ -194,7 +194,7 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
     .label:hover { text-decoration: underline; }
     .settings { color: inherit; }
     iframe { display: block; width: 100%; border: 0; border-top: 1px solid var(--uui-color-border); }
-    .placeholder { min-height: 80px; border-top: 1px solid var(--uui-color-border); background: var(--uui-color-surface-alt); }
+    .placeholder { display: flex; align-items: center; justify-content: center; min-height: 80px; border-top: 1px solid var(--uui-color-border); background: var(--uui-color-surface-alt); }
     .note { padding: var(--uui-size-space-3) var(--uui-size-space-4); border-top: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); font-size: 0.9em; }
     .note.warning { color: var(--uui-color-warning-standalone); }
   `;

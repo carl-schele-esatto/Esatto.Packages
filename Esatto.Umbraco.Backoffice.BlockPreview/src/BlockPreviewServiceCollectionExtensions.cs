@@ -39,6 +39,7 @@ public static class BlockPreviewServiceCollectionExtensions
         services.Configure<UmbracoPipelineOptions>(options => options.AddFilter(
             new UmbracoPipelineFilter("Esatto.BlockPreview.OpaqueOriginAssets") { PrePipeline = app => app.UseOpaqueOriginAssets() }));
 
+        services.AddScoped<EditorValueConverter>();
         services.AddScoped<IBlockItemFactory, BlockItemFactory>();
         services.AddScoped<IViewRenderer, RazorViewRenderer>();
         services.AddScoped<BlockPreviewRenderer>();

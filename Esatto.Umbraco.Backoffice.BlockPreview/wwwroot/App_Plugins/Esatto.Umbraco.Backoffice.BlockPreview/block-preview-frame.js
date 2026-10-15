@@ -1,7 +1,7 @@
 import { css as K, property as f, state as B, customElement as q, html as v, nothing as w } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as z } from "@umbraco-cms/backoffice/lit-element";
-import { tryExecute as H } from "@umbraco-cms/backoffice/resources";
-import { UMB_BLOCK_ENTRY_CONTEXT as L } from "@umbraco-cms/backoffice/block";
+import { tryExecute as L } from "@umbraco-cms/backoffice/resources";
+import { UMB_BLOCK_ENTRY_CONTEXT as H } from "@umbraco-cms/backoffice/block";
 import { UMB_CONTENT_WORKSPACE_CONTEXT as X } from "@umbraco-cms/backoffice/content";
 import { UMB_PROPERTY_CONTEXT as G, UMB_PROPERTY_DATASET_CONTEXT as V } from "@umbraco-cms/backoffice/property";
 import { UMB_WORKSPACE_CONTEXT as Y } from "@umbraco-cms/backoffice/workspace";
@@ -62,7 +62,7 @@ function ae(e, t) {
   const i = ["content", "settings"].filter((r) => e.has(r));
   return i.length === 0 ? null : i.some((r) => e.get(r) !== void 0) ? t : 0;
 }
-class ce {
+class le {
   #e;
   next() {
     return this.#e?.abort(), this.#e = new AbortController(), this.#e.signal;
@@ -71,45 +71,45 @@ class ce {
     this.#e?.abort(), this.#e = void 0;
   }
 }
-var le = Object.defineProperty, he = Object.getOwnPropertyDescriptor, A = (e) => {
+var ce = Object.defineProperty, he = Object.getOwnPropertyDescriptor, A = (e) => {
   throw TypeError(e);
 }, d = (e, t, i, r) => {
   for (var s = r > 1 ? void 0 : r ? he(t, i) : t, g = e.length - 1, m; g >= 0; g--)
     (m = e[g]) && (s = (r ? m(t, i, s) : m(s)) || s);
-  return r && s && le(t, i, s), s;
-}, N = (e, t, i) => t.has(e) || A("Cannot " + i), n = (e, t, i) => (N(e, t, "read from private field"), t.get(e)), h = (e, t, i) => t.has(e) ? A("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), l = (e, t, i, r) => (N(e, t, "write to private field"), t.set(e, i), i), c = (e, t, i) => (N(e, t, "access private method"), i), _, b, C, x, y, u, M, P, k, o, p, U, R, T, $, I;
+  return r && s && ce(t, i, s), s;
+}, N = (e, t, i) => t.has(e) || A("Cannot " + i), n = (e, t, i) => (N(e, t, "read from private field"), t.get(e)), h = (e, t, i) => t.has(e) ? A("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), c = (e, t, i, r) => (N(e, t, "write to private field"), t.set(e, i), i), l = (e, t, i) => (N(e, t, "access private method"), i), _, b, C, x, y, u, M, P, k, o, p, U, R, T, $, I;
 const ue = 400;
 let a = class extends z {
   constructor() {
-    super(), h(this, o), this._view = { kind: "loading" }, this._height = 0, h(this, _), h(this, b), h(this, C), h(this, x), h(this, y), h(this, u), h(this, M, new ce()), h(this, P, ""), h(this, k), h(this, T, (e) => {
+    super(), h(this, o), this._view = { kind: "loading" }, this._height = 0, h(this, _), h(this, b), h(this, C), h(this, x), h(this, y), h(this, u), h(this, M, new le()), h(this, P, ""), h(this, k), h(this, T, (e) => {
       const t = this.shadowRoot?.querySelector("iframe"), i = ie(e, t?.contentWindow, n(this, P));
       i !== null && (this._height = i);
-    }), this.consumeContext(L, (e) => {
-      l(this, _, e), c(this, o, p).call(this, 0);
+    }), this.consumeContext(H, (e) => {
+      c(this, _, e), l(this, o, p).call(this, 0);
     }), this.consumeContext(Y, (e) => {
-      l(this, k, e?.getEntityType()), c(this, o, p).call(this, 0);
+      c(this, k, e?.getEntityType()), l(this, o, p).call(this, 0);
     }), this.consumeContext(X, (e) => {
-      l(this, b, e), c(this, o, p).call(this, 0), this.observe(e?.isNew, (t) => {
-        t === !1 && this._view.kind === "unsaved" && c(this, o, p).call(this, 0);
+      c(this, b, e), l(this, o, p).call(this, 0), this.observe(e?.isNew, (t) => {
+        t === !1 && this._view.kind === "unsaved" && l(this, o, p).call(this, 0);
       }, "_observeIsNew");
     }), this.consumeContext(G, (e) => {
-      l(this, C, e), c(this, o, p).call(this, 0);
+      c(this, C, e), l(this, o, p).call(this, 0);
     }), this.consumeContext(V, (e) => {
-      l(this, x, e), c(this, o, p).call(this, 0);
+      c(this, x, e), l(this, o, p).call(this, 0);
     });
   }
   connectedCallback() {
-    super.connectedCallback(), window.addEventListener("message", n(this, T)), c(this, o, p).call(this, 0);
+    super.connectedCallback(), window.addEventListener("message", n(this, T)), l(this, o, p).call(this, 0);
   }
   disconnectedCallback() {
     super.disconnectedCallback(), window.removeEventListener("message", n(this, T)), clearTimeout(n(this, y)), n(this, M).cancel();
   }
   updated(e) {
     const t = ae(e, ue);
-    t !== null && c(this, o, p).call(this, t);
+    t !== null && l(this, o, p).call(this, t);
   }
   render() {
-    return v`${c(this, o, $).call(this)}${c(this, o, I).call(this)}`;
+    return v`${l(this, o, $).call(this)}${l(this, o, I).call(this)}`;
   }
 };
 _ = /* @__PURE__ */ new WeakMap();
@@ -123,15 +123,15 @@ P = /* @__PURE__ */ new WeakMap();
 k = /* @__PURE__ */ new WeakMap();
 o = /* @__PURE__ */ new WeakSet();
 p = function(e) {
-  clearTimeout(n(this, y)), l(this, y, setTimeout(() => {
-    c(this, o, U).call(this);
+  clearTimeout(n(this, y)), c(this, y, setTimeout(() => {
+    l(this, o, U).call(this);
   }, e));
 };
 U = async function() {
   try {
-    await c(this, o, R).call(this);
+    await l(this, o, R).call(this);
   } catch (e) {
-    l(this, u, void 0), this._view = { kind: "error", message: e?.message ?? "The preview could not be loaded." };
+    c(this, u, void 0), this._view = { kind: "error", message: e?.message ?? "The preview could not be loaded." };
   }
 };
 R = async function() {
@@ -152,19 +152,19 @@ R = async function() {
     settings: n(this, _)?.getSettings()
   }), E = Q(m);
   if (E === n(this, u)) return;
-  l(this, u, E);
-  const S = n(this, M).next(), { data: W, error: F } = await H(this, ne(m, S), { disableNotifications: !0, abortSignal: S });
+  c(this, u, E);
+  const S = n(this, M).next(), { data: W, error: F } = await L(this, ne(m, S), { disableNotifications: !0, abortSignal: S });
   if (S.aborted) {
-    E === n(this, u) && l(this, u, void 0);
+    E === n(this, u) && c(this, u, void 0);
     return;
   }
   if (E !== n(this, u)) return;
   if (F || !W) {
-    l(this, u, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
+    c(this, u, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
     return;
   }
   const { view: O, keepFingerprint: D } = se(W, g);
-  D || l(this, u, void 0), O.kind === "rendered" && l(this, P, O.nonce), this._view = O;
+  D || c(this, u, void 0), O.kind === "rendered" && c(this, P, O.nonce), this._view = O;
 };
 T = /* @__PURE__ */ new WeakMap();
 $ = function() {
@@ -181,7 +181,7 @@ $ = function() {
 I = function() {
   switch (this._view.kind) {
     case "loading":
-      return v`<div class="placeholder"></div>`;
+      return v`<div class="placeholder"><uui-loader label="Loading preview"></uui-loader></div>`;
     case "rendered":
       return v`<iframe
           title=${this.label ?? "Block preview"}
@@ -205,7 +205,7 @@ a.styles = K`
     .label:hover { text-decoration: underline; }
     .settings { color: inherit; }
     iframe { display: block; width: 100%; border: 0; border-top: 1px solid var(--uui-color-border); }
-    .placeholder { min-height: 80px; border-top: 1px solid var(--uui-color-border); background: var(--uui-color-surface-alt); }
+    .placeholder { display: flex; align-items: center; justify-content: center; min-height: 80px; border-top: 1px solid var(--uui-color-border); background: var(--uui-color-surface-alt); }
     .note { padding: var(--uui-size-space-3) var(--uui-size-space-4); border-top: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); font-size: 0.9em; }
     .note.warning { color: var(--uui-color-warning-standalone); }
   `;
