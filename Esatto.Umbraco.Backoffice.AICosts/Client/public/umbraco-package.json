@@ -1,0 +1,19 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.AICosts",
+  "name": "Esatto Umbraco Backoffice AI Costs",
+  "version": "1.0.0",
+  "allowTelemetry": false,
+  "extensions": [
+    {
+      "type": "workspaceView",
+      "alias": "Esatto.Umbraco.Backoffice.AICosts.CostsView",
+      "name": "AI Analytics Costs",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.AICosts/ai-costs-view.js",
+      "elementName": "esatto-ai-costs-view",
+      "weight": 900,
+      "meta": { "label": "Costs", "pathname": "costs", "icon": "icon-coins" },
+      "conditions": [{ "alias": "Umb.Condition.WorkspaceAlias", "match": "UmbracoAI.Workspace.AnalyticsRoot" }]
+    }
+  ]
+}
