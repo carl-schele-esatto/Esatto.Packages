@@ -30,6 +30,17 @@ public class FrameScriptTests
         Assert.True(result.IndexOf("<script>", StringComparison.Ordinal) < result.IndexOf("</BODY>", StringComparison.Ordinal));
     }
 
+    // Live finding (Task 7): the carousel's margin-bottom (4rem) collapsed into the document height,
+    // leaving empty space under every preview. The height must be the content's bottom edge
+    // (outer margins excluded), not the whole document.
+    [Fact]
+    public void Measures_the_content_bottom_edge_not_the_document_height()
+    {
+        string result = FrameScript.Inject("<body></body>", "abc");
+        Assert.Contains("document.body.children", result);
+        Assert.DoesNotContain("document.documentElement.getBoundingClientRect().height", result);
+    }
+
     [Fact]
     public void Embeds_the_nonce_as_a_json_string()
     {

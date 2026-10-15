@@ -12,11 +12,22 @@ public static class FrameScript
         <script>
         (function () {
           var id = __NONCE__;
+          // The content's bottom edge, not the document height: a block's outer margin
+          // (spacing meant for the page around it) would otherwise show as empty space.
+          function contentBottom() {
+            var bottom = 0;
+            for (var i = 0; i < document.body.children.length; i++) {
+              bottom = Math.max(bottom, document.body.children[i].getBoundingClientRect().bottom);
+            }
+            return bottom > 0 ? bottom : document.documentElement.scrollHeight;
+          }
           function post() {
-            var height = Math.ceil(document.documentElement.getBoundingClientRect().height);
+            var height = Math.ceil(contentBottom() + window.scrollY);
             parent.postMessage({ type: "esatto-block-preview:height", id: id, height: height }, "*");
           }
-          new ResizeObserver(post).observe(document.documentElement);
+          var observer = new ResizeObserver(post);
+          observer.observe(document.documentElement);
+          observer.observe(document.body);
           window.addEventListener("load", post);
           document.addEventListener("click", function (e) {
             var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
