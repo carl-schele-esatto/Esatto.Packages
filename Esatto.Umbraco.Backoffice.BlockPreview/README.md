@@ -10,8 +10,8 @@ Requires Umbraco 17+.
 
 | Element (`elementName`) | Served path | Purpose |
 |---|---|---|
-| `backoffice-blockpreview-video` | `/App_Plugins/Backoffice.BlockPreview/video-preview.element.js` | YouTube video preview (thumbnail + play overlay) |
-| `backoffice-blockpreview-code` | `/App_Plugins/Backoffice.BlockPreview/code-preview.element.js` | Syntax-highlighted code preview with copy button (bundled highlight.js) |
+| `backoffice-blockpreview-video` | `/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/video-preview.element.js` | YouTube video preview (thumbnail + play overlay) |
+| `backoffice-blockpreview-code` | `/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/code-preview.element.js` | Syntax-highlighted code preview with copy button (bundled highlight.js) |
 
 ## Install
 
@@ -32,7 +32,7 @@ const videoPreview: ManifestBlockEditorCustomView = {
   type: "blockEditorCustomView",
   alias: "MySite.BlockView.Video",
   name: "Video Preview",
-  element: "/App_Plugins/Backoffice.BlockPreview/video-preview.element.js",
+  element: "/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/video-preview.element.js",
   elementName: "backoffice-blockpreview-video",
   forContentTypeAlias: "videoRow",      // your content type
   forBlockEditor: "block-list",         // or "block-grid"
@@ -47,7 +47,7 @@ const videoPreview: ManifestBlockEditorCustomView = {
   "type": "blockEditorCustomView",
   "alias": "MySite.BlockView.Video",
   "name": "Video Preview",
-  "element": "/App_Plugins/Backoffice.BlockPreview/video-preview.element.js",
+  "element": "/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/video-preview.element.js",
   "elementName": "backoffice-blockpreview-video",
   "forContentTypeAlias": "videoRow",
   "forBlockEditor": "block-list",

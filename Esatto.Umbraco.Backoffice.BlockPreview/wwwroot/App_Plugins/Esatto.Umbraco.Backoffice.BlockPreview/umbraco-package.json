@@ -1,0 +1,7 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.BlockPreview",
+  "name": "Esatto Umbraco Backoffice Block Preview",
+  "version": "1.0.0",
+  "extensions": []
+}

@@ -11,7 +11,7 @@ import { LitElement, css, html, nothing } from '@umbraco-cms/backoffice/external
  *   {
  *     type: 'blockEditorCustomView',
  *     alias: 'My.BlockView.Code',
- *     element: '/App_Plugins/Backoffice.BlockPreview/code-preview.element.js',
+ *     element: '/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/code-preview.element.js',
  *     elementName: 'backoffice-blockpreview-code',
  *     forContentTypeAlias: 'codeSnippetRow',
  *     forBlockEditor: 'block-list',
@@ -24,8 +24,8 @@ import { LitElement, css, html, nothing } from '@umbraco-cms/backoffice/external
 
 const DEFAULT_CODE_ALIAS = 'code';
 const DEFAULT_CAPTION_ALIAS = 'caption';
-const HLJS_SCRIPT_URL = '/App_Plugins/Backoffice.BlockPreview/lib/highlight.min.js';
-const DEFAULT_THEME_URL = '/App_Plugins/Backoffice.BlockPreview/lib/vs2015.css';
+const HLJS_SCRIPT_URL = '/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/lib/highlight.min.js';
+const DEFAULT_THEME_URL = '/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/lib/vs2015.css';
 
 let hljsPromise;
 let copyPluginRegistered = false;

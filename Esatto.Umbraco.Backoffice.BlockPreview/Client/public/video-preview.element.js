@@ -11,7 +11,7 @@ import { LitElement, css, html, nothing } from '@umbraco-cms/backoffice/external
  *   {
  *     type: 'blockEditorCustomView',
  *     alias: 'My.BlockView.Video',
- *     element: '/App_Plugins/Backoffice.BlockPreview/video-preview.element.js',
+ *     element: '/App_Plugins/Esatto.Umbraco.Backoffice.BlockPreview/video-preview.element.js',
  *     elementName: 'backoffice-blockpreview-video',
  *     forContentTypeAlias: 'videoRow',
  *     forBlockEditor: 'block-list',
