@@ -60,22 +60,31 @@ function ensureCopyPlugin(hljs) {
     return hljs;
 }
 
-/** Loads the bundled highlight.js once and returns the global `hljs`. */
+/**
+ * Loads the bundled highlight.js once and returns the global `hljs`. A failed load is forgotten
+ * (promise and script tag), so the next call tries again instead of failing forever.
+ */
 function loadHljs() {
     if (globalThis.hljs) return Promise.resolve(ensureCopyPlugin(globalThis.hljs));
     if (!hljsPromise) {
         hljsPromise = new Promise((resolve, reject) => {
             const done = () => resolve(ensureCopyPlugin(globalThis.hljs));
+            const failed = (script) => {
+                hljsPromise = undefined;
+                script.remove();
+                reject(new Error(`Failed to load highlight.js from ${HLJS_SCRIPT_URL}`));
+            };
             const existing = document.querySelector(`script[src="${HLJS_SCRIPT_URL}"]`);
             if (existing) {
                 existing.addEventListener('load', done, { once: true });
+                existing.addEventListener('error', () => failed(existing), { once: true });
                 if (globalThis.hljs) done();
                 return;
             }
             const script = document.createElement('script');
             script.src = HLJS_SCRIPT_URL;
             script.onload = done;
-            script.onerror = () => reject(new Error(`Failed to load highlight.js from ${HLJS_SCRIPT_URL}`));
+            script.onerror = () => failed(script);
             document.head.appendChild(script);
         });
     }
@@ -122,7 +131,15 @@ class BackofficeBlockPreviewCode extends LitElement {
         const codeEl = this.renderRoot.querySelector('code.snippet');
         if (!codeEl) return;
 
-        const hljs = await loadHljs();
+        let hljs;
+        try {
+            hljs = await loadHljs();
+        } catch (err) {
+            // Show the code unhighlighted; #highlightedCode stays unset, so the next update retries.
+            console.warn(err);
+            codeEl.textContent = this._code;
+            return;
+        }
         codeEl.textContent = this._code;
         codeEl.removeAttribute('data-highlighted');
         codeEl.className = 'snippet hljs';

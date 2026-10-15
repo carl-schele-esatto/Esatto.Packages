@@ -14,6 +14,7 @@ import { buildRenderRequest, newNonce, requestFingerprint, type BlockData } from
 import { readHeight } from './frame-messages';
 import { renderBlockPreview, type RenderOutcome } from './api';
 import { isPreviewableWorkspace, toViewState, type ViewState } from './view-state';
+import { LatestRequest, renderDelay } from './render-scheduling';
 
 const DEBOUNCE_MS = 400;
 
@@ -36,6 +37,7 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   #dataset?: typeof UMB_PROPERTY_DATASET_CONTEXT.TYPE;
   #timer?: ReturnType<typeof setTimeout>;
   #lastFingerprint?: string;
+  #requests = new LatestRequest();
   #currentNonce = '';
   // The nearest workspace: the document's, or a block workspace when this Block List is nested
   // inside a block (UMB_CONTENT_WORKSPACE_CONTEXT would skip past that to the document).
@@ -60,16 +62,21 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('message', this.#onMessage);
+    // Moving a block disconnects and reconnects this element, which cancelled any pending render.
+    // Catch up; the fingerprint skips the request when nothing changed.
+    this.#schedule(0);
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
     window.removeEventListener('message', this.#onMessage);
     clearTimeout(this.#timer);
+    this.#requests.cancel();
   }
 
   protected updated(changed: Map<PropertyKey, unknown>): void {
-    if (changed.has('content') || changed.has('settings')) this.#schedule(DEBOUNCE_MS);
+    const delay = renderDelay(changed, DEBOUNCE_MS);
+    if (delay !== null) this.#schedule(delay);
   }
 
   #schedule(delay: number): void {
@@ -115,7 +122,14 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
     if (fingerprint === this.#lastFingerprint) return;
     this.#lastFingerprint = fingerprint;
 
-    const { data, error } = await tryExecute(this, renderBlockPreview(body), { disableNotifications: true });
+    const signal = this.#requests.next();
+    const { data, error } = await tryExecute(this, renderBlockPreview(body, signal), { disableNotifications: true, abortSignal: signal });
+    if (signal.aborted) {
+      // Superseded (a newer render owns the fingerprint) or the block was removed or moved:
+      // forget this one so reconnecting renders again. Not an error worth showing.
+      if (fingerprint === this.#lastFingerprint) this.#lastFingerprint = undefined;
+      return;
+    }
     if (fingerprint !== this.#lastFingerprint) return; // a newer render started meanwhile
     if (error || !data) {
       this.#lastFingerprint = undefined; // retry on the next change

@@ -9,11 +9,13 @@ export type RenderOutcome =
 const ENDPOINT = '/umbraco/management/api/v1/esatto/block-preview/render';
 
 // `security: [bearer]` makes the shared backoffice client attach the user's token.
-export function renderBlockPreview(body: RenderRequestBody) {
+// The signal cancels the fetch itself when a newer render supersedes this one.
+export function renderBlockPreview(body: RenderRequestBody, signal?: AbortSignal) {
   return umbHttpClient.post<{ 200: RenderOutcome }>({
     security: [{ scheme: 'bearer', type: 'http' }],
     url: ENDPOINT,
     body,
+    signal,
     headers: { 'Content-Type': 'application/json' },
   });
 }

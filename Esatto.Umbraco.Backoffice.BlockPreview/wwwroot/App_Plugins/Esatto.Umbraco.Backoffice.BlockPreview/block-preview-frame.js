@@ -1,12 +1,12 @@
-import { css as F, property as f, state as N, customElement as K, html as v, nothing as w } from "@umbraco-cms/backoffice/external/lit";
-import { UmbLitElement as D } from "@umbraco-cms/backoffice/lit-element";
-import { tryExecute as z } from "@umbraco-cms/backoffice/resources";
-import { UMB_BLOCK_ENTRY_CONTEXT as H } from "@umbraco-cms/backoffice/block";
+import { css as K, property as f, state as B, customElement as q, html as v, nothing as w } from "@umbraco-cms/backoffice/external/lit";
+import { UmbLitElement as z } from "@umbraco-cms/backoffice/lit-element";
+import { tryExecute as H } from "@umbraco-cms/backoffice/resources";
+import { UMB_BLOCK_ENTRY_CONTEXT as L } from "@umbraco-cms/backoffice/block";
 import { UMB_CONTENT_WORKSPACE_CONTEXT as X } from "@umbraco-cms/backoffice/content";
-import { UMB_PROPERTY_CONTEXT as q, UMB_PROPERTY_DATASET_CONTEXT as L } from "@umbraco-cms/backoffice/property";
-import { UMB_WORKSPACE_CONTEXT as G } from "@umbraco-cms/backoffice/workspace";
-import { umbHttpClient as V } from "@umbraco-cms/backoffice/http-client";
-function Y(e) {
+import { UMB_PROPERTY_CONTEXT as G, UMB_PROPERTY_DATASET_CONTEXT as V } from "@umbraco-cms/backoffice/property";
+import { UMB_WORKSPACE_CONTEXT as Y } from "@umbraco-cms/backoffice/workspace";
+import { umbHttpClient as j } from "@umbraco-cms/backoffice/http-client";
+function J(e) {
   return {
     documentKey: e.documentKey,
     documentTypeKey: e.documentTypeKey,
@@ -18,33 +18,34 @@ function Y(e) {
     settings: e.settings ?? null
   };
 }
-function j(e) {
+function Q(e) {
   const { nonce: t, ...i } = e;
   return JSON.stringify(i);
 }
-function J() {
+function Z() {
   if (typeof globalThis.crypto?.randomUUID == "function") return globalThis.crypto.randomUUID();
   const e = globalThis.crypto.getRandomValues(new Uint8Array(16));
   return Array.from(e, (t) => t.toString(16).padStart(2, "0")).join("");
 }
-const Q = "esatto-block-preview:height", Z = 3e3;
-function ee(e, t, i) {
+const ee = "esatto-block-preview:height", te = 3e3;
+function ie(e, t, i) {
   if (e.source !== t) return null;
-  const s = e.data;
-  if (!s || typeof s != "object" || s.type !== Q || s.id !== i) return null;
-  const { height: r } = s;
-  return typeof r != "number" || !Number.isFinite(r) || r <= 0 ? null : Math.min(Math.ceil(r), Z);
+  const r = e.data;
+  if (!r || typeof r != "object" || r.type !== ee || r.id !== i) return null;
+  const { height: s } = r;
+  return typeof s != "number" || !Number.isFinite(s) || s <= 0 ? null : Math.min(Math.ceil(s), te);
 }
-const te = "/umbraco/management/api/v1/esatto/block-preview/render";
-function ie(e) {
-  return V.post({
+const re = "/umbraco/management/api/v1/esatto/block-preview/render";
+function ne(e, t) {
+  return j.post({
     security: [{ scheme: "bearer", type: "http" }],
-    url: te,
+    url: re,
     body: e,
+    signal: t,
     headers: { "Content-Type": "application/json" }
   });
 }
-function re(e, t) {
+function se(e, t) {
   switch (e.status) {
     case "rendered":
       return { view: { kind: "rendered", html: e.html, nonce: t }, keepFingerprint: !0 };
@@ -54,100 +55,119 @@ function re(e, t) {
       return { view: { kind: "error", message: e.message }, keepFingerprint: !1 };
   }
 }
-function ne(e) {
+function oe(e) {
   return e === "document";
 }
-var se = Object.defineProperty, oe = Object.getOwnPropertyDescriptor, W = (e) => {
+function ae(e, t) {
+  const i = ["content", "settings"].filter((r) => e.has(r));
+  return i.length === 0 ? null : i.some((r) => e.get(r) !== void 0) ? t : 0;
+}
+class ce {
+  #e;
+  next() {
+    return this.#e?.abort(), this.#e = new AbortController(), this.#e.signal;
+  }
+  cancel() {
+    this.#e?.abort(), this.#e = void 0;
+  }
+}
+var le = Object.defineProperty, he = Object.getOwnPropertyDescriptor, A = (e) => {
   throw TypeError(e);
-}, h = (e, t, i, s) => {
-  for (var r = s > 1 ? void 0 : s ? oe(t, i) : t, m = e.length - 1, g; m >= 0; m--)
-    (g = e[m]) && (r = (s ? g(t, i, r) : g(r)) || r);
-  return s && r && se(t, i, r), r;
-}, S = (e, t, i) => t.has(e) || W("Cannot " + i), n = (e, t, i) => (S(e, t, "read from private field"), t.get(e)), d = (e, t, i) => t.has(e) ? W("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), l = (e, t, i, s) => (S(e, t, "write to private field"), t.set(e, i), i), c = (e, t, i) => (S(e, t, "access private method"), i), _, b, T, C, y, p, P, k, o, u, B, U, E, A, $;
-const ae = 400;
-let a = class extends D {
+}, d = (e, t, i, r) => {
+  for (var s = r > 1 ? void 0 : r ? he(t, i) : t, g = e.length - 1, m; g >= 0; g--)
+    (m = e[g]) && (s = (r ? m(t, i, s) : m(s)) || s);
+  return r && s && le(t, i, s), s;
+}, N = (e, t, i) => t.has(e) || A("Cannot " + i), n = (e, t, i) => (N(e, t, "read from private field"), t.get(e)), h = (e, t, i) => t.has(e) ? A("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), l = (e, t, i, r) => (N(e, t, "write to private field"), t.set(e, i), i), c = (e, t, i) => (N(e, t, "access private method"), i), _, b, C, x, y, u, M, P, k, o, p, U, R, T, $, I;
+const ue = 400;
+let a = class extends z {
   constructor() {
-    super(), d(this, o), this._view = { kind: "loading" }, this._height = 0, d(this, _), d(this, b), d(this, T), d(this, C), d(this, y), d(this, p), d(this, P, ""), d(this, k), d(this, E, (e) => {
-      const t = this.shadowRoot?.querySelector("iframe"), i = ee(e, t?.contentWindow, n(this, P));
+    super(), h(this, o), this._view = { kind: "loading" }, this._height = 0, h(this, _), h(this, b), h(this, C), h(this, x), h(this, y), h(this, u), h(this, M, new ce()), h(this, P, ""), h(this, k), h(this, T, (e) => {
+      const t = this.shadowRoot?.querySelector("iframe"), i = ie(e, t?.contentWindow, n(this, P));
       i !== null && (this._height = i);
-    }), this.consumeContext(H, (e) => {
-      l(this, _, e), c(this, o, u).call(this, 0);
-    }), this.consumeContext(G, (e) => {
-      l(this, k, e?.getEntityType()), c(this, o, u).call(this, 0);
-    }), this.consumeContext(X, (e) => {
-      l(this, b, e), c(this, o, u).call(this, 0), this.observe(e?.isNew, (t) => {
-        t === !1 && this._view.kind === "unsaved" && c(this, o, u).call(this, 0);
-      }, "_observeIsNew");
-    }), this.consumeContext(q, (e) => {
-      l(this, T, e), c(this, o, u).call(this, 0);
     }), this.consumeContext(L, (e) => {
-      l(this, C, e), c(this, o, u).call(this, 0);
+      l(this, _, e), c(this, o, p).call(this, 0);
+    }), this.consumeContext(Y, (e) => {
+      l(this, k, e?.getEntityType()), c(this, o, p).call(this, 0);
+    }), this.consumeContext(X, (e) => {
+      l(this, b, e), c(this, o, p).call(this, 0), this.observe(e?.isNew, (t) => {
+        t === !1 && this._view.kind === "unsaved" && c(this, o, p).call(this, 0);
+      }, "_observeIsNew");
+    }), this.consumeContext(G, (e) => {
+      l(this, C, e), c(this, o, p).call(this, 0);
+    }), this.consumeContext(V, (e) => {
+      l(this, x, e), c(this, o, p).call(this, 0);
     });
   }
   connectedCallback() {
-    super.connectedCallback(), window.addEventListener("message", n(this, E));
+    super.connectedCallback(), window.addEventListener("message", n(this, T)), c(this, o, p).call(this, 0);
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), window.removeEventListener("message", n(this, E)), clearTimeout(n(this, y));
+    super.disconnectedCallback(), window.removeEventListener("message", n(this, T)), clearTimeout(n(this, y)), n(this, M).cancel();
   }
   updated(e) {
-    (e.has("content") || e.has("settings")) && c(this, o, u).call(this, ae);
+    const t = ae(e, ue);
+    t !== null && c(this, o, p).call(this, t);
   }
   render() {
-    return v`${c(this, o, A).call(this)}${c(this, o, $).call(this)}`;
+    return v`${c(this, o, $).call(this)}${c(this, o, I).call(this)}`;
   }
 };
 _ = /* @__PURE__ */ new WeakMap();
 b = /* @__PURE__ */ new WeakMap();
-T = /* @__PURE__ */ new WeakMap();
 C = /* @__PURE__ */ new WeakMap();
+x = /* @__PURE__ */ new WeakMap();
 y = /* @__PURE__ */ new WeakMap();
-p = /* @__PURE__ */ new WeakMap();
+u = /* @__PURE__ */ new WeakMap();
+M = /* @__PURE__ */ new WeakMap();
 P = /* @__PURE__ */ new WeakMap();
 k = /* @__PURE__ */ new WeakMap();
 o = /* @__PURE__ */ new WeakSet();
-u = function(e) {
+p = function(e) {
   clearTimeout(n(this, y)), l(this, y, setTimeout(() => {
-    c(this, o, B).call(this);
+    c(this, o, U).call(this);
   }, e));
 };
-B = async function() {
+U = async function() {
   try {
-    await c(this, o, U).call(this);
+    await c(this, o, R).call(this);
   } catch (e) {
-    l(this, p, void 0), this._view = { kind: "error", message: e?.message ?? "The preview could not be loaded." };
+    l(this, u, void 0), this._view = { kind: "error", message: e?.message ?? "The preview could not be loaded." };
   }
 };
-U = async function() {
-  if (n(this, k) !== void 0 && !ne(n(this, k))) {
+R = async function() {
+  if (n(this, k) !== void 0 && !oe(n(this, k))) {
     this._view = { kind: "plain" };
     return;
   }
-  const e = n(this, _)?.getContent(), t = n(this, b)?.getUnique(), i = n(this, b)?.structure.getOwnerContentTypeUnique(), s = n(this, T)?.getAlias();
-  if (!e || !t || !i || !s) return;
-  const r = n(this, C)?.getVariantId(), m = J(), g = Y({
+  const e = n(this, _)?.getContent(), t = n(this, b)?.getUnique(), i = n(this, b)?.structure.getOwnerContentTypeUnique(), r = n(this, C)?.getAlias();
+  if (!e || !t || !i || !r) return;
+  const s = n(this, x)?.getVariantId(), g = Z(), m = J({
     documentKey: t,
     documentTypeKey: i,
-    propertyAlias: s,
-    culture: r?.culture,
-    segment: r?.segment,
-    nonce: m,
+    propertyAlias: r,
+    culture: s?.culture,
+    segment: s?.segment,
+    nonce: g,
     content: e,
     settings: n(this, _)?.getSettings()
-  }), x = j(g);
-  if (x === n(this, p)) return;
-  l(this, p, x);
-  const { data: O, error: I } = await z(this, ie(g), { disableNotifications: !0 });
-  if (x !== n(this, p)) return;
-  if (I || !O) {
-    l(this, p, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
+  }), E = Q(m);
+  if (E === n(this, u)) return;
+  l(this, u, E);
+  const S = n(this, M).next(), { data: W, error: F } = await H(this, ne(m, S), { disableNotifications: !0, abortSignal: S });
+  if (S.aborted) {
+    E === n(this, u) && l(this, u, void 0);
     return;
   }
-  const { view: M, keepFingerprint: R } = re(O, m);
-  R || l(this, p, void 0), M.kind === "rendered" && l(this, P, M.nonce), this._view = M;
+  if (E !== n(this, u)) return;
+  if (F || !W) {
+    l(this, u, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
+    return;
+  }
+  const { view: O, keepFingerprint: D } = se(W, g);
+  D || l(this, u, void 0), O.kind === "rendered" && l(this, P, O.nonce), this._view = O;
 };
-E = /* @__PURE__ */ new WeakMap();
-A = function() {
+T = /* @__PURE__ */ new WeakMap();
+$ = function() {
   const e = this.contentInvalid || this.settingsInvalid;
   return v`
       <div class="bar ${e ? "invalid" : ""}">
@@ -158,7 +178,7 @@ A = function() {
         ${this.config?.showSettingsEdit ? v`<a class="settings" href=${this.config.editSettingsPath ?? w} title="Settings"><umb-icon name="icon-settings"></umb-icon></a>` : w}
       </div>`;
 };
-$ = function() {
+I = function() {
   switch (this._view.kind) {
     case "loading":
       return v`<div class="placeholder"></div>`;
@@ -176,7 +196,7 @@ $ = function() {
       return w;
   }
 };
-a.styles = F`
+a.styles = K`
     /* Space between stacked blocks: Block List puts custom views directly on top of each other. */
     :host { display: block; margin-bottom: var(--uui-size-space-4); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
     .bar { display: flex; align-items: center; min-height: 40px; padding: 0 var(--uui-size-space-4); gap: var(--uui-size-space-2); }
@@ -189,39 +209,39 @@ a.styles = F`
     .note { padding: var(--uui-size-space-3) var(--uui-size-space-4); border-top: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); font-size: 0.9em; }
     .note.warning { color: var(--uui-color-warning-standalone); }
   `;
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "content", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "settings", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "label", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "icon", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "config", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "contentInvalid", 2);
-h([
+d([
   f({ attribute: !1 })
 ], a.prototype, "settingsInvalid", 2);
-h([
-  N()
+d([
+  B()
 ], a.prototype, "_view", 2);
-h([
-  N()
+d([
+  B()
 ], a.prototype, "_height", 2);
-a = h([
-  K("esatto-block-preview-frame")
+a = d([
+  q("esatto-block-preview-frame")
 ], a);
-const me = a;
+const be = a;
 export {
   a as EsattoBlockPreviewFrameElement,
-  me as default
+  be as default
 };
 //# sourceMappingURL=block-preview-frame.js.map
