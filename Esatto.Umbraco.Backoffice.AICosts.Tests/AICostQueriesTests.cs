@@ -26,6 +26,17 @@ public class AICostQueriesTests
     }
 
     [Fact]
+    public async Task Average_duration_is_weighted_by_requests()
+    {
+        _analytics.GetSummaryAsync(Arg.Any<DateTime>(), Arg.Any<DateTime>(), AIUsagePeriod.Daily, Arg.Any<AIUsageFilter?>(), Arg.Any<CancellationToken>())
+            .Returns(Usage.Summary(10, 0, 0, durationMs: 1000));
+        _analytics.GetSummaryAsync(Arg.Any<DateTime>(), Arg.Any<DateTime>(), AIUsagePeriod.Hourly, Arg.Any<AIUsageFilter?>(), Arg.Any<CancellationToken>())
+            .Returns(Usage.Summary(30, 0, 0, durationMs: 2000));
+
+        Assert.Equal(1750, await new AICostQueries(_analytics).GetAverageDurationMsAsync(_window, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Breakdown_merges_daily_and_hourly_rows_keeping_a_name()
     {
         _analytics.GetBreakdownByUserAsync(Arg.Any<DateTime>(), Arg.Any<DateTime>(), AIUsagePeriod.Daily, Arg.Any<CancellationToken>())

@@ -14,16 +14,16 @@ public sealed class TestClock(DateTime utcNow) : TimeProvider
 /// <summary>Builders for Umbraco.AI usage statistics.</summary>
 public static class Usage
 {
-    public static AIUsageTimeSeriesPoint Point(DateTime at, int requests, long input, long output, long cached = 0) => new()
+    public static AIUsageTimeSeriesPoint Point(DateTime at, int requests, long input, long output, long cached = 0, int failed = 0) => new()
     {
         Timestamp = at, RequestCount = requests, InputTokens = input, OutputTokens = output,
-        CachedInputTokens = cached, TotalTokens = input + output, SuccessCount = requests, FailureCount = 0,
+        CachedInputTokens = cached, TotalTokens = input + output, SuccessCount = requests - failed, FailureCount = failed,
     };
 
-    public static AIUsageSummary Summary(int requests, long input, long output, long cached = 0) => new()
+    public static AIUsageSummary Summary(int requests, long input, long output, long cached = 0, int durationMs = 0) => new()
     {
         TotalRequests = requests, InputTokens = input, OutputTokens = output, CachedInputTokens = cached,
-        TotalTokens = input + output, SuccessCount = requests, FailureCount = 0, SuccessRate = 1, AverageDurationMs = 0,
+        TotalTokens = input + output, SuccessCount = requests, FailureCount = 0, SuccessRate = 1, AverageDurationMs = durationMs,
     };
 
     public static AIUsageBreakdownItem Item(string dimension, string? name = null) =>

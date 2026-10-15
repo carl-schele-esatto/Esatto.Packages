@@ -65,6 +65,22 @@ public sealed class AICostQueries
         return totals;
     }
 
+    /// <summary>Average response time over the window, weighted by each part's request count (0 without requests).</summary>
+    public async Task<int> GetAverageDurationMsAsync(UsageWindow window, CancellationToken ct)
+    {
+        long requests = 0;
+        double weighted = 0;
+        if (window.HasDaily) Add(await _analytics.GetSummaryAsync(window.From, window.HourlyFrom, AIUsagePeriod.Daily, new AIUsageFilter(), ct));
+        if (window.HasHourly) Add(await _analytics.GetSummaryAsync(window.HourlyFrom, window.To, AIUsagePeriod.Hourly, new AIUsageFilter(), ct));
+        return requests == 0 ? 0 : (int)Math.Round(weighted / requests);
+
+        void Add(AIUsageSummary s)
+        {
+            requests += s.TotalRequests;
+            weighted += (double)s.AverageDurationMs * s.TotalRequests;
+        }
+    }
+
     /// <summary>
     /// Totals per model, each priced with <see cref="AICostCalculator"/>. Pricing is linear in tokens, so
     /// pricing a model's totals equals pricing each of its data points.

@@ -95,12 +95,12 @@ public class AICostReportServiceTests
     public async Task Clamps_days_to_the_retention_window() =>
         Assert.Equal(AICostReportService.MaxDays, (await Sut().GetReportAsync(10_000, CancellationToken.None)).Days.Count);
 
-    private void MonthUsage(decimal costInMillionInputTokensAtTwo)
+    // The month is priced from data points (like the report), so its usage is a time series point today.
+    private void MonthUsage(decimal costInMillionInputTokensAtTwo, DateTime? at = null)
     {
         Models(AIUsagePeriod.Hourly, "claude-sonnet-5-5");
-        _analytics.GetSummaryAsync(Arg.Any<DateTime>(), Arg.Any<DateTime>(), AIUsagePeriod.Hourly,
-                Arg.Is<AIUsageFilter?>(f => f!.ModelId == "claude-sonnet-5-5"), Arg.Any<CancellationToken>())
-            .Returns(Usage.Summary(1, (long)(costInMillionInputTokensAtTwo / 2m * 1_000_000), 0));
+        Series(AIUsagePeriod.Hourly, "claude-sonnet-5-5",
+            Usage.Point(at ?? Now, 1, (long)(costInMillionInputTokensAtTwo / 2m * 1_000_000), 0));
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class AICostReportServiceTests
     public async Task Month_projection_on_the_first_day()
     {
         var firstOfMonth = new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc);
-        MonthUsage(2m);
+        MonthUsage(2m, firstOfMonth);
 
         var month = (await Sut(firstOfMonth).GetReportAsync(30, CancellationToken.None)).Month;
 
@@ -135,8 +135,8 @@ public class AICostReportServiceTests
     [Fact]
     public async Task Month_projection_on_the_last_day_is_the_cost_so_far()
     {
-        MonthUsage(6m);
         var lastOfMonth = new DateTime(2026, 10, 31, 20, 0, 0, DateTimeKind.Utc);
+        MonthUsage(6m, lastOfMonth);
 
         Assert.Equal(6m, (await Sut(lastOfMonth).GetReportAsync(30, CancellationToken.None)).Month.ProjectedCost);
     }
@@ -161,6 +161,64 @@ public class AICostReportServiceTests
         Assert.Equal(new DateOnly(2026, 8, 14), previous.From);
         Assert.Equal(new DateOnly(2026, 9, 12), previous.To);
         Assert.Equal(new AICostTotals(4, 1_000_000, 2m, 0), previous.Totals);
+    }
+
+    // Charts (Task 12).
+    [Fact]
+    public async Task Days_count_succeeded_and_failed_requests()
+    {
+        Series(AIUsagePeriod.Hourly, null, Usage.Point(Now, 4, 100, 10, failed: 1));
+
+        var today = (await Sut().GetReportAsync(1, CancellationToken.None)).Days.Single();
+
+        Assert.Equal((3L, 1L), (today.SucceededRequests, today.FailedRequests));
+    }
+
+    [Fact]
+    public async Task Model_days_are_aligned_with_days_and_priced_models_only()
+    {
+        Models(AIUsagePeriod.Hourly, "claude-sonnet-5-5", "gpt-unpriced");
+        Series(AIUsagePeriod.Hourly, "claude-sonnet-5-5", Usage.Point(Now, 1, 1_000_000, 100_000));
+        Series(AIUsagePeriod.Hourly, "gpt-unpriced", Usage.Point(Now, 1, 500, 500));
+
+        var modelDays = Assert.Single((await Sut().GetReportAsync(3, CancellationToken.None)).ModelDays);
+
+        Assert.Equal("claude-sonnet-5-5", modelDays.ModelId);
+        Assert.Equal([0m, 0m, 3m], modelDays.Costs);
+    }
+
+    [Fact]
+    public async Task Caching_savings_price_cached_tokens_at_the_difference()
+    {
+        Models(AIUsagePeriod.Hourly, "claude-sonnet-5-5");
+        Series(AIUsagePeriod.Hourly, "claude-sonnet-5-5", Usage.Point(Now, 1, 2_000_000, 0, cached: 1_000_000));
+
+        Assert.Equal(1.8m, (await Sut().GetReportAsync(7, CancellationToken.None)).CachingSavings); // 1M × (2 − 0.2)
+    }
+
+    [Fact]
+    public async Task Month_days_run_from_the_first_to_today_and_sum_to_the_month_cost()
+    {
+        Models(AIUsagePeriod.Daily, "claude-sonnet-5-5");
+        Models(AIUsagePeriod.Hourly, "claude-sonnet-5-5");
+        Series(AIUsagePeriod.Daily, "claude-sonnet-5-5", Usage.Point(new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc), 1, 1_000_000, 0));
+        Series(AIUsagePeriod.Hourly, "claude-sonnet-5-5", Usage.Point(Now, 1, 500_000, 0));
+
+        var month = (await Sut().GetReportAsync(30, CancellationToken.None)).Month;
+
+        Assert.Equal(12, month.Days.Count);
+        Assert.Equal(new AICostMonthDay(new DateOnly(2026, 10, 1), 2m), month.Days[0]);
+        Assert.Equal(3m, month.Days.Sum(d => d.Cost));
+        Assert.Equal(month.Cost, month.Days.Sum(d => d.Cost));
+    }
+
+    [Fact]
+    public async Task Report_has_the_average_response_time()
+    {
+        _analytics.GetSummaryAsync(Arg.Any<DateTime>(), Arg.Any<DateTime>(), AIUsagePeriod.Hourly, Arg.Is<AIUsageFilter?>(f => f!.ModelId == null), Arg.Any<CancellationToken>())
+            .Returns(Usage.Summary(10, 0, 0, durationMs: 1200));
+
+        Assert.Equal(1200, (await Sut().GetReportAsync(1, CancellationToken.None)).AverageDurationMs);
     }
 
     [Fact]

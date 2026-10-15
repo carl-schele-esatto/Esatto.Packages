@@ -8,7 +8,9 @@ public sealed record AICostDay(
     long CachedInputTokens,
     long TotalTokens,
     decimal Cost,
-    long UnpricedTokens);
+    long UnpricedTokens,
+    long SucceededRequests,
+    long FailedRequests);
 
 public sealed record AICostModel(
     string ModelId,
@@ -24,8 +26,15 @@ public sealed record AICostTotals(long Requests, long TotalTokens, decimal Cost,
 /// <summary>The monthly budget as configured: amount and its currency (not converted).</summary>
 public sealed record AICostBudget(decimal Amount, string Currency);
 
-/// <summary>The calendar month to date (UTC), in the base currency, with the projected month-end cost.</summary>
-public sealed record AICostMonth(DateOnly From, DateOnly To, decimal Cost, decimal ProjectedCost, long UnpricedTokens, AICostBudget? Budget);
+/// <summary>A priced model's cost per day; <see cref="Costs"/>[i] belongs to the report's Days[i].</summary>
+public sealed record AICostModelDays(string ModelId, IReadOnlyList<decimal> Costs);
+
+public sealed record AICostMonthDay(DateOnly Date, decimal Cost);
+
+/// <summary>The calendar month to date (UTC), in the base currency, with the projected month-end cost and
+/// the cost per day (1st → today) for the "This month" chart.</summary>
+public sealed record AICostMonth(DateOnly From, DateOnly To, decimal Cost, decimal ProjectedCost, long UnpricedTokens,
+    AICostBudget? Budget, IReadOnlyList<AICostMonthDay> Days);
 
 /// <summary>Totals for the period of the same length just before the selected one.</summary>
 public sealed record AICostPrevious(DateOnly From, DateOnly To, AICostTotals Totals);
@@ -43,4 +52,7 @@ public sealed record AICostReport(
     IReadOnlyList<AICostModel> Models,
     AICostTotals Totals,
     AICostMonth Month,
-    AICostPrevious? Previous);
+    AICostPrevious? Previous,
+    IReadOnlyList<AICostModelDays> ModelDays,
+    decimal CachingSavings,
+    int AverageDurationMs);
