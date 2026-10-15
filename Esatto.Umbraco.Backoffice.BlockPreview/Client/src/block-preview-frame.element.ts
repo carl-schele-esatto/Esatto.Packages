@@ -172,7 +172,8 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   }
 
   static styles = css`
-    :host { display: block; border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
+    /* Space between stacked blocks: Block List puts custom views directly on top of each other. */
+    :host { display: block; margin-bottom: var(--uui-size-space-4); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
     .bar { display: flex; align-items: center; min-height: 40px; padding: 0 var(--uui-size-space-4); gap: var(--uui-size-space-2); }
     .bar.invalid { color: var(--uui-color-danger); }
     .label { display: flex; align-items: center; gap: var(--uui-size-space-2); flex: 1; color: inherit; text-decoration: none; font-weight: 600; }

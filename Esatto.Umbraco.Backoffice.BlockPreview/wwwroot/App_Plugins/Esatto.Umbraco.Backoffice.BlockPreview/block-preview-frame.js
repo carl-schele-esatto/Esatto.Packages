@@ -1,10 +1,10 @@
-import { css as F, property as f, state as N, customElement as K, html as v, nothing as _ } from "@umbraco-cms/backoffice/external/lit";
+import { css as F, property as f, state as N, customElement as K, html as v, nothing as w } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as D } from "@umbraco-cms/backoffice/lit-element";
 import { tryExecute as z } from "@umbraco-cms/backoffice/resources";
 import { UMB_BLOCK_ENTRY_CONTEXT as H } from "@umbraco-cms/backoffice/block";
 import { UMB_CONTENT_WORKSPACE_CONTEXT as X } from "@umbraco-cms/backoffice/content";
-import { UMB_PROPERTY_CONTEXT as q, UMB_PROPERTY_DATASET_CONTEXT as G } from "@umbraco-cms/backoffice/property";
-import { UMB_WORKSPACE_CONTEXT as L } from "@umbraco-cms/backoffice/workspace";
+import { UMB_PROPERTY_CONTEXT as q, UMB_PROPERTY_DATASET_CONTEXT as L } from "@umbraco-cms/backoffice/property";
+import { UMB_WORKSPACE_CONTEXT as G } from "@umbraco-cms/backoffice/workspace";
 import { umbHttpClient as V } from "@umbraco-cms/backoffice/http-client";
 function Y(e) {
   return {
@@ -60,27 +60,27 @@ function ne(e) {
 var se = Object.defineProperty, oe = Object.getOwnPropertyDescriptor, W = (e) => {
   throw TypeError(e);
 }, h = (e, t, i, s) => {
-  for (var r = s > 1 ? void 0 : s ? oe(t, i) : t, g = e.length - 1, m; g >= 0; g--)
-    (m = e[g]) && (r = (s ? m(t, i, r) : m(r)) || r);
+  for (var r = s > 1 ? void 0 : s ? oe(t, i) : t, m = e.length - 1, g; m >= 0; m--)
+    (g = e[m]) && (r = (s ? g(t, i, r) : g(r)) || r);
   return s && r && se(t, i, r), r;
-}, S = (e, t, i) => t.has(e) || W("Cannot " + i), n = (e, t, i) => (S(e, t, "read from private field"), t.get(e)), d = (e, t, i) => t.has(e) ? W("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), l = (e, t, i, s) => (S(e, t, "write to private field"), t.set(e, i), i), c = (e, t, i) => (S(e, t, "access private method"), i), w, y, T, C, b, p, P, k, o, u, B, U, E, A, $;
+}, S = (e, t, i) => t.has(e) || W("Cannot " + i), n = (e, t, i) => (S(e, t, "read from private field"), t.get(e)), d = (e, t, i) => t.has(e) ? W("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), l = (e, t, i, s) => (S(e, t, "write to private field"), t.set(e, i), i), c = (e, t, i) => (S(e, t, "access private method"), i), _, b, T, C, y, p, P, k, o, u, B, U, E, A, $;
 const ae = 400;
 let a = class extends D {
   constructor() {
-    super(), d(this, o), this._view = { kind: "loading" }, this._height = 0, d(this, w), d(this, y), d(this, T), d(this, C), d(this, b), d(this, p), d(this, P, ""), d(this, k), d(this, E, (e) => {
+    super(), d(this, o), this._view = { kind: "loading" }, this._height = 0, d(this, _), d(this, b), d(this, T), d(this, C), d(this, y), d(this, p), d(this, P, ""), d(this, k), d(this, E, (e) => {
       const t = this.shadowRoot?.querySelector("iframe"), i = ee(e, t?.contentWindow, n(this, P));
       i !== null && (this._height = i);
     }), this.consumeContext(H, (e) => {
-      l(this, w, e), c(this, o, u).call(this, 0);
-    }), this.consumeContext(L, (e) => {
+      l(this, _, e), c(this, o, u).call(this, 0);
+    }), this.consumeContext(G, (e) => {
       l(this, k, e?.getEntityType()), c(this, o, u).call(this, 0);
     }), this.consumeContext(X, (e) => {
-      l(this, y, e), c(this, o, u).call(this, 0), this.observe(e?.isNew, (t) => {
+      l(this, b, e), c(this, o, u).call(this, 0), this.observe(e?.isNew, (t) => {
         t === !1 && this._view.kind === "unsaved" && c(this, o, u).call(this, 0);
       }, "_observeIsNew");
     }), this.consumeContext(q, (e) => {
       l(this, T, e), c(this, o, u).call(this, 0);
-    }), this.consumeContext(G, (e) => {
+    }), this.consumeContext(L, (e) => {
       l(this, C, e), c(this, o, u).call(this, 0);
     });
   }
@@ -88,7 +88,7 @@ let a = class extends D {
     super.connectedCallback(), window.addEventListener("message", n(this, E));
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), window.removeEventListener("message", n(this, E)), clearTimeout(n(this, b));
+    super.disconnectedCallback(), window.removeEventListener("message", n(this, E)), clearTimeout(n(this, y));
   }
   updated(e) {
     (e.has("content") || e.has("settings")) && c(this, o, u).call(this, ae);
@@ -97,17 +97,17 @@ let a = class extends D {
     return v`${c(this, o, A).call(this)}${c(this, o, $).call(this)}`;
   }
 };
-w = /* @__PURE__ */ new WeakMap();
-y = /* @__PURE__ */ new WeakMap();
+_ = /* @__PURE__ */ new WeakMap();
+b = /* @__PURE__ */ new WeakMap();
 T = /* @__PURE__ */ new WeakMap();
 C = /* @__PURE__ */ new WeakMap();
-b = /* @__PURE__ */ new WeakMap();
+y = /* @__PURE__ */ new WeakMap();
 p = /* @__PURE__ */ new WeakMap();
 P = /* @__PURE__ */ new WeakMap();
 k = /* @__PURE__ */ new WeakMap();
 o = /* @__PURE__ */ new WeakSet();
 u = function(e) {
-  clearTimeout(n(this, b)), l(this, b, setTimeout(() => {
+  clearTimeout(n(this, y)), l(this, y, setTimeout(() => {
     c(this, o, B).call(this);
   }, e));
 };
@@ -123,27 +123,27 @@ U = async function() {
     this._view = { kind: "plain" };
     return;
   }
-  const e = n(this, w)?.getContent(), t = n(this, y)?.getUnique(), i = n(this, y)?.structure.getOwnerContentTypeUnique(), s = n(this, T)?.getAlias();
+  const e = n(this, _)?.getContent(), t = n(this, b)?.getUnique(), i = n(this, b)?.structure.getOwnerContentTypeUnique(), s = n(this, T)?.getAlias();
   if (!e || !t || !i || !s) return;
-  const r = n(this, C)?.getVariantId(), g = J(), m = Y({
+  const r = n(this, C)?.getVariantId(), m = J(), g = Y({
     documentKey: t,
     documentTypeKey: i,
     propertyAlias: s,
     culture: r?.culture,
     segment: r?.segment,
-    nonce: g,
+    nonce: m,
     content: e,
-    settings: n(this, w)?.getSettings()
-  }), x = j(m);
+    settings: n(this, _)?.getSettings()
+  }), x = j(g);
   if (x === n(this, p)) return;
   l(this, p, x);
-  const { data: O, error: I } = await z(this, ie(m), { disableNotifications: !0 });
+  const { data: O, error: I } = await z(this, ie(g), { disableNotifications: !0 });
   if (x !== n(this, p)) return;
   if (I || !O) {
     l(this, p, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
     return;
   }
-  const { view: M, keepFingerprint: R } = re(O, g);
+  const { view: M, keepFingerprint: R } = re(O, m);
   R || l(this, p, void 0), M.kind === "rendered" && l(this, P, M.nonce), this._view = M;
 };
 E = /* @__PURE__ */ new WeakMap();
@@ -151,11 +151,11 @@ A = function() {
   const e = this.contentInvalid || this.settingsInvalid;
   return v`
       <div class="bar ${e ? "invalid" : ""}">
-        <a class="label" href=${this.config?.editContentPath ?? _}>
-          ${this.icon ? v`<umb-icon name=${this.icon}></umb-icon>` : _}
+        <a class="label" href=${this.config?.editContentPath ?? w}>
+          ${this.icon ? v`<umb-icon name=${this.icon}></umb-icon>` : w}
           <span>${this.label}</span>
         </a>
-        ${this.config?.showSettingsEdit ? v`<a class="settings" href=${this.config.editSettingsPath ?? _} title="Settings"><umb-icon name="icon-settings"></umb-icon></a>` : _}
+        ${this.config?.showSettingsEdit ? v`<a class="settings" href=${this.config.editSettingsPath ?? w} title="Settings"><umb-icon name="icon-settings"></umb-icon></a>` : w}
       </div>`;
 };
 $ = function() {
@@ -173,11 +173,12 @@ $ = function() {
     case "error":
       return v`<div class="note warning">Preview failed: ${this._view.message}</div>`;
     default:
-      return _;
+      return w;
   }
 };
 a.styles = F`
-    :host { display: block; border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
+    /* Space between stacked blocks: Block List puts custom views directly on top of each other. */
+    :host { display: block; margin-bottom: var(--uui-size-space-4); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
     .bar { display: flex; align-items: center; min-height: 40px; padding: 0 var(--uui-size-space-4); gap: var(--uui-size-space-2); }
     .bar.invalid { color: var(--uui-color-danger); }
     .label { display: flex; align-items: center; gap: var(--uui-size-space-2); flex: 1; color: inherit; text-decoration: none; font-weight: 600; }
@@ -218,9 +219,9 @@ h([
 a = h([
   K("esatto-block-preview-frame")
 ], a);
-const ge = a;
+const me = a;
 export {
   a as EsattoBlockPreviewFrameElement,
-  ge as default
+  me as default
 };
 //# sourceMappingURL=block-preview-frame.js.map
