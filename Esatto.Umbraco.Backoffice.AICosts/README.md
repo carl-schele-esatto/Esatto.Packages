@@ -4,16 +4,19 @@ Estimated AI costs for **Umbraco.AI** in the Umbraco 18 backoffice.
 
 Umbraco.AI records how many tokens every AI request uses, but not what it costs. This package adds a **Costs** tab next to Umbraco.AI's own **Usage** tab (AI section → Analytics) that turns that usage into money: tokens × each model's list price, in your currency.
 
-![The Costs tab: this month with budget, estimated cost, usage calendar, daily cost chart and cost by model](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.AICosts/docs/costs.png)
+![The Costs tab: totals, this month chart with budget, usage calendar, daily cost, tokens by type, reliability and cost by model](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.AICosts/docs/costs.png)
 
 ## What you see
 
 - **Period and currency:** 30, 90 or 180 days, or 12 months; any currency the European Central Bank quotes. Your choices are remembered per browser.
 - **This month:** cost so far, the projected cost by month end, and — with a monthly budget configured — a bar showing how much of it is used. It turns amber at 80 % or when the projection goes over the budget, and red once the budget is spent.
 - **Totals:** estimated cost, tokens, requests and cost per request, each with the change against the previous period of the same length (e.g. "+12 % vs previous 30 days").
+- **This month chart:** the cost so far as a line, a dashed projection to month end, and your budget as a reference line.
 - **Usage calendar:** one square per day, for cost, tokens or requests.
-- **Daily cost** (weekly for longer periods), as a chart or a table.
-- **Cost by model, profile, user or provider**, with each one's share of the total.
+- **Daily cost** (weekly for longer periods), in total or **stacked by model**, as a chart or a table.
+- **Tokens by type:** input, cached input and output per day, and how much prompt caching saved.
+- **Reliability:** succeeded and failed requests per day, the failure rate and the average response time.
+- **Cost by model, profile, user or provider**, with each one's share of the total. Usage without a backoffice user (front end, API, scheduled agents) is shown as Umbraco.AI's "Anonymous" row.
 - **Download CSV** of the daily figures and of the cost breakdown. Files open directly in Excel, also in locales with a decimal comma (Swedish, German…).
 
 ## Why "estimated"
