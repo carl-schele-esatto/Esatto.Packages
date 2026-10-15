@@ -85,6 +85,26 @@ public class FrameScriptTests
         Assert.Contains("\"a\\u0022b\"", FrameScript.Inject("<body></body>", "a\"b"));
     }
 
+    // 1.0.2: video players can't run inside the sandbox. A page script hands the backoffice the
+    // player URL and the element to cover; the backoffice shows the player there, outside the sandbox.
+    [Fact]
+    public void Offers_playEmbed_and_reports_embed_positions()
+    {
+        string result = FrameScript.Inject("<body></body>", "abc");
+        Assert.Contains("window.EsattoBlockPreview", result);
+        Assert.Contains("playEmbed", result);
+        Assert.Contains("esatto-block-preview:embeds", result);
+    }
+
+    // The covered element moves when the preview resizes or scrolls; the positions must follow.
+    [Fact]
+    public void Embed_positions_are_resent_when_the_preview_changes()
+    {
+        string result = FrameScript.Inject("<body></body>", "abc");
+        Assert.Contains("postEmbeds()", result.Substring(result.IndexOf("function post()", StringComparison.Ordinal)));
+        Assert.Contains("addEventListener(\"scroll\"", result);
+    }
+
     private static int CountOf(string text, string value)
     {
         int count = 0;

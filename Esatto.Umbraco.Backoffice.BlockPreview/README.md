@@ -94,6 +94,22 @@ All optional, in `appsettings.json`:
 - **Viewport units size against the preview, not the browser window.** `100vh` means the height of the preview frame. Previews are capped at 3000px tall.
 - **The preview grows to fit, and never scrolls vertically.** Content wider than the block (a wide table, for example) scrolls sideways, as it would on the page.
 
+### Playing videos in the preview
+
+YouTube's player can't run inside the sandboxed preview. Instead of inserting the player, let your script hand it to the backoffice, which shows it over your element, outside the sandbox:
+
+```js
+const src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`;
+if (window.EsattoBlockPreview) {
+  // In the backoffice preview: the player is shown over `poster`.
+  window.EsattoBlockPreview.playEmbed(poster, src);
+} else {
+  // On the page: insert the player as usual.
+}
+```
+
+Only YouTube embed players (`https://www.youtube.com/embed/…` and `https://www.youtube-nocookie.com/embed/…`) are accepted. The player follows the element when the preview resizes, and goes away when the preview refreshes.
+
 ### Limitations (1.0)
 
 - **Block List only.** Block Grid and blocks in the Rich Text editor are planned.

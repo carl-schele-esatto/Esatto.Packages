@@ -2,7 +2,7 @@
 // Razor partial inside the site's preview layout — in a sandboxed, auto-sized iframe.
 // A slim label bar above it opens the block editor; the preview itself is interactive.
 
-import { css, customElement, html, nothing, property, state } from '@umbraco-cms/backoffice/external/lit';
+import { css, customElement, html, nothing, property, repeat, state } from '@umbraco-cms/backoffice/external/lit';
 import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
 import { UMB_BLOCK_ENTRY_CONTEXT } from '@umbraco-cms/backoffice/block';
@@ -11,7 +11,7 @@ import { UMB_CONTENT_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/content';
 import { UMB_PROPERTY_CONTEXT, UMB_PROPERTY_DATASET_CONTEXT } from '@umbraco-cms/backoffice/property';
 import { UMB_WORKSPACE_CONTEXT } from '@umbraco-cms/backoffice/workspace';
 import { buildRenderRequest, newNonce, requestFingerprint, type BlockData } from './render-request';
-import { readHeight } from './frame-messages';
+import { readEmbeds, readHeight, type Embed } from './frame-messages';
 import { renderBlockPreview, type RenderOutcome } from './api';
 import { isPreviewableWorkspace, toViewState, type ViewState } from './view-state';
 import { LatestRequest, renderDelay } from './render-scheduling';
@@ -30,6 +30,8 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
 
   @state() private _view: ViewState = { kind: 'loading' };
   @state() private _height = 0;
+  // Video players shown over the preview (they can't run inside its sandbox); see FrameScript.
+  @state() private _embeds: Embed[] = [];
 
   #entry?: typeof UMB_BLOCK_ENTRY_CONTEXT.TYPE;
   #workspace?: typeof UMB_CONTENT_WORKSPACE_CONTEXT.TYPE;
@@ -138,14 +140,19 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
     }
     const { view, keepFingerprint } = toViewState(data as RenderOutcome, nonce);
     if (!keepFingerprint) this.#lastFingerprint = undefined;
-    if (view.kind === 'rendered') this.#currentNonce = view.nonce;
+    if (view.kind === 'rendered') {
+      this.#currentNonce = view.nonce;
+      this._embeds = []; // a new render starts with its posters, not the previous render's players
+    }
     this._view = view;
   }
 
   #onMessage = (event: MessageEvent): void => {
-    const frame = this.shadowRoot?.querySelector('iframe');
+    const frame = this.shadowRoot?.querySelector<HTMLIFrameElement>('iframe.preview');
     const height = readHeight(event, frame?.contentWindow, this.#currentNonce);
     if (height !== null) this._height = height;
+    const embeds = readEmbeds(event, frame?.contentWindow, this.#currentNonce);
+    if (embeds !== null) this._embeds = embeds;
   };
 
   #renderBar() {
@@ -167,11 +174,26 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
       case 'loading':
         return html`<div class="placeholder"><uui-loader label="Loading preview"></uui-loader></div>`;
       case 'rendered':
-        return html`<iframe
-          title=${this.label ?? 'Block preview'}
-          sandbox="allow-scripts"
-          .srcdoc=${this._view.html}
-          style="height:${this._height || 80}px"></iframe>`;
+        return html`<div class="frame">
+          <iframe
+            class="preview"
+            title=${this.label ?? 'Block preview'}
+            sandbox="allow-scripts"
+            .srcdoc=${this._view.html}
+            style="height:${this._height || 80}px"></iframe>
+          ${repeat(
+            this._embeds,
+            (embed) => embed.url,
+            (embed) => html`<iframe
+              class="embed"
+              title="Video player"
+              src=${embed.url}
+              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+              allowfullscreen
+              referrerpolicy="strict-origin-when-cross-origin"
+              style="top:${embed.rect.top}px;left:${embed.rect.left}px;width:${embed.rect.width}px;height:${embed.rect.height}px"></iframe>`,
+          )}
+        </div>`;
       case 'unsaved':
         return html`<div class="note">Save the page once to see a preview.</div>`;
       case 'error':
@@ -193,7 +215,9 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
     .label { display: flex; align-items: center; gap: var(--uui-size-space-2); flex: 1; color: inherit; text-decoration: none; font-weight: 600; }
     .label:hover { text-decoration: underline; }
     .settings { color: inherit; }
-    iframe { display: block; width: 100%; border: 0; border-top: 1px solid var(--uui-color-border); }
+    .frame { position: relative; border-top: 1px solid var(--uui-color-border); }
+    .preview { display: block; width: 100%; border: 0; }
+    .embed { position: absolute; border: 0; }
     .placeholder { display: flex; align-items: center; justify-content: center; min-height: 80px; border-top: 1px solid var(--uui-color-border); background: var(--uui-color-surface-alt); }
     .note { padding: var(--uui-size-space-3) var(--uui-size-space-4); border-top: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); font-size: 0.9em; }
     .note.warning { color: var(--uui-color-warning-standalone); }

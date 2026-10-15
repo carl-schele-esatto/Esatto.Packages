@@ -31,10 +31,34 @@ public static class FrameScript
           function scrollbarHeight() {
             return Math.max(0, window.innerHeight - document.documentElement.clientHeight);
           }
+          // Video players (YouTube) can't run inside this sandbox. A page script calls
+          // EsattoBlockPreview.playEmbed(element, url) instead of inserting the player, and the backoffice
+          // shows that player over the element, outside the sandbox (it only accepts known players).
+          // Positions are viewport-relative, which is the iframe's own box; they're resent on changes.
+          var embeds = [];
+          function postEmbeds() {
+            var list = [];
+            for (var i = 0; i < embeds.length; i++) {
+              if (!embeds[i].element.isConnected) continue;
+              var r = embeds[i].element.getBoundingClientRect();
+              list.push({ url: embeds[i].url, rect: { top: r.top, left: r.left, width: r.width, height: r.height } });
+            }
+            parent.postMessage({ type: "esatto-block-preview:embeds", id: id, embeds: list }, "*");
+          }
+          window.EsattoBlockPreview = {
+            playEmbed: function (element, url) {
+              embeds = embeds.filter(function (e) { return e.element !== element; });
+              embeds.push({ element: element, url: String(url) });
+              observer.observe(element);
+              postEmbeds();
+            }
+          };
           function post() {
             var height = Math.ceil(contentBottom() + scrollbarHeight());
             parent.postMessage({ type: "esatto-block-preview:height", id: id, height: height }, "*");
+            if (embeds.length) postEmbeds();
           }
+          window.addEventListener("scroll", function () { if (embeds.length) postEmbeds(); });
           // Watch the content elements themselves, not just html/body: with html, body { height: 100% }
           // the body box follows the frame, so growing content (accordion, tabs) wouldn't resize it.
           var observer = new ResizeObserver(post);
