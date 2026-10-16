@@ -1,0 +1,103 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <!-- Serve wwwroot/App_Plugins/... at literal /App_Plugins/... in the consumer.
+         Default Razor SDK behaviour would prefix everything with /_content/<PackageId>/,
+         which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+
+    <RootNamespace>Esatto.Umbraco.Backoffice.AICosts</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.AICosts</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.AICosts</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Estimated AI costs for Umbraco.AI in the backoffice: a Costs tab next to Analytics → Usage that prices the tokens Umbraco.AI records per model, in your currency — with cost by model, profile, user and provider, a monthly budget and forecast, CSV export and period comparison.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;ai;umbraco-ai;costs;analytics</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.AICosts</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Umbraco.AI.Core: usage analytics (CachedInputTokens since 18.3.0). Umbraco.AI.Web: the AI
+         section access policy. Api.Management: controller base + versioned route, and the Umbraco
+         dependency the Marketplace detects. Min versions; resolve to the consumer's. -->
+    <PackageReference Include="Umbraco.AI.Core" Version="18.3.0" />
+    <PackageReference Include="Umbraco.AI.Web" Version="18.3.0" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="18.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Patched floors for advisories that Umbraco's transitive graph pulls in. Drop each once
+         Umbraco bumps its own dependency past it. Same pins as DictionaryFilterValues.
+         - MessagePack 3.1.4 (via HybridCache): LZ4 decompression OOB read (GHSA-hv8m-jj95-wg3x), fixed 3.1.7.
+         - Microsoft.OpenApi 2.3.0 (via Api.Management -> Swashbuckle): circular-ref stack overflow (GHSA-v5pm-xwqc-g5wc), fixed 2.7.5.
+         - MailKit 4.14.0: STARTTLS response injection (GHSA-9j88-vvj5-vhgr), fixed 4.16.0.
+         - MimeKit 4.14.0: CRLF injection (GHSA-g7hc-96xr-gvvx), fixed 4.15.1; 4.16.0 = MailKit's floor.
+         - System.Security.Cryptography.Pkcs: DoS, CVE-2026-84008 (GHSA-846f-f764-76mx); 10.0.13. -->
+    <PackageReference Include="MessagePack" Version="3.1.7" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
+    <PackageReference Include="MimeKit" Version="4.16.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project.
+       Skipped during IDE design-time builds to avoid running npm on every keystroke, and when
+       there's no client (yet). -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true' And Exists('$(MSBuildProjectDirectory)\Client\package.json')">
+    <Message Importance="high" Text="Installing backoffice client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building backoffice client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+  <ItemGroup Label="NuGet audit: SixLabors.ImageSharp">
+    <!-- Umbraco.AI.Core 18.x references SixLabors.ImageSharp 3.1.12 directly, and Umbraco 18 itself ships
+         3.x (with ImageSharp.Web 3.2). These advisories are fixed only in 4.1.2; forcing 4.x from a package
+         could break the site's image processing. This package doesn't use ImageSharp, and the version a site
+         runs is decided by its own Umbraco, which reports these advisories there. Drop once Umbraco moves on. -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-gwg2-r3hj-4w44" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-wmxv-xphr-5c9g" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j3p4-wp97-rph4" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j9gm-c75j-xc9q" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-jjfr-hcj7-qf5w" />
+  </ItemGroup>
+
+</Project>
