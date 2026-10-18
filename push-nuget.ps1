@@ -28,7 +28,13 @@
     Directory for the produced .nupkg. Defaults to the repo's artifacts folder.
 
 .PARAMETER Force
-    Skip the interactive confirmation before pushing.
+    Skip the interactive confirmation before pushing. It does NOT skip the prerelease guard below -
+    -Force means "do not ask me", not "do not check".
+
+.PARAMETER AllowPrerelease
+    Permit pushing a prerelease version. Off by default: MinVer produces one whenever HEAD is not
+    itself tagged for this package, so an unexpected prerelease almost always means the tag is behind
+    HEAD rather than that one was wanted.
 
 .EXAMPLE
     $env:NUGET_API_KEY = "oy2..."; ./push-nuget.ps1
@@ -42,7 +48,8 @@ param(
     [string]$Source = "https://api.nuget.org/v3/index.json",
     [string]$ApiKey = $env:NUGET_API_KEY,
     [string]$Output = "$PSScriptRoot\artifacts",
-    [switch]$Force
+    [switch]$Force,
+    [switch]$AllowPrerelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -93,6 +100,34 @@ if (-not $isNew) {
     Write-Host "  NOTE    : pack produced no new file - this version was built earlier (will --skip-duplicate)." -ForegroundColor Yellow
 }
 Write-Host ""
+
+# Refused BEFORE the -Force check, and that ordering is the whole point: -Force means "do not ask
+# me", not "do not check". An accidental prerelease push happened exactly this way - a tag one commit
+# behind HEAD made MinVer compute 1.2.1-preview.0.1 where 1.2.0 was intended, and -Force skipped the
+# only line that would have shown it.
+#
+# A prerelease is almost never what a release run wants, and the cause is nearly always the same: HEAD
+# has moved past the tag. Publishing one is not undoable - a feed version cannot be deleted, only
+# unlisted - and it does not even fix the problem it looks like it fixed, because `dotnet tool
+# install` and an ordinary PackageReference both resolve the latest STABLE version and will carry on
+# ignoring it.
+if ($version -match '-' -and -not $AllowPrerelease) {
+    $tagName = "$packageId-<version>"
+
+    throw @"
+Refusing to push $version, which is a PRERELEASE.
+
+MinVer produces one when HEAD is not itself tagged for this package, so this usually means the tag
+is behind HEAD rather than that a prerelease was wanted:
+
+    git tag $tagName        # tag THIS commit, then re-run
+    git tag --list "$packageId-*"
+
+If a prerelease really is intended, pass -AllowPrerelease.
+
+Nothing was pushed.
+"@
+}
 
 if (-not $Force) {
     $answer = Read-Host "Push this package to '$Source'? Type 'yes' to continue"

@@ -1,0 +1,104 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Esatto.CookieScan.Desktop</RootNamespace>
+    <AssemblyName>esatto-cookiescan-ui</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!--
+      Not packed. This is the one half of the scanner that is not a NuGet package: a WinForms window
+      is not a library anyone references, and a dotnet tool would trade the copy-anywhere exe - the
+      whole point of the thing an operator double-clicks - for a machine that has the Windows
+      Desktop runtime installed. It publishes as a self-contained single file instead; see the
+      publish section of the README.
+    -->
+    <IsPackable>false</IsPackable>
+    <!--
+      Set explicitly, because the repo-wide default cannot work here. Directory.Build.targets derives
+      MinVerTagPrefix from $(PackageId), and a project that is not packable never sets one - so it
+      defaulted to $(AssemblyName), "esatto-cookiescan-ui-", and no tag by that name has ever
+      existed. MinVer found nothing and stamped every build 0.0.0-preview.0.<commit height>, a number
+      that changed on every commit and told an operator nothing.
+
+      It matters more here than for a package. A NuGet package carries its version in its filename
+      and on a feed page; a copied exe carries it nowhere but inside itself, and "which one are you
+      running" is the first question any bug report has to answer. The launcher also reads this
+      prefix off the release tags - see DashboardRelease.TagPrefix - so the version in a tag name,
+      the version inside the exe and the folder it is cached under are necessarily one string.
+    -->
+    <MinVerTagPrefix>Esatto.CookieScan.Desktop-</MinVerTagPrefix>
+    <!--
+      The exe's icon in Explorer and the taskbar. Generated from the sidebar's brand mark by
+      Assets\make-icon.ps1; regenerate rather than edit. The same file is embedded below so the
+      window can wear it too - ApplicationIcon only decorates the file, not the Form.
+    -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <!--
+      The same three the console tool needs, for the same reason: Playwright's driver ships node.exe,
+      which the SDK classifies as content rather than a native library. WebView2Loader.dll rides
+      along on the native switch - the bundler classifies by content, not by item type.
+    -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+  </PropertyGroup>
+
+  <!--
+    MailKit is here and NOT on Esatto.CookieScan.Engine, deliberately. This project is the one half
+    of the scanner that is not packed, so a mail transport referenced here reaches nobody who
+    references the engine for its scanner. The message itself is composed over there by ScanEmail,
+    which is pure and has never heard of SMTP - see EmailSender for the whole argument.
+
+    MailKit rather than System.Net.Mail.SmtpClient, which Microsoft's own documentation says not to
+    use for new development: it cannot do implicit TLS on 465 at all, and its failures arrive as
+    "Failure sending mail" with the reason on an inner exception nobody sees.
+  -->
+  <ItemGroup>
+    <PackageReference Include="MailKit" Version="4.17.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
+  </ItemGroup>
+
+  <!--
+    ProtectedText encrypts the settings file's credentials with DPAPI, which lives in
+    System.Security.Cryptography.ProtectedData. There is deliberately no PackageReference for it.
+
+    The assembly is NOT in Microsoft.NETCore.App - it is in Microsoft.WindowsDesktop.App, the shared
+    framework this project already resolves because UseWindowsForms is on. That is the whole reason
+    it needs no reference here, and it is worth being exact about: a plain net10.0 project, or one
+    without UseWindowsForms, would have to add the package (latest stable on nuget.org is 10.0.11).
+    Adding it here anyway raises NU1510 ("will not be pruned ... does not need to be referenced
+    explicitly"), which this build treats as the warning it is.
+  -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Esatto.CookieScan.Core\Esatto.CookieScan.Core.csproj" />
+    <ProjectReference Include="..\Esatto.CookieScan.Engine\Esatto.CookieScan.Engine.csproj" />
+  </ItemGroup>
+
+  <!--
+    The WebView2 package ships a WPF control beside the WinForms one, and the WPF assembly
+    references a WindowsBase this project does not have - MSB3277 on every build, over a reference
+    nothing here loads. Dropping it also keeps it out of the published single file.
+  -->
+  <Target Name="DropUnusedWebView2Wpf" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    The dashboard lives inside the exe. LogicalName keeps the relative path, so the resolver can map
+    a URL straight onto a resource name without a lookup table that would drift.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\app.ico" LogicalName="app.ico" />
+    <EmbeddedResource Include="wwwroot\**\*">
+      <LogicalName>wwwroot/$([System.String]::Copy('%(RecursiveDir)%(Filename)%(Extension)').Replace('\','/'))</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

@@ -7,6 +7,8 @@ using Umbraco.Cms.Api.Management.Routing;
 using Umbraco.Cms.Core.Models;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services;
+using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Cms.Web.Common.Authorization;
 using Umbraco.Extensions;
@@ -41,17 +43,23 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
     private readonly ITimeLimitedDataProtector _protector;
     private readonly IUmbracoContextAccessor _umbracoContextAccessor;
     private readonly IPublishedUrlProvider _urlProvider;
+    private readonly IDocumentNavigationQueryService _navigation;
+    private readonly IDocumentUrlService _documentUrlService;
 
     public PreviewLinkController(
         IDataProtectionProvider dataProtectionProvider,
         IUmbracoContextAccessor umbracoContextAccessor,
-        IPublishedUrlProvider urlProvider)
+        IPublishedUrlProvider urlProvider,
+        IDocumentNavigationQueryService navigation,
+        IDocumentUrlService documentUrlService)
     {
         _protector = dataProtectionProvider
             .CreateProtector(ProtectorPurpose)
             .ToTimeLimitedDataProtector();
         _umbracoContextAccessor = umbracoContextAccessor;
         _urlProvider = urlProvider;
+        _navigation = navigation;
+        _documentUrlService = documentUrlService;
     }
 
     [HttpPost]
@@ -93,12 +101,10 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
         if (string.IsNullOrWhiteSpace(absoluteUrl) || absoluteUrl == "#")
         {
             // The published URL provider's route table is published-only —
-            // drafts return "#". Construct the URL manually: walk up the tree
-            // collecting URL segments, then prepend the root's URL (root is
-            // always published, gives us the right hostname + culture-path
-            // prefix). UrlSegment is set when content is saved, so it's
-            // available even on never-published documents.
-            absoluteUrl = BuildDraftUrl(content, cultureCode);
+            // drafts return "#". Construct the URL from the draft URL segments,
+            // prefixed with the root's URL (root is always published, gives us
+            // the right hostname + culture-path prefix). See DraftContentPath.
+            absoluteUrl = BuildDraftUrl(umbCtx, content.Key, cultureCode);
             if (string.IsNullOrWhiteSpace(absoluteUrl))
             {
                 return BadRequest(new { error = "Content has no resolvable URL" });
@@ -137,30 +143,15 @@ public sealed class PreviewLinkController : ManagementApiControllerBase
         return trimmed.Length == 0 ? "/" : "/" + trimmed.ToLowerInvariant();
     }
 
-    private string? BuildDraftUrl(IPublishedContent content, string? cultureCode)
+    private string? BuildDraftUrl(IUmbracoContext umbCtx, Guid contentKey, string? cultureCode)
     {
-        var segments = new List<string>();
-        var cur = content;
-        while (cur != null && cur.Level > 1)
-        {
-            var seg = cur.UrlSegment(cultureCode);
-            if (!string.IsNullOrEmpty(seg))
-            {
-                segments.Insert(0, seg);
-            }
-            cur = cur.Parent<IPublishedContent>();
-        }
-
-        var root = content.AncestorOrSelf(1);
+        var root = umbCtx.Content?.GetById(preview: true, DraftContentPath.RootKey(_navigation, contentKey));
         if (root == null) return null;
+
         var baseUrl = _urlProvider.GetUrl(root, UrlMode.Absolute, culture: cultureCode);
         if (string.IsNullOrWhiteSpace(baseUrl) || baseUrl == "#") return null;
 
-        var sb = new System.Text.StringBuilder(baseUrl.TrimEnd('/'));
-        foreach (var seg in segments)
-        {
-            sb.Append('/').Append(seg);
-        }
-        return sb.ToString();
+        return baseUrl.TrimEnd('/')
+            + DraftContentPath.RelativePath(_navigation, _documentUrlService, contentKey, cultureCode);
     }
 }

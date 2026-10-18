@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Esatto.CookieScan.Core</RootNamespace>
+    <AssemblyName>Esatto.CookieScan.Core</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!--
+      No Umbraco, no Playwright, no HTTP - deliberately, and enforced by having no PackageReference
+      at all. Every rule the scanner and the site's merge endpoint share lives here so both can be
+      tested without a browser or a published content graph, and so the Umbraco package can depend
+      on the rules without dragging a browser automation stack into a web application.
+    -->
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.CookieScan.Core</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>The dependency-free rules behind the Esatto cookie scanner: known-cookie catalogue matching with wildcard patterns, consent-category inference, the violation rule, append-only merge planning for a cookie policy page, localised duration formatting and scan-to-scan diffing. No Umbraco, no browser, no HTTP - shared by the scanner tool and by the Umbraco endpoint it writes through.</Description>
+    <PackageTags>cookie-consent;gdpr;eprivacy;cookie-scanner;cookie-audit</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.CookieScan.Core</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The catalogue's purpose text becomes public legal wording, so it is data rather than code.
+      Embedded so a copy-anywhere exe carries its own defaults; CatalogueSource lets a
+      cookie-catalogue.json beside the exe replace it wholesale.
+    -->
+    <EmbeddedResource Include="Resources\cookie-catalogue.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.CookieScan.Tests" />
+  </ItemGroup>
+
+</Project>

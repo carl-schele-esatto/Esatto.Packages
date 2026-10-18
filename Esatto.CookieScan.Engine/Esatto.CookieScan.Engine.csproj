@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Esatto.CookieScan.Engine</RootNamespace>
+    <AssemblyName>Esatto.CookieScan.Engine</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <!--
+      InvariantGlobalization stays off: the report renders Swedish wording and formats durations
+      per locale, both of which need real ICU data.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.CookieScan.Engine</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>The cookie consent audit engine behind the esatto-cookiescan tool. Crawls a site with a real headless browser, replays it once per consent decision a visitor can make, and reports every cookie and storage entry set outside the consent it needed. Reference it to build your own front end; install Esatto.CookieScan.Cli if you just want to run it. Pairs with the Esatto.Umbraco.Backoffice.CookieScan endpoint to append findings to an Umbraco cookie policy page as a draft.</Description>
+    <PackageTags>cookie-consent;gdpr;eprivacy;cookie-scanner;cookie-audit;playwright</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.CookieScan.Engine</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Esatto.CookieScan.Core\Esatto.CookieScan.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.CookieScan.Tests" />
+  </ItemGroup>
+
+</Project>

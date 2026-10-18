@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Esatto.CookieScan.Core\Esatto.CookieScan.Core.csproj" />
+    <ProjectReference Include="..\Esatto.CookieScan.Engine\Esatto.CookieScan.Engine.csproj" />
+    <!--
+      Reaches into the tool project for ConsoleScanLog. PackAsTool changes how that project is
+      packed, not whether it can be referenced, so the console front end is testable without a
+      fourth assembly existing just to hold one class.
+    -->
+    <ProjectReference Include="..\Esatto.CookieScan.Cli\Esatto.CookieScan.Cli.csproj" />
+  </ItemGroup>
+
+</Project>

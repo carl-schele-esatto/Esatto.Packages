@@ -9,6 +9,7 @@ using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Core.Preview;
 using Umbraco.Cms.Core.PublishedCache;
 using Umbraco.Cms.Core.Routing;
+using Umbraco.Cms.Core.Services;
 using Umbraco.Cms.Core.Services.Navigation;
 using Umbraco.Cms.Core.Web;
 using Umbraco.Extensions;
@@ -101,11 +102,13 @@ public class PreviewLinkMiddleware
         IUmbracoContextFactory umbracoContextFactory,
         IPublishedUrlProvider urlProvider,
         IPreviewTokenGenerator previewTokenGenerator,
-        IDocumentNavigationQueryService navigation)
+        IDocumentNavigationQueryService navigation,
+        IDocumentUrlService documentUrlService)
     {
         if (!context.Request.Query.TryGetValue(QueryParam, out var tokenValues)
             || string.IsNullOrWhiteSpace(tokenValues.ToString()))
         {
+            await KeepVerifiablePreviewCookieAsync(context, previewTokenGenerator);
             await _next(context);
             return;
         }
@@ -180,8 +183,7 @@ public class PreviewLinkMiddleware
                 // BELOW the root node, "" for the home/root page. Excludes any culture/
                 // domain prefix (e.g. "/en"), which is reconciled in the fallback matcher.
                 var cultureCode = content.GetCultureFromDomains();
-                relativePath = BuildContentRelativePath(
-                    ctxRef.UmbracoContext.Content!, navigation, contentKey, cultureCode);
+                relativePath = DraftContentPath.RelativePath(navigation, documentUrlService, contentKey, cultureCode);
             }
         }
 
@@ -279,6 +281,60 @@ public class PreviewLinkMiddleware
         context.Response.Redirect(redirectUrl);
     }
 
+    // On the redirected request the browser sends every matching UMB_PREVIEW: the share
+    // link's path-scoped cookie first, then any site-wide one left by the backoffice
+    // "Preview" button. ASP.NET Core keeps the LAST duplicate, so if that site-wide cookie
+    // is stale (e.g. minted under a previous DataProtection key ring) Umbraco fails to
+    // verify it, drops out of preview mode and renders the draft as a 404. Rewrite the
+    // Cookie header so only the first verifiable UMB_PREVIEW remains.
+    private static async Task KeepVerifiablePreviewCookieAsync(
+        HttpContext context,
+        IPreviewTokenGenerator previewTokenGenerator)
+    {
+        const string prefix = Constants.Web.PreviewCookieName + "=";
+
+        var pairs = context.Request.Headers.Cookie
+            .SelectMany(header => (header ?? string.Empty).Split(';'))
+            .Select(pair => pair.Trim())
+            .Where(pair => pair.Length > 0)
+            .ToList();
+        var previewPairs = pairs.Where(pair => pair.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+        if (previewPairs.Count < 2) return;
+
+        string? keep = null;
+        foreach (var pair in previewPairs)
+        {
+            var value = Uri.UnescapeDataString(pair.Substring(prefix.Length).Trim('"'));
+            if ((await previewTokenGenerator.VerifyAsync(value)).Success)
+            {
+                keep = pair;
+                break;
+            }
+        }
+
+        // None verifies: leave the header alone, Umbraco renders non-preview either way.
+        if (keep is null) return;
+
+        var rewritten = new List<string>(pairs.Count);
+        var kept = false;
+        foreach (var pair in pairs)
+        {
+            if (!pair.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                rewritten.Add(pair);
+            }
+            else if (!kept && pair == keep)
+            {
+                rewritten.Add(pair);
+                kept = true;
+            }
+        }
+
+        // RequestCookiesFeature re-parses when the Cookie header changes, so Umbraco's
+        // later Request.Cookies reads see the rewritten set.
+        context.Request.Headers.Cookie = string.Join("; ", rewritten);
+    }
+
     private async Task RenderErrorAsync(
         HttpContext context,
         string variant,
@@ -293,52 +349,6 @@ public class PreviewLinkMiddleware
         context.Request.QueryString = QueryString.Empty;
 
         await _next(context);
-    }
-
-    // Build the content's path RELATIVE to its culture/domain root for any document
-    // (published or draft) by walking the ancestor key chain via the navigation
-    // service and looking each one up in the draft-aware content cache. Avoids the
-    // unreliable IPublishedContent.Parent traversal which fails on draft-loaded
-    // content in the ad-hoc UmbracoContext.
-    //
-    // Returns the segments BELOW the root node: "" for the home/root page itself,
-    // "/about" for a level-2 page, "/about/team" for level-3, etc. The root's own
-    // segment is never part of the URL path (the root maps to the culture/domain
-    // root), so it is dropped.
-    private static string BuildContentRelativePath(
-        IPublishedContentCache contentCache,
-        IDocumentNavigationQueryService navigation,
-        Guid contentKey,
-        string? cultureCode)
-    {
-        // Full chain root → … → self, then drop the FIRST element (the root). Done
-        // AFTER appending self so the home/root page (no ancestors) correctly yields
-        // an empty chain rather than its own segment.
-        IEnumerable<Guid> pathKeys;
-        if (navigation.TryGetAncestorsKeys(contentKey, out var ancestorKeys))
-        {
-            // ancestorKeys: immediate parent first, root last → Reverse() = root first.
-            pathKeys = ancestorKeys.Reverse().Concat(new[] { contentKey }).Skip(1);
-        }
-        else
-        {
-            // No ancestors ⇒ this IS the root/home page ⇒ empty relative path.
-            pathKeys = Array.Empty<Guid>();
-        }
-
-        var segments = new List<string>();
-        foreach (var key in pathKeys)
-        {
-            var node = contentCache.GetById(preview: true, key);
-            if (node == null) continue;
-            var seg = node.UrlSegment(cultureCode);
-            if (!string.IsNullOrEmpty(seg))
-            {
-                segments.Add(seg);
-            }
-        }
-
-        return segments.Count == 0 ? string.Empty : "/" + string.Join("/", segments);
     }
 
     // True when the request path corresponds to the token's content. The content-
