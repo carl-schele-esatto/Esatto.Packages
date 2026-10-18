@@ -28,14 +28,18 @@ public sealed class ScheduledTasksController : ManagementApiControllerBase
     private readonly IBackOfficeSecurityAccessor _backOfficeSecurityAccessor;
     private readonly IOptionsMonitor<ScheduledTasksOptions> _options;
 
+    private readonly ScheduledTasksSchemaState? _schema;
+
     public ScheduledTasksController(
         IScheduledTaskService service,
         IBackOfficeSecurityAccessor backOfficeSecurityAccessor,
-        IOptionsMonitor<ScheduledTasksOptions> options)
+        IOptionsMonitor<ScheduledTasksOptions> options,
+        ScheduledTasksSchemaState? schema = null)
     {
         _service = service;
         _backOfficeSecurityAccessor = backOfficeSecurityAccessor;
         _options = options;
+        _schema = schema;
     }
 
     [HttpGet]
@@ -45,7 +49,8 @@ public sealed class ScheduledTasksController : ManagementApiControllerBase
             Environment.MachineName,
             _service.CurrentServerRole.ToString(),
             _options.CurrentValue.RunHistoryLimit,
-            _service.GetAll().Select(t => t.ToDto()).ToList()));
+            _service.GetAll().Select(t => t.ToDto()).ToList(),
+            _options.CurrentValue.PersistRunHistory && _schema?.IsReady != false));
 
     [HttpGet("runs")]
     [ProducesResponseType(typeof(IReadOnlyList<ScheduledTaskRunDto>), StatusCodes.Status200OK)]
@@ -59,7 +64,7 @@ public sealed class ScheduledTasksController : ManagementApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult ClearRuns([FromQuery] string id)
-        => _service.ClearRuns(id).Status == ScheduledTaskCommandStatus.Ok ? NoContent() : NotFound();
+        => _service.ClearRuns(id, CurrentUserName()).Status == ScheduledTaskCommandStatus.Ok ? NoContent() : NotFound();
 
     [HttpPost("run")]
     [ProducesResponseType(typeof(ScheduledTaskCommandResponse), StatusCodes.Status200OK)]
@@ -124,7 +129,7 @@ public sealed class ScheduledTasksController : ManagementApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public IActionResult Reset([FromBody] ResetScheduledTaskRunRequest request)
-        => ToResponse(request.Id, _service.ResetRun(request.Id, request.RunningSinceUtc));
+        => ToResponse(request.Id, _service.ResetRun(request.Id, request.RunningSinceUtc, CurrentUserName()));
 
     [HttpPost("pause")]
     [ProducesResponseType(typeof(ScheduledTaskCommandResponse), StatusCodes.Status200OK)]
@@ -159,6 +164,54 @@ public sealed class ScheduledTasksController : ManagementApiControllerBase
         }
 
         return ToResponse(request.Id, _service.SetPeriod(request.Id, period, CurrentUserName()));
+    }
+
+    [HttpPost("stop")]
+    [ProducesResponseType(typeof(ScheduledTaskCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public IActionResult Stop([FromBody] ScheduledTaskIdRequest request)
+        => ToResponse(request.Id, _service.Stop(request.Id, CurrentUserName()));
+
+    [HttpPut("run-policy")]
+    [ProducesResponseType(typeof(ScheduledTaskCommandResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult SetRunPolicy([FromBody] SetScheduledTaskRunPolicyRequest request)
+    {
+        ScheduledTaskRunPolicy? policy = null;
+        if (request.RunPolicy is { } dto)
+        {
+            if (dto.RetryDelaySeconds is { } delay && !double.IsFinite(delay) || dto.TimeoutSeconds is { } limit && !double.IsFinite(limit))
+                return ProblemResult(StatusCodes.Status400BadRequest, "Enter numbers of seconds.");
+
+            policy = new ScheduledTaskRunPolicy(
+                dto.Retries,
+                ScheduledTaskRunPolicies.SecondsToTimeSpan(dto.RetryDelaySeconds),
+                ScheduledTaskRunPolicies.SecondsToTimeSpan(dto.TimeoutSeconds));
+        }
+
+        return ToResponse(request.Id, _service.SetRunPolicy(request.Id, policy, CurrentUserName()));
+    }
+
+    [HttpGet("changes")]
+    [ProducesResponseType(typeof(IReadOnlyList<ScheduledTaskAuditEntryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public IActionResult GetChanges([FromQuery] string id)
+        => _service.GetChanges(id) is { } changes ? Ok(changes.Select(c => c.ToDto()).ToList()) : NotFound();
+
+    [HttpGet("export")]
+    [ProducesResponseType(typeof(ScheduledTasksExport), StatusCodes.Status200OK)]
+    public IActionResult Export() => Ok(_service.Export());
+
+    [HttpPost("import")]
+    [ProducesResponseType(typeof(ScheduledTasksImportResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public IActionResult Import([FromBody] ImportScheduledTasksRequest request)
+    {
+        if (request.Document is null) return ProblemResult(StatusCodes.Status400BadRequest, "Choose a Scheduled Tasks export file.");
+        var result = _service.Import(request.Document, request.Apply, request.ResetMissing, CurrentUserName());
+        return result.Error is { } error ? ProblemResult(StatusCodes.Status400BadRequest, error) : Ok(result);
     }
 
     private IActionResult ToResponse(string id, ScheduledTaskCommandResult result) => result.Status switch

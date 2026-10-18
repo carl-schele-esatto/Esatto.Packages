@@ -3,11 +3,13 @@ using System.Text.Json.Nodes;
 
 namespace Esatto.Umbraco.Backoffice.ScheduledTasks;
 
+/// <param name="HistoryPersisted">Whether runs are saved in the database (every server's, surviving restarts) or kept in memory here.</param>
 public sealed record ScheduledTasksOverviewDto(
     string ServerName,
     string ServerRole,
     int RunHistoryLimit,
-    IReadOnlyList<ScheduledTaskDto> Tasks);
+    IReadOnlyList<ScheduledTaskDto> Tasks,
+    bool HistoryPersisted = false);
 
 /// <summary>
 /// A task as the dashboard sees it. Periods are in seconds; null means "never on its own"
@@ -46,7 +48,35 @@ public sealed record ScheduledTaskDto(
     double? Progress,
     string? ProgressMessage,
     string? CalendarUnavailableReason = null,
-    double? MinimumPeriodSeconds = null);
+    double? MinimumPeriodSeconds = null,
+    ScheduledTaskRunPolicyStateDto? RunPolicy = null,
+    string? StopRequestedBy = null,
+    DateTime? RetryAtUtc = null,
+    int? NextAttempt = null,
+    int? MaxAttempts = null);
+
+/// <summary>
+/// Retries and time limit: what the task runs with, and the job's own defaults. Seconds;
+/// <c>timeoutSeconds</c> null = no time limit. <c>isCustomised</c>: an editor changed them.
+/// </summary>
+public sealed record ScheduledTaskRunPolicyStateDto(
+    int Retries,
+    double RetryDelaySeconds,
+    double? TimeoutSeconds,
+    bool IsCustomised,
+    int DefaultRetries,
+    double DefaultRetryDelaySeconds,
+    double? DefaultTimeoutSeconds);
+
+/// <summary>New retries and time limit; null restores the task's defaults. <c>timeoutSeconds</c> 0 = no time limit.</summary>
+public sealed record SetScheduledTaskRunPolicyRequest(string Id, ScheduledTaskRunPolicyDto? RunPolicy);
+
+/// <summary>One entry of a task's change log.</summary>
+public sealed record ScheduledTaskAuditEntryDto(DateTime Utc, string? PerformedBy, string Action, string? Details, string? Server);
+
+/// <param name="Apply">False previews what would change without saving anything.</param>
+/// <param name="ResetMissing">Also put the tasks the file leaves out back on their defaults.</param>
+public sealed record ImportScheduledTasksRequest(ScheduledTasksExport Document, bool Apply, bool ResetMissing = false);
 
 /// <summary>
 /// A calendar schedule: <c>kind</c> daily | weekly | monthly | yearly | cron; <c>time</c> "HH:mm";
@@ -111,7 +141,12 @@ public sealed record ScheduledTaskRunDto(
     int Occurrences,
     DateTime LastOccurrenceUtc,
     double? Progress,
-    string? ProgressMessage);
+    string? ProgressMessage,
+    int Attempt = 1,
+    int MaxAttempts = 1,
+    DateTime? RetryAtUtc = null,
+    string? StopRequestedBy = null,
+    string? Log = null);
 
 public sealed record ScheduledTaskIdRequest(string Id);
 
@@ -148,7 +183,7 @@ internal static class ScheduledTaskDtoMapper
         task.IsPossiblyStuck,
         task.NextRunUtc,
         task.LastRunUtc,
-        task.Stats.Last?.ToDto(),
+        task.Stats.Last?.ToDto(includeLog: false),
         task.Stats.Runs,
         task.Stats.Failures,
         task.Setting?.UpdatedUtc,
@@ -159,7 +194,22 @@ internal static class ScheduledTaskDtoMapper
         task.Stats.Current?.Progress,
         task.Stats.Current?.ProgressMessage,
         task.CalendarUnavailableReason,
-        task.MinimumPeriod is { } minimum ? Seconds(minimum) : null);
+        task.MinimumPeriod is { } minimum ? Seconds(minimum) : null,
+        new ScheduledTaskRunPolicyStateDto(
+            task.RunPolicy.Retries,
+            task.RunPolicy.RetryDelay.TotalSeconds,
+            task.RunPolicy.Timeout?.TotalSeconds,
+            task.Setting?.RunPolicy is not null,
+            task.DefaultRunPolicy.Retries,
+            task.DefaultRunPolicy.RetryDelay.TotalSeconds,
+            task.DefaultRunPolicy.Timeout?.TotalSeconds),
+        task.StopRequestedBy,
+        task.Stats.PendingRetry?.RetryAtUtc,
+        task.Stats.PendingRetry is { } retry ? retry.Attempt + 1 : null,
+        task.Stats.PendingRetry?.MaxAttempts);
+
+    public static ScheduledTaskAuditEntryDto ToDto(this ScheduledTaskAuditEntry entry)
+        => new(entry.Utc, entry.PerformedBy, entry.Action, entry.Details, entry.Server);
 
     public static ScheduledTaskScheduleDto ToDto(this ScheduledTaskCalendar calendar) => new(
         calendar.Kind.ToString().ToLowerInvariant(),
@@ -235,7 +285,7 @@ internal static class ScheduledTaskDtoMapper
         form.IsCustomised,
         form.Warnings);
 
-    public static ScheduledTaskRunDto ToDto(this ScheduledTaskRun run) => new(
+    public static ScheduledTaskRunDto ToDto(this ScheduledTaskRun run, bool includeLog = true) => new(
         run.Id,
         run.Trigger.ToString().ToLowerInvariant(),
         run.TriggeredBy,
@@ -249,7 +299,12 @@ internal static class ScheduledTaskDtoMapper
         run.Occurrences,
         run.LastOccurrenceUtc,
         run.Progress,
-        run.ProgressMessage);
+        run.ProgressMessage,
+        run.Attempt,
+        run.MaxAttempts,
+        run.RetryAtUtc,
+        run.StopRequestedBy,
+        includeLog ? run.Log : null);
 
     private static double? Seconds(TimeSpan period)
         => period == Timeout.InfiniteTimeSpan ? null : period.TotalSeconds;

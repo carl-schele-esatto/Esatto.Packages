@@ -3,6 +3,7 @@ import { UmbModalBaseElement, umbConfirmModal } from '@umbraco-cms/backoffice/mo
 import { UmbDataPathPropertyValueQuery, UmbValidationContext } from '@umbraco-cms/backoffice/validation';
 import '@umbraco-cms/backoffice/property'; // <umb-property-dataset>, <umb-property>
 import { errorMessage, getProperties, setProperties } from '@esatto/scheduled-tasks/api.js';
+import { termsOf } from '@esatto/scheduled-tasks/format.js';
 
 const dataPath = (alias) => `$.values[${UmbDataPathPropertyValueQuery({ alias })}].value`;
 
@@ -38,6 +39,10 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
     #values = [];
     #loadStarted = false;
 
+    get #t() {
+        return termsOf(this.localize);
+    }
+
     constructor() {
         super();
         this._form = null;
@@ -57,7 +62,7 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
     async #load() {
         const { data, error } = await getProperties(this, this.data.task.id);
         if (error) {
-            this._error = errorMessage(error, 'Could not load the properties.');
+            this._error = errorMessage(error, this.#t('loadPropertiesFailed'));
         } else {
             this.#values = data.values.map((v) => ({ alias: v.alias, value: v.value }));
             this._form = data;
@@ -90,16 +95,16 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
             return;
         }
 
-        this.value = { task: data?.task, message: data?.message };
+        this.value = { task: data?.task, message: this.#t(data?.task?.hasCustomProperties === false ? 'propertiesReset' : 'propertiesSaved') };
         this._submitModal();
     }
 
     async #resetToDefaults() {
         try {
             await umbConfirmModal(this, {
-                headline: 'Reset to defaults?',
-                content: `Forget the saved values; “${this.data.task.name}” uses its built-in defaults from its next run.`,
-                confirmLabel: 'Reset',
+                headline: this.#t('resetPropertiesHeadline'),
+                content: this.#t('resetPropertiesContent', this.data.task.name),
+                confirmLabel: this.#t('reset'),
                 color: 'danger',
             });
         } catch {
@@ -111,17 +116,17 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
         this._saving = false;
 
         if (error) {
-            this._error = errorMessage(error, 'Could not reset the properties.');
+            this._error = errorMessage(error, this.#t('resetPropertiesFailed'));
             return;
         }
 
-        this.value = { task: data?.task, message: data?.message };
+        this.value = { task: data?.task, message: this.#t('propertiesReset') };
         this._submitModal();
     }
 
     /** Puts the server's per-field problems on the fields, and the summary at the top. */
     #showErrors(error) {
-        this._error = errorMessage(error, 'Could not save the properties.');
+        this._error = errorMessage(error, this.#t('savePropertiesFailed'));
         const aliases = new Set(this._form?.definitions.filter((d) => !d.error).map((d) => d.alias) ?? []);
         for (const [alias, messages] of fieldErrors(error?.problemDetails?.errors)) {
             // Only on fields that are shown: a message no field clears would keep failing validate().
@@ -141,8 +146,8 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
         return html`
             <uui-box>
                 <p class="intro">
-                    The task reads these values each time it runs; changes apply from its next run.
-                    ${form.isCustomised ? nothing : html`<br><span class="muted">All values are the task’s defaults.</span>`}
+                    ${this.#t('propertiesIntro')}
+                    ${form.isCustomised ? nothing : html`<br><span class="muted">${this.#t('allDefaults')}</span>`}
                 </p>
                 ${form.warnings.map((w) => html`<p class="warning">${w}</p>`)}
                 ${this._error ? html`<p role="alert" class="error">${this._error}</p>` : nothing}
@@ -168,7 +173,7 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
                 ${broken.length
                     ? html`
                         <div class="broken">
-                            <strong>Not editable here</strong>
+                            <strong>${this.#t('notEditable')}</strong>
                             <ul>${broken.map((d) => html`<li><code>${d.alias}</code>: ${d.error}</li>`)}</ul>
                         </div>`
                     : nothing}
@@ -179,22 +184,22 @@ class EsattoScheduledTaskPropertiesModal extends UmbModalBaseElement {
     render() {
         const task = this.data?.task;
         return html`
-            <umb-body-layout headline=${`Properties: ${task?.name ?? ''}`}>
+            <umb-body-layout headline=${this.#t('propertiesHeadline', task?.name ?? '')}>
                 ${this._loading ? html`<uui-loader></uui-loader>` : this.#renderForm()}
                 <div slot="actions">
                     ${this._form?.isCustomised
                         ? html`<uui-button
                             look="secondary"
                             color="danger"
-                            label="Reset to defaults"
+                            label=${this.#t('resetToDefaults')}
                             ?disabled=${this._saving}
                             @click=${() => this.#resetToDefaults()}></uui-button>`
                         : nothing}
-                    <uui-button label="Cancel" ?disabled=${this._saving} @click=${() => this._rejectModal()}></uui-button>
+                    <uui-button label=${this.#t('cancel')} ?disabled=${this._saving} @click=${() => this._rejectModal()}></uui-button>
                     <uui-button
                         look="primary"
                         color="positive"
-                        label="Save"
+                        label=${this.#t('save')}
                         .state=${this._saving ? 'waiting' : undefined}
                         ?disabled=${this._saving || this._loading || !this._form}
                         @click=${() => this.#save()}></uui-button>

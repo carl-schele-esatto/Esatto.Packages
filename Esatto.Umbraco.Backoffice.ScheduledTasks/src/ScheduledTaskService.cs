@@ -50,6 +50,15 @@ public sealed record ScheduledTaskInfo(
 
     /// <summary>The shortest interval an editor can set (the task's own period is always accepted).</summary>
     public TimeSpan? MinimumPeriod { get; init; }
+
+    /// <summary>Retries and time limit the task runs with (an editor's values over the job's defaults).</summary>
+    public EffectiveRunPolicy RunPolicy { get; init; } = EffectiveRunPolicy.None;
+
+    /// <summary>The job's own retries and time limit (<see cref="ScheduledTaskRunPolicyAttribute"/>).</summary>
+    public EffectiveRunPolicy DefaultRunPolicy { get; init; } = EffectiveRunPolicy.None;
+
+    /// <summary>Who asked the task's run in progress on this server to stop, if anyone has.</summary>
+    public string? StopRequestedBy { get; init; }
 }
 
 public enum ScheduledTaskCommandStatus
@@ -110,6 +119,9 @@ public interface IScheduledTaskService
 
     ScheduledTaskCommandResult ClearRuns(string id);
 
+    /// <summary>As <see cref="ClearRuns(string)"/>, recording who did it in the change log.</summary>
+    ScheduledTaskCommandResult ClearRuns(string id, string? clearedBy) => ClearRuns(id);
+
     /// <summary>
     /// Clears the "running" flag of a distributed task whose run was interrupted (e.g. the site
     /// stopped mid-run), so it runs again when due instead of waiting until Umbraco considers it stale.
@@ -123,6 +135,9 @@ public interface IScheduledTaskService
     /// </summary>
     ScheduledTaskCommandResult ResetRun(string id, DateTime? runningSinceUtc) => ResetRun(id);
 
+    /// <summary>As <see cref="ResetRun(string, DateTime?)"/>, recording who did it in the change log.</summary>
+    ScheduledTaskCommandResult ResetRun(string id, DateTime? runningSinceUtc, string? resetBy) => ResetRun(id, runningSinceUtc);
+
     /// <summary>
     /// The task's properties form (see <see cref="IScheduledTaskWithProperties{TProperties}"/>);
     /// no definitions when it has no properties, null when the task doesn't exist.
@@ -131,9 +146,32 @@ public interface IScheduledTaskService
 
     /// <summary>Saves editor values for the task's properties; null restores all defaults.</summary>
     ScheduledTaskCommandResult SetProperties(string id, IReadOnlyDictionary<string, JsonNode?>? values, string? updatedBy);
+
+    /// <summary>
+    /// Asks the task's runs in progress (on this server and others) to stop, or cancels a pending
+    /// retry. A job only stops if it observes its cancellation token.
+    /// </summary>
+    ScheduledTaskCommandResult Stop(string id, string? requestedBy) => throw new NotSupportedException();
+
+    /// <summary>Sets the task's retries and time limit; null restores the job's defaults.</summary>
+    ScheduledTaskCommandResult SetRunPolicy(string id, ScheduledTaskRunPolicy? policy, string? updatedBy) => throw new NotSupportedException();
+
+    /// <summary>The task's change log, newest first; null when the task doesn't exist.</summary>
+    IReadOnlyList<ScheduledTaskAuditEntry>? GetChanges(string id) => null;
+
+    /// <summary>Every task's editor settings (pause, schedule, properties, run policy), for another environment.</summary>
+    ScheduledTasksExport Export() => throw new NotSupportedException();
+
+    /// <summary>
+    /// Compares an export with the current settings and, when <paramref name="apply"/>, applies it:
+    /// all of it, or nothing when any task's settings can't be used.
+    /// </summary>
+    /// <param name="resetMissing">Also put the tasks the file leaves out back on their defaults.</param>
+    ScheduledTasksImportResult Import(ScheduledTasksExport document, bool apply, bool resetMissing, string? updatedBy)
+        => throw new NotSupportedException();
 }
 
-internal sealed class ScheduledTaskService : IScheduledTaskService
+internal sealed partial class ScheduledTaskService : IScheduledTaskService
 {
     private readonly IEnumerable<IRecurringBackgroundJob> _recurringJobs;
     private readonly IEnumerable<IDistributedBackgroundJob> _distributedJobs;
@@ -149,6 +187,9 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
     private readonly ScheduledTaskCalendarEvaluator _calendarEvaluator;
     private readonly IOptionsMonitor<ScheduledTasksOptions> _options;
     private readonly ILogger<ScheduledTaskService> _logger;
+    private readonly IScheduledTaskAuditLog? _auditLog;
+    private readonly ScheduledTaskRunControl _runControl;
+    private readonly IScheduledTaskRunStore? _runStore;
 
     public ScheduledTaskService(
         IEnumerable<IRecurringBackgroundJob> recurringJobs,
@@ -164,8 +205,14 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
         ScheduledTaskPropertyValues propertyValues,
         ScheduledTaskCalendarEvaluator calendarEvaluator,
         IOptionsMonitor<ScheduledTasksOptions> options,
-        ILogger<ScheduledTaskService> logger)
+        ILogger<ScheduledTaskService> logger,
+        IScheduledTaskAuditLog? auditLog = null,
+        ScheduledTaskRunControl? runControl = null,
+        IScheduledTaskRunStore? runStore = null)
     {
+        _auditLog = auditLog;
+        _runControl = runControl ?? new ScheduledTaskRunControl(runLog, TimeProvider.System);
+        _runStore = runStore;
         _propertyValues = propertyValues;
         _calendarEvaluator = calendarEvaluator;
         _recurringJobs = recurringJobs;
@@ -221,9 +268,9 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
                 return ScheduledTaskCommandResult.Conflict(
                     $"This task doesn't run on this server's role ({role}). Run it from a server with role {string.Join(" or ", recurring.ServerRoles)}.");
 
-            return host.RequestRun(triggeredBy)
-                ? ScheduledTaskCommandResult.Ok("Run started.")
-                : ScheduledTaskCommandResult.Conflict("The task is already running.");
+            if (!host.RequestRun(triggeredBy)) return ScheduledTaskCommandResult.Conflict("The task is already running.");
+            Audit(id, ScheduledTaskAuditActions.RunStarted, triggeredBy);
+            return ScheduledTaskCommandResult.Ok("Run started.");
         }
 
         if (FindDistributed(id) is { } distributed)
@@ -244,6 +291,7 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
             }
 
             StartDistributedRun(distributed, triggeredBy);
+            Audit(id, ScheduledTaskAuditActions.RunStarted, triggeredBy);
             return ScheduledTaskCommandResult.Ok("Run started.");
         }
 
@@ -254,7 +302,9 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
     {
         if (!Exists(id)) return ScheduledTaskCommandResult.NotFound;
 
+        var wasPaused = _settings.Get(id)?.IsPaused == true;
         _settings.Update(id, state => state with { IsPaused = isPaused }, updatedBy);
+        if (wasPaused != isPaused) Audit(id, isPaused ? ScheduledTaskAuditActions.Paused : ScheduledTaskAuditActions.Resumed, updatedBy);
         return ScheduledTaskCommandResult.Ok(isPaused ? "Task paused." : "Task resumed.");
     }
 
@@ -278,8 +328,14 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
 
         // Setting the task's own period is the same as resetting it. An interval replaces a calendar.
         var periodOverride = period == defaultPeriod ? null : period;
+        var before = DescribeSchedule(_settings.Get(id), defaultPeriod);
         _settings.Update(id, state => state with { PeriodOverride = periodOverride, Calendar = null }, updatedBy);
         ApplySchedule(id, periodOverride ?? defaultPeriod);
+        Audit(
+            id,
+            periodOverride is null ? ScheduledTaskAuditActions.ScheduleReset : ScheduledTaskAuditActions.IntervalChanged,
+            updatedBy,
+            ScheduledTaskDescriptions.Change(before, ScheduledTaskDescriptions.Schedule(null, periodOverride ?? defaultPeriod)));
 
         return ScheduledTaskCommandResult.Ok(periodOverride is null ? "Back on the task's own schedule." : "Interval updated.");
     }
@@ -291,11 +347,14 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
         else if (FindDistributed(id) is { } distributed) defaultPeriod = distributed.Period;
         else return ScheduledTaskCommandResult.NotFound;
 
+        var current = _settings.Get(id);
+        var before = DescribeSchedule(current, defaultPeriod);
         if (calendar is null)
         {
-            var current = _settings.Get(id);
             _settings.Update(id, state => state with { Calendar = null }, updatedBy);
             ApplySchedule(id, current?.PeriodOverride ?? defaultPeriod);
+            Audit(id, ScheduledTaskAuditActions.ScheduleChanged, updatedBy,
+                ScheduledTaskDescriptions.Change(before, ScheduledTaskDescriptions.Schedule(null, current?.PeriodOverride ?? defaultPeriod)));
             return ScheduledTaskCommandResult.Ok("Back on an interval.");
         }
 
@@ -310,6 +369,8 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
         var saved = calendar with { SavedUtc = utcNow };
         _settings.Update(id, state => state with { Calendar = saved, PeriodOverride = null }, updatedBy);
         ApplySchedule(id, defaultPeriod);
+        Audit(id, ScheduledTaskAuditActions.ScheduleChanged, updatedBy,
+            ScheduledTaskDescriptions.Change(before, ScheduledTaskDescriptions.Calendar(saved)));
         return ScheduledTaskCommandResult.Ok("Schedule saved.");
     }
 
@@ -345,16 +406,28 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
         _distributedJobTable.SetPeriods(new Dictionary<string, TimeSpan> { [name] = intervalPeriod });
     }
 
-    public ScheduledTaskCommandResult ClearRuns(string id)
+    public ScheduledTaskCommandResult ClearRuns(string id) => ClearRuns(id, null);
+
+    public ScheduledTaskCommandResult ClearRuns(string id, string? clearedBy)
     {
         if (!Exists(id)) return ScheduledTaskCommandResult.NotFound;
         _runLog.Clear(id);
+        Audit(id, ScheduledTaskAuditActions.HistoryCleared, clearedBy);
         return ScheduledTaskCommandResult.Ok("History cleared.");
     }
 
     public ScheduledTaskCommandResult ResetRun(string id) => ResetRun(id, null);
 
-    public ScheduledTaskCommandResult ResetRun(string id, DateTime? runningSinceUtc)
+    public ScheduledTaskCommandResult ResetRun(string id, DateTime? runningSinceUtc) => ResetRun(id, runningSinceUtc, null);
+
+    public ScheduledTaskCommandResult ResetRun(string id, DateTime? runningSinceUtc, string? resetBy)
+    {
+        var result = ResetRunCore(id, runningSinceUtc);
+        if (result.Status == ScheduledTaskCommandStatus.Ok) Audit(id, ScheduledTaskAuditActions.RunReset, resetBy);
+        return result;
+    }
+
+    private ScheduledTaskCommandResult ResetRunCore(string id, DateTime? runningSinceUtc)
     {
         if (FindDistributed(id) is not { } job)
         {
@@ -409,9 +482,125 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
             json = prepared;
         }
 
+        var before = _settings.Get(id)?.PropertiesJson;
         _settings.Update(id, state => state with { PropertiesJson = json }, updatedBy);
+        Audit(
+            id,
+            values is null ? ScheduledTaskAuditActions.PropertiesReset : ScheduledTaskAuditActions.PropertiesChanged,
+            updatedBy,
+            values is null ? null : ScheduledTaskDescriptions.ChangedProperties(before, json));
         return ScheduledTaskCommandResult.Ok(json is null ? "Properties reset to their defaults." : "Properties saved.");
     }
+
+    public ScheduledTaskCommandResult SetRunPolicy(string id, ScheduledTaskRunPolicy? policy, string? updatedBy)
+    {
+        if (FindJob(id) is not { } job) return ScheduledTaskCommandResult.NotFound;
+        if (policy is not null && ScheduledTaskRunPolicies.Validate(policy) is { } error) return ScheduledTaskCommandResult.Invalid(error);
+
+        // Values equal to the job's own defaults aren't overrides: they keep following the code.
+        var defaults = ScheduledTaskRunPolicies.Defaults(job.GetType());
+        var overrides = policy is null ? null : WithoutDefaults(policy, defaults);
+        var before = ScheduledTaskRunPolicies.Resolve(job.GetType(), _settings.Get(id)?.RunPolicy);
+
+        _settings.Update(id, state => state with { RunPolicy = overrides }, updatedBy);
+        var after = ScheduledTaskRunPolicies.Resolve(job.GetType(), overrides);
+        if (before != after)
+        {
+            Audit(id, ScheduledTaskAuditActions.RunPolicyChanged, updatedBy,
+                ScheduledTaskDescriptions.Change(ScheduledTaskRunPolicies.Describe(before), ScheduledTaskRunPolicies.Describe(after)));
+        }
+        return ScheduledTaskCommandResult.Ok(overrides is null ? "Retries and time limit back to the task's defaults." : "Retries and time limit saved.");
+    }
+
+    private static ScheduledTaskRunPolicy? WithoutDefaults(ScheduledTaskRunPolicy policy, EffectiveRunPolicy defaults)
+    {
+        var timeoutDefault = defaults.Timeout ?? TimeSpan.Zero;
+        var trimmed = new ScheduledTaskRunPolicy(
+            policy.Retries == defaults.Retries ? null : policy.Retries,
+            policy.RetryDelay == defaults.RetryDelay ? null : policy.RetryDelay,
+            policy.Timeout == timeoutDefault ? null : policy.Timeout);
+        return trimmed.IsEmpty ? null : trimmed;
+    }
+
+    public ScheduledTaskCommandResult Stop(string id, string? requestedBy)
+    {
+        if (!Exists(id)) return ScheduledTaskCommandResult.NotFound;
+
+        // Here, and on every other server that saved a run of the task as in progress.
+        var stoppedHere = _runControl.RequestStop(id, requestedBy);
+        var otherServers = new List<string>();
+        if (_runStore is { IsAvailable: true } store)
+        {
+            try
+            {
+                // Running there, or waiting in-process for a retry there (a recurring task's wait).
+                foreach (var run in store.GetActive(id).Where(r => !string.Equals(r.Server, Environment.MachineName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (store.RequestStop(run.Id, requestedBy ?? "someone")) otherServers.Add(run.Server);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not ask other servers to stop scheduled task {TaskId}", id);
+            }
+        }
+
+        if (stoppedHere || otherServers.Count > 0)
+        {
+            Audit(id, ScheduledTaskAuditActions.StopRequested, requestedBy,
+                otherServers.Count == 0 ? null : $"On {string.Join(", ", otherServers.Distinct(StringComparer.OrdinalIgnoreCase))}");
+            return ScheduledTaskCommandResult.Ok(stoppedHere
+                ? "Asked the task to stop. It stops as soon as it checks its cancellation token."
+                : "Asked the server running the task to stop it; it does within a few seconds, if the task checks its cancellation token.");
+        }
+
+        // A distributed task waiting for its retry isn't running anywhere: cancel the retry.
+        if (_runLog.GetPendingRetry(id, fresh: true) is { } failed)
+        {
+            _runLog.SetRetry(id, failed.Id, null);
+            if (ScheduledTaskIdentity.IsDistributed(id) && FindDistributed(id) is { } distributed)
+                ApplySchedule(id, _settings.Get(id)?.PeriodOverride ?? distributed.Period);
+            Audit(id, ScheduledTaskAuditActions.RetryCanceled, requestedBy);
+            return ScheduledTaskCommandResult.Ok("Retry canceled.");
+        }
+
+        return ScheduledTaskCommandResult.Conflict("The task isn't running.");
+    }
+
+    public IReadOnlyList<ScheduledTaskAuditEntry>? GetChanges(string id)
+    {
+        if (!Exists(id)) return null;
+        if (_auditLog is null) return [];
+        try
+        {
+            return _auditLog.Get(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not read the change log of scheduled task {TaskId}", id);
+            return [];
+        }
+    }
+
+    /// <summary>Who asked the task's run on another server to stop, per the saved run; null when nobody has.</summary>
+    private string? RemoteStopRequestedBy(string id)
+    {
+        if (_runStore is not { IsAvailable: true } store) return null;
+        try
+        {
+            return store.GetRunning(id).FirstOrDefault(r => r.StopRequestedBy is not null)?.StopRequestedBy;
+        }
+        catch
+        {
+            return null; // the dashboard still works without it
+        }
+    }
+
+    private void Audit(string id, string action, string? performedBy, string? details = null)
+        => _auditLog?.Write(id, action, performedBy, details);
+
+    private static string DescribeSchedule(ScheduledTaskSetting? setting, TimeSpan defaultPeriod)
+        => ScheduledTaskDescriptions.Schedule(setting?.Calendar, setting?.PeriodOverride ?? defaultPeriod);
 
     // Units for describing periods, largest first. Like the dashboard, a month is 30 days and a year
     // 365 days: Umbraco schedules by fixed periods, not calendar dates.
@@ -475,6 +664,9 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
             PropertyCount(job))
         {
             MinimumPeriod = _options.CurrentValue.MinimumPeriod,
+            RunPolicy = ScheduledTaskRunPolicies.Resolve(type, setting?.RunPolicy),
+            DefaultRunPolicy = ScheduledTaskRunPolicies.Defaults(type),
+            StopRequestedBy = _runControl.StopRequestedBy(id),
         };
     }
 
@@ -501,7 +693,8 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
             type.Assembly.GetName().Name,
             ScheduledTaskKind.Distributed,
             IsUmbracoAssembly(type),
-            row?.Period ?? setting?.PeriodOverride ?? job.Period,
+            // While a retry is pending the row's period is the wait for it, not the task's interval.
+            (stats.PendingRetry is null ? row?.Period : null) ?? setting?.PeriodOverride ?? job.Period,
             job.Period,
             null,
             [],
@@ -519,6 +712,11 @@ internal sealed class ScheduledTaskService : IScheduledTaskService
         {
             CalendarUnavailableReason = DistributedJobClock.IsAlignedToClock(job) ? AlignedToClockReason : null,
             MinimumPeriod = DistributedMinimumPeriod(),
+            RunPolicy = ScheduledTaskRunPolicies.Resolve(type, setting?.RunPolicy),
+            DefaultRunPolicy = ScheduledTaskRunPolicies.Defaults(type),
+            StopRequestedBy = _runControl.StopRequestedBy(id)
+                ?? stats.Current?.StopRequestedBy
+                ?? (isRunning && !runningHere ? RemoteStopRequestedBy(id) : null),
         };
     }
 

@@ -26,6 +26,7 @@ const stubs = {
     '@umbraco-cms/backoffice/modal': moduleUrl(`
         export class UmbModalBaseElement {
             isConnected = true;
+            localize = globalThis.__localize;
             data;
             modalContext;
             submitted = 0;
@@ -59,6 +60,16 @@ registerHooks({
         return nextResolve(specifier, context);
     },
 });
+
+// The localize controller over the English texts, as the backoffice resolves them.
+const { termsFrom, SECTION } = await import(pathToFileURL(path.join(pluginDir, 'format.js')).href);
+const { default: en } = await import(pathToFileURL(path.join(pluginDir, 'lang/en.js')).href);
+const englishTerms = termsFrom(en);
+globalThis.__localize = {
+    term: (key, ...args) => englishTerms(key.slice(SECTION.length + 1), ...args),
+    lang: () => 'en',
+    date: (value) => new Date(value).toISOString(),
+};
 
 const defined = new Map();
 globalThis.customElements = { define: (name, ctor) => defined.set(name, ctor) };
@@ -141,7 +152,7 @@ test('saving while open submits the result', async () => {
     await clickSave(modal);
     assert.deepEqual(calls, [['setPeriod', 'job-1', 1800]]);
     assert.equal(modal.submitted, 1);
-    assert.equal(modal.value.message, 'Interval saved.');
+    assert.equal(modal.value.message, 'Interval updated.');
 });
 
 test('closing the sidebar while a save is in flight hands the result to the opener instead of throwing', async () => {
@@ -166,7 +177,7 @@ test('closing the sidebar while a save is in flight hands the result to the open
     }
     assert.equal(modal.submitted, 0);
     assert.equal(late.length, 1);
-    assert.equal(late[0].message, 'Interval saved.');
+    assert.equal(late[0].message, 'Interval updated.');
 });
 
 test('an interval below the task’s minimum is refused with a message, without calling the server', async () => {
@@ -225,6 +236,6 @@ test('the time zone list offers UTC and the stored zone', () => {
 
 /** Clicks Save (the primary action) and waits for it to finish. */
 function clickSave(modal) {
-    const save = templates(modal.render()).find((t) => t.strings.join('').includes('label="Save"'));
+    const save = templates(modal.render()).find((t) => t.strings.join('').includes('look="primary"') && t.strings.join('').includes('color="positive"'));
     return save.values[save.values.length - 1]();
 }

@@ -1,16 +1,38 @@
 // Pure formatting helpers for the Scheduled Tasks dashboard. No @umbraco-cms imports, so they
 // unit-test in plain Node (see Esatto.Umbraco.Backoffice.ScheduledTasks.Tests/client).
+//
+// Text comes from the localization files (lang/en.js, lang/sv.js) through `t(key, ...args)`, a
+// lookup of `esattoScheduledTasks_<key>`: in the backoffice the element's localize controller
+// (see termsOf), in tests the dictionary itself (see termsFrom).
 
 const DAY = 86400;
+export const SECTION = 'esattoScheduledTasks';
+
+/** t(key, ...args) over an element's localize controller (`this.localize`). */
+export function termsOf(localize) {
+    return (key, ...args) => localize.term(`${SECTION}_${key}`, ...args);
+}
+
+/** t(key, ...args) over a localization dictionary such as lang/en.js, as Umbraco resolves it. */
+export function termsFrom(...dictionaries) {
+    return (key, ...args) => {
+        for (const dictionary of dictionaries) {
+            const entry = dictionary?.[SECTION]?.[key];
+            if (typeof entry === 'function') return entry(...args);
+            if (typeof entry === 'string') return entry.replace(/\{(\d+)\}/g, (match, i) => (args[i] === undefined ? match : String(args[i])));
+        }
+        return key;
+    };
+}
 
 // Units an editor can pick for an interval, largest first. Monthly and yearly runs are calendar
 // schedules ("on the 1st", "on 15 March") rather than fixed intervals.
 export const INTERVAL_UNITS = [
-    { unit: 'weeks', seconds: 7 * DAY, singular: 'week', label: 'weeks' },
-    { unit: 'days', seconds: DAY, singular: 'day', label: 'days' },
-    { unit: 'hours', seconds: 3600, singular: 'hour', label: 'hours' },
-    { unit: 'minutes', seconds: 60, singular: 'minute', label: 'minutes' },
-    { unit: 'seconds', seconds: 1, singular: 'second', label: 'seconds' },
+    { unit: 'weeks', seconds: 7 * DAY, term: 'unitWeeks' },
+    { unit: 'days', seconds: DAY, term: 'unitDays' },
+    { unit: 'hours', seconds: 3600, term: 'unitHours' },
+    { unit: 'minutes', seconds: 60, term: 'unitMinutes' },
+    { unit: 'seconds', seconds: 1, term: 'unitSeconds' },
 ];
 
 // Compact units for elapsed times (how long a run took).
@@ -44,11 +66,10 @@ export function formatDuration(seconds) {
  * 3600 → "Every hour", 1209600 → "Every 2 weeks", 5400 → "Every 90 minutes".
  * null means the task never runs on its own.
  */
-export function formatInterval(seconds) {
-    if (seconds == null) return 'On demand only';
+export function formatInterval(seconds, t) {
+    if (seconds == null) return t('onDemandOnly');
     const { value, unit } = splitInterval(seconds);
-    if (value === 1) return `Every ${INTERVAL_UNITS.find((u) => u.unit === unit).singular}`;
-    return `Every ${value} ${unit}`;
+    return t('every', value, unit);
 }
 
 /** Run time: 320 → "320 ms", 4200 → "4.2 s", 95000 → "1 min 35 s". */
@@ -97,44 +118,45 @@ export function toSeconds(value, unit) {
 }
 
 // Calendar schedules, as the API sends them: { kind, time, weekdays, dayOfMonth, month, cron, timeZone }.
+// Weekdays travel as English names; they're shown in the user's language.
 export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-export const MONTHS = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
-];
 
-/** 1 → "1st", 22 → "22nd", 13 → "13th". */
-export function ordinal(n) {
-    const tens = n % 100;
-    if (tens >= 11 && tens <= 13) return `${n}th`;
-    return `${n}${{ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th'}`;
+/** The weekday names in the user's language, in WEEKDAYS order. */
+export function weekdayNames(t, short = false) {
+    return t(short ? 'weekdayShortNames' : 'weekdayNames').split(',');
 }
 
-/** ['Monday'] → "Monday"; ['Monday', 'Thursday', 'Friday'] → "Monday, Thursday and Friday". */
-function joinList(items) {
-    return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+/** The month names in the user's language, January first. */
+export function monthNames(t) {
+    return t('monthNames').split(',');
+}
+
+/** ['a'] → "a"; ['a', 'b', 'c'] → "a, b and c" (in the user's language). */
+function joinList(items, t) {
+    return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} ${t('and')} ${items[items.length - 1]}`;
 }
 
 /** "Every Monday at 07:00", "Every month on the 1st at 06:00", "Every year on 15 March at 09:00". */
-export function describeSchedule(schedule) {
+export function describeSchedule(schedule, t) {
     if (!schedule) return '';
-    const at = schedule.time ? ` at ${schedule.time}` : '';
+    const time = schedule.time ?? '';
 
     switch (schedule.kind) {
         case 'daily':
-            return `Every day${at}`;
+            return t('everyDayAt', time);
         case 'weekly': {
-            const days = WEEKDAYS.filter((d) => schedule.weekdays?.includes(d));
-            if (days.length === 7) return `Every day${at}`;
-            if (days.join() === WEEKDAYS.slice(0, 5).join()) return `Every weekday${at}`;
-            return `Every ${joinList(days)}${at}`;
+            const names = weekdayNames(t);
+            const days = WEEKDAYS.map((d, i) => (schedule.weekdays?.includes(d) ? names[i] : null)).filter(Boolean);
+            if (days.length === 7) return t('everyDayAt', time);
+            if (days.length === 5 && WEEKDAYS.slice(0, 5).every((d) => schedule.weekdays.includes(d))) return t('everyWeekdayAt', time);
+            return t('everyDaysAt', joinList(days, t), time);
         }
         case 'monthly':
-            return `Every month on the ${ordinal(schedule.dayOfMonth)}${at}`;
+            return t('everyMonthOn', schedule.dayOfMonth, time);
         case 'yearly':
-            return `Every year on ${schedule.dayOfMonth} ${MONTHS[schedule.month - 1] ?? '?'}${at}`;
+            return t('everyYearOn', schedule.dayOfMonth, monthNames(t)[schedule.month - 1] ?? '?', time);
         case 'cron':
-            return `Cron: ${schedule.cron}`;
+            return t('cron', schedule.cron);
         default:
             return '';
     }
@@ -155,9 +177,9 @@ export function matchesFilter(task, term) {
 }
 
 /** 1 → "1 second", 300 → "5 minutes", 7200 → "2 hours" (largest exact unit). */
-export function formatLength(seconds) {
+export function formatLength(seconds, t) {
     const { value, unit } = splitInterval(seconds);
-    return value === 1 ? `1 ${INTERVAL_UNITS.find((u) => u.unit === unit).singular}` : `${value} ${unit}`;
+    return t('length', value, unit);
 }
 
 /**
@@ -189,9 +211,37 @@ export function timeZoneOptions(current, supported) {
 }
 
 /** Message when an interval is shorter than the task allows ('' when it's fine or there's no limit). */
-export function minimumIntervalError(seconds, minimumPeriodSeconds) {
+export function minimumIntervalError(seconds, minimumPeriodSeconds, t) {
     if (minimumPeriodSeconds == null || !Number.isFinite(minimumPeriodSeconds) || minimumPeriodSeconds <= 0) return '';
-    return seconds < minimumPeriodSeconds
-        ? `This task can’t run more often than every ${formatLength(minimumPeriodSeconds)}.`
-        : '';
+    return seconds < minimumPeriodSeconds ? t('minimumInterval', formatLength(minimumPeriodSeconds, t)) : '';
+}
+
+/** "3 retries, 1 minute apart · time limit 10 minutes" for a run policy (as the API sends it). */
+export function describeRunPolicy(retries, retryDelaySeconds, timeoutSeconds, t) {
+    const retriesText = t('retriesEvery', retries, formatLength(retryDelaySeconds, t));
+    const limitText = timeoutSeconds ? t('withTimeLimit', formatLength(timeoutSeconds, t)) : t('noTimeLimit');
+    return `${retriesText} · ${limitText}`;
+}
+
+/** The short summary under a task's "Retries & time limit" button: "3 retries · limit 10 minutes". */
+export function summarizeRunPolicy(policy, t) {
+    if (!policy) return '';
+    const parts = [policy.retries > 0 ? t('retriesCount', policy.retries) : t('noRetries')];
+    if (policy.timeoutSeconds) parts.push(t('timeLimit', formatLength(policy.timeoutSeconds, t)));
+    return parts.join(' · ');
+}
+
+/**
+ * A captured log line "2026-10-18T07:00:03.120Z INF Source: message" split into its time (a Date,
+ * or null when the line has none), level and text.
+ */
+export function parseLogLine(line) {
+    const match = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z) (VRB|DBG|INF|WRN|ERR|FTL) (.*)$/.exec(line ?? '');
+    if (!match) return { time: null, level: null, text: line ?? '' };
+    return { time: new Date(match[1]), level: match[2], text: match[3] };
+}
+
+/** A run's captured log (lines separated by newlines) as parsed lines. */
+export function logLines(log) {
+    return log ? log.split('\n').map(parseLogLine) : [];
 }

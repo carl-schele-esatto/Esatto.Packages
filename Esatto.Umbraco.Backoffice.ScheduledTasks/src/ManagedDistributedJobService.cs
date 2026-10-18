@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Umbraco.Cms.Infrastructure.BackgroundJobs;
 using Umbraco.Cms.Infrastructure.Models;
 using Umbraco.Cms.Infrastructure.Services;
@@ -42,6 +43,8 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
     private readonly ScheduledTaskCalendarEvaluator _calendarEvaluator;
     private readonly ILogger<ManagedDistributedJobService> _logger;
     private readonly TimeProvider _timeProvider;
+    private readonly ScheduledTaskRunControl _runControl;
+    private readonly IOptionsMonitor<ScheduledTasksOptions>? _options;
 
     // Occurrences handled on this server, by job name: still known if recording one in the database failed.
     private readonly ConcurrentDictionary<string, DateTime> _handledOccurrences = new(StringComparer.Ordinal);
@@ -61,7 +64,9 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
         IEnumerable<IDistributedBackgroundJob> jobs,
         ScheduledTaskCalendarEvaluator calendarEvaluator,
         ILogger<ManagedDistributedJobService> logger,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        ScheduledTaskRunControl? runControl = null,
+        IOptionsMonitor<ScheduledTasksOptions>? options = null)
     {
         _inner = inner;
         _table = table;
@@ -71,6 +76,8 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
         _calendarEvaluator = calendarEvaluator;
         _logger = logger;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _runControl = runControl ?? new ScheduledTaskRunControl(runLog, _timeProvider);
+        _options = options;
     }
 
     public async Task<IDistributedBackgroundJob?> TryTakeRunnableAsync()
@@ -98,6 +105,27 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
 
         var job = await _inner.TryTakeRunnableAsync();
         if (job is null) return null;
+
+        // A failed run's retry that has come due: run it as that retry (it doesn't serve a calendar occurrence).
+        if (DueRetry(job) is { } retryOf)
+        {
+            // The row was taken with the short retry-delay period. Running longer than that plus
+            // MaximumExecutionTime would look stale, and another server would start the job on top
+            // of the retry; give the running row the task's real period, as a normal run has.
+            try
+            {
+                var setting = _settings.Get(ScheduledTaskIdentity.ForDistributed(job.Name));
+                var period = setting?.PeriodOverride ?? job.Period;
+                if (RunningPeriod(job, setting, UtcNow()) is { } calendarPeriod && calendarPeriod > period) period = calendarPeriod;
+                if (period > TimeSpan.Zero) _table.RaiseRunningPeriod(job.Name, period);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not keep the retry of distributed job {JobName} from looking stale early", job.Name);
+            }
+
+            return Track(job, ScheduledTaskTrigger.Retry, triggeredBy: null, skipReason: null, retryOf);
+        }
 
         string? skipReason = null;
         try
@@ -142,8 +170,29 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
     public TrackedDistributedJob Track(IDistributedBackgroundJob job, ScheduledTaskTrigger trigger, string? triggeredBy)
         => Track(job, trigger, triggeredBy, skipReason: null);
 
-    private TrackedDistributedJob Track(IDistributedBackgroundJob job, ScheduledTaskTrigger trigger, string? triggeredBy, string? skipReason)
-        => new(job, trigger, triggeredBy, _settings, _runLog, _logger, skipReason);
+    private TrackedDistributedJob Track(
+        IDistributedBackgroundJob job,
+        ScheduledTaskTrigger trigger,
+        string? triggeredBy,
+        string? skipReason,
+        ScheduledTaskRun? retryOf = null)
+        => new(job, trigger, triggeredBy, _settings, _runLog, _logger, skipReason,
+            _runControl, _options?.CurrentValue, _timeProvider, retryOf);
+
+    // A retry is taken up to one poll early: the poller only looks every PollPeriod.
+    private ScheduledTaskRun? DueRetry(IDistributedBackgroundJob job)
+    {
+        try
+        {
+            var pending = _runLog.GetPendingRetry(ScheduledTaskIdentity.ForDistributed(job.Name), fresh: true);
+            return pending?.RetryAtUtc is { } retryAt && retryAt <= UtcNow() + _table.PollPeriod ? pending : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not check for a pending retry of distributed job {JobName}", job.Name);
+            return null;
+        }
+    }
 
     /// <summary>
     /// The period a calendar job's row should have while it runs (taken now): at least the job's
@@ -283,6 +332,15 @@ internal sealed class ManagedDistributedJobService : IDistributedJobService
                         "Distributed job {JobName} aligns its runs to the clock, so its calendar schedule is ignored; it runs every {Period}",
                         name, job.Period);
                 periods[name] = job.Period;
+            }
+            else if (setting?.IsPaused != true
+                     && _runLog.GetPendingRetry(ScheduledTaskIdentity.ForDistributed(name))?.RetryAtUtc is { } retryAt
+                     && rows.TryGetValue(name, out var failedRow))
+            {
+                // A failed run is tried again: due at the retry time, whatever the schedule says.
+                var lastRun = DateTime.SpecifyKind(failedRow.LastRun, DateTimeKind.Utc);
+                periods[name] = retryAt > lastRun ? retryAt - lastRun : TimeSpan.Zero;
+                scheduled++;
             }
             else if (setting?.Calendar is { } onCalendar)
             {

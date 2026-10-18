@@ -5,13 +5,18 @@ A Settings-section dashboard lists every recurring and distributed task (Umbraco
 
 - **See** each task's schedule, status, last run (outcome, duration, error) and next run
 - **Run now**: trigger any task immediately, even a paused one
+- **Stop**: ask a running task to stop, on whichever server runs it
 - **Pause / resume**: stop a task's scheduled runs without a deploy
 - **Change the schedule**: an interval (every 30 minutes, every 2 weeks) or calendar times (every Monday at 07:00, the 1st of every month, every year on 15 March, or any cron expression) in your time zone, with a preview of the next runs
+- **Retries and time limits**: try a failed run again (so many times, so long apart) and fail a run that takes too long; defaults in code, editable in the dashboard
 - **Properties**: let editors set what a job works on, such as the page a clean-up job starts from, with Umbraco's own editors (content tree picker, dropdowns, toggles…)
 - **Progress**: a job can report how far it has got, shown as a progress bar while it runs
-- **History**: recent runs per task, with the exception message and stack trace of failures
-- Works with **existing jobs unchanged**: no base class or registration change required. Properties are opt-in per job.
-- Pause, schedule and property values are **stored in the database** and survive restarts
+- **History**: every server's runs, saved in the database, with the exception and stack trace of failures and **the log lines each run wrote**
+- **Change log**: who paused, rescheduled, ran or stopped a task, and what they changed
+- **Export / import**: move every task's settings from one environment to another, with a preview of what changes
+- **English and Swedish**, following each user's backoffice language
+- Works with **existing jobs unchanged**: no base class or registration change required. Properties and retries are opt-in per job.
+- Pause, schedule, property values and run history are **stored in the database** and survive restarts
 
 ## How it works
 
@@ -27,11 +32,27 @@ A task that declares properties (see [Task properties](#task-properties)) has a 
 
 ![A task's properties](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-properties.png)
 
-**History** opens the task's recent runs on this server: who started a manual run, which runs were triggered from code, and why a run failed or was skipped.
+**Retries & time limit** sets what happens when a run fails or takes too long (see [Retries and time limits](#retries-and-time-limits)). A task waiting for its retry shows **Retry pending**; a running task has a **Stop** button.
 
-![Run history](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-history.png)
+![Retries and time limit](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-run-policy.png)
+
+**History** opens the task's recent runs, from every server: who started a manual run, which runs were triggered from code or were retries (attempt 2 of 3), why a run failed, was skipped or stopped, and what the job logged while it ran.
+
+![Run history with a run's log](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-history.png)
+
+Its **Changes** tab is the task's change log: who changed what, and when.
+
+![A task's change log](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-changes.png)
+
+**Export** downloads every task's settings as a JSON file; **Import** on another environment (staging → production) shows what the file would change before anything is saved. See [Export and import](#export-and-import).
+
+![Importing settings](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-import.png)
 
 Pausing one of Umbraco's own tasks asks for confirmation first, because some of them (cache instruction processing, scheduled publishing, clean-up) keep the site healthy.
+
+The dashboard follows each user's backoffice language: English, or Swedish for users set to Svenska.
+
+![The dashboard in Swedish](https://raw.githubusercontent.com/carl-schele-esatto/Esatto.Packages/main/Esatto.Umbraco.Backoffice.ScheduledTasks/docs/scheduled-tasks-swedish.png)
 
 ## Getting started
 
@@ -112,6 +133,9 @@ Start the site and open **Settings → Scheduled Tasks**. From there an editor c
 
 - **Properties** editors set for the job, such as which part of the content tree it works on: see [Task properties](#task-properties).
 - **A progress bar** while the job runs: see [Progress](#progress).
+- **Retries and a time limit**: `[ScheduledTaskRunPolicy(Retries = 3, RetryDelaySeconds = 60, TimeoutSeconds = 600)]` on the job: see [Retries and time limits](#retries-and-time-limits).
+- **Stoppable runs**: pass the `CancellationToken` your job gets on to what it awaits (or check it in loops), and **Stop** and the time limit can end it early. See [Stopping a run](#stopping-a-run).
+- **Logs in the history**: nothing to do. Whatever the job logs through `ILogger` while it runs is kept with the run. See [Run logs](#run-logs).
 - **Run it from code**, for example right after content is published, with Umbraco's trigger. The run shows in the history as *Triggered from code* and respects a pause:
 
   ```csharp
@@ -315,8 +339,79 @@ public sealed class SearchIndexRebuildJob(IScheduledTaskProgress progress, IMyIn
 
 - `Report(this, percent, message)`: a `null` percent only changes the message (for steps you can't count), and a `null` message keeps the previous one. Values outside 0–100 are clamped.
 - It works the same for `IDistributedBackgroundJob`s and combines with properties.
-- Reporting is an in-memory update, cheap enough for every item. Like the run history it lives on the server that runs the job, so a distributed job's progress shows on that server's dashboard (normally the one editors use).
+- Reporting is an in-memory update, cheap enough for every item. The latest progress is saved with the run every few seconds (`RunHistoryFlushInterval`), so other servers' dashboards see it too, a little behind.
 - Reports while no run of the job is in progress (e.g. from a constructor) are ignored.
+
+## Retries and time limits
+
+A failed run can be tried again, and a run that takes too long can be failed. Set the job's defaults with an attribute; editors can change them per task under **Retries & time limit** (and **Use the task's defaults** goes back to the attribute's values).
+
+```csharp
+using Esatto.Umbraco.Backoffice.ScheduledTasks;
+
+// A failed import is tried 3 more times, 2 minutes apart; a run over 10 minutes is stopped and counts as failed.
+[ScheduledTaskRunPolicy(Retries = 3, RetryDelaySeconds = 120, TimeoutSeconds = 600)]
+public sealed class ProductFeedImportJob(IProductFeed feed) : RecurringBackgroundJobBase(TimeSpan.FromHours(1))
+{
+    public override async Task RunJobAsync(CancellationToken cancellationToken)
+        => await feed.ImportAsync(cancellationToken);   // pass the token on: it's how a stop or the time limit reaches the work
+}
+```
+
+| Setting | Default | Range |
+|---------|---------|-------|
+| `Retries` | `0` (no retries) | 0–10 |
+| `RetryDelaySeconds` | `60` | 1 second – 1 day |
+| `TimeoutSeconds` | `0` (no time limit) | 1 second – 7 days |
+
+- Every attempt is its own entry in the history (*Retry · attempt 2 of 4*), with its own error and log. A run that fails all its attempts publishes Umbraco's `RecurringBackgroundJobFailedNotification` once, at the end.
+- **Recurring tasks** wait for the retry in-process: the task shows as running (**Retry pending**) and its next scheduled run waits too. Pausing the task ends a scheduled run's retries; a run started with **Run now** keeps retrying.
+- **Distributed tasks** don't wait: Umbraco's poller runs one distributed job at a time, so waiting would hold up all of them (scheduled publishing included). Instead the failed run records when it's tried again and the job's row in `umbracoDistributedJob` gets the period that makes it due then. Any server can pick the retry up; it runs on the first poll after the delay that has no other job due (Umbraco takes one due job per 5-second poll), so it may start a few seconds late. Pausing the task drops a pending retry.
+- **Stop** (or **Cancel retry** on a distributed task that's waiting) ends a run's retries. A stopped run isn't retried.
+- A time limit cancels the job's `CancellationToken` and records the run as *Timed out after 10 minutes*, which is retried like any failure. A job that ignores the token can't be stopped early: it runs on, and the run is recorded as finishing after its time limit.
+
+## Stopping a run
+
+A running task has a **Stop** button. It asks the run to stop through the `CancellationToken` the job got, on whichever server is running it: the server you're on stops it at once, other servers within a few seconds (they check for stop requests every `RunHistoryFlushInterval`). The run is recorded as *Canceled: Stopped by Carl*. Stopping only works for a job that observes the token: pass it on to what it awaits (`HttpClient`, EF Core, `Task.Delay`…) or check it in loops:
+
+```cs
+foreach (var page in pages)
+{
+    cancellationToken.ThrowIfCancellationRequested();
+    await indexer.IndexAsync(page, cancellationToken);
+}
+```
+
+A job that doesn't check it runs on until it finishes (the run is then recorded as finishing although it was asked to stop). Runs of Umbraco's own jobs can be stopped too, as far as they observe their token.
+
+## Run logs
+
+Everything a job logs through `ILogger` while it runs (and everything the code it calls logs, Umbraco's services included) is kept with the run and shown in its history, in the user's time zone. Nothing to set up: the package adds a Serilog sink that only picks up events logged inside a run.
+
+- From `Information` up, at most 500 lines per run (`RunLogMinimumLevel`, `RunLogMaxLines`; `RunLogMinimumLevel: "None"` turns it off). Serilog's own minimum levels still apply first.
+- The log goes wherever it went before too (files, the Log Viewer…): the run's copy is extra.
+- Work a job starts but doesn't await (fire-and-forget) runs outside the run, so its logging isn't captured.
+
+## Export and import
+
+**Export** on the dashboard downloads every task's editor settings (pause, interval or calendar schedule, property values, retries and time limit) as JSON. Tasks on their defaults aren't in the file. **Import** on another environment reads such a file and first shows what it would change, task by task:
+
+- **Changes**: what's different, e.g. *Schedule: Every hour → Every Monday at 07:00 (Europe/Stockholm)*
+- **Not on this site**: tasks the file has that this site doesn't (skipped)
+- **Can't be imported**: settings this site refuses (an interval outside the allowed range, an invalid schedule, a property value that no longer fits). Then nothing is imported until the file is fixed.
+- Optionally, tasks the file doesn't mention are put back on their defaults.
+
+The import is recorded in each changed task's change log. A calendar schedule that's the same as the current one keeps its bookkeeping, so no occurrence runs twice or goes missing. Property values are imported as they were saved: content picked in a content picker is identified by its key, which matches between environments kept in step by Umbraco Deploy or uSync, but not between unrelated sites.
+
+## Change log
+
+Every change made from the dashboard is recorded per task: pause and resume, interval and schedule changes (*Every hour → Every day at 07:00*), property changes (which properties), retries and time limit, **Run now**, **Stop**, cancelled retries, cleared history, reset running flags and imports, with who did it, when and on which server. It's in the **Changes** tab of the task's history, kept for a year (`AuditRetention`), and also written to the log at `Information` level.
+
+## Languages
+
+The dashboard and its sidebars are in English and Swedish, following each user's backoffice UI language (set per user under Users). Users with any other language see English. The package's own messages from the server (validation errors, a skipped run's reason) are in English.
+
+Adding a language is a `localization` extension in your site's `umbraco-package.json` whose `esattoScheduledTasks` keys mirror the package's `lang/en.js` (in `wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/lang/`); keys you leave out fall back to English.
 
 ## What it hooks into
 
@@ -355,7 +450,9 @@ A calendar schedule ("every Monday at 07:00") replaces the task's interval; swit
 
 - Pause, schedule and property values live in the database. The server that handled the change applies it immediately; every other server re-reads them every `SettingsRefreshInterval` (30 s by default) and applies schedule changes to its timer then.
 - Distributed tasks are coordinated through the database, so run now, pause and schedule apply to the whole cluster. After every run the job's period is rewritten from the stored setting, so a server with an outdated copy can't leave a wrong schedule behind. Their interval can't be shorter than Umbraco's poll period (`Umbraco:CMS:DistributedJobs:Period`, 5 s by default): Umbraco takes one due job per poll, so a shorter one would keep the others from running.
-- Run history is kept **in memory on each server** (it resets on restart). The dashboard shows the history of the server you're connected to, normally the backoffice / SchedulingPublisher server. Umbraco's own jobs run every few seconds, so a database log would add constant writes.
+- Run history is **saved in the database** by every server, so the history shows each run with the server it ran on, whichever server you're connected to. Each server writes its new and changed runs in one batch every `RunHistoryFlushInterval` (5 s), keeps the latest `RunHistoryLimit` per task and deletes runs older than `RunHistoryRetention`. What's running right now (with its live progress and log) is shown from the server's memory until it's written. Runs of tasks that run more often than `PersistAllRunsFromPeriod` (a minute; e.g. Umbraco's cache instruction processing every 5 seconds) are kept in memory only, unless they fail, are stopped or retried, so they don't write to the database all the time. The *runs and failures since startup* counters are per server.
+- A run that was in progress when its server stopped is closed as *Interrupted* when that server starts again — or by any other server within about 15 minutes, for a server that never comes back under that name (a replaced container, a scaled-in instance). Each server marks its running rows as alive every flush.
+- **Stop** reaches runs on other servers through the database (within `RunHistoryFlushInterval`). A distributed task's retry runs on whichever server picks it up.
 
 ## Configuration
 
@@ -365,7 +462,14 @@ All optional, under `Esatto:ScheduledTasks`:
 {
   "Esatto": {
     "ScheduledTasks": {
-      "RunHistoryLimit": 25,
+      "RunHistoryLimit": 50,
+      "PersistRunHistory": true,
+      "PersistAllRunsFromPeriod": "00:01:00",
+      "RunHistoryRetention": "30.00:00:00",
+      "RunHistoryFlushInterval": "00:00:05",
+      "RunLogMinimumLevel": "Information",
+      "RunLogMaxLines": 500,
+      "AuditRetention": "365.00:00:00",
       "SettingsRefreshInterval": "00:00:30",
       "MinimumPeriod": "00:00:01",
       "MaximumPeriod": "3650.00:00:00"
@@ -376,7 +480,14 @@ All optional, under `Esatto:ScheduledTasks`:
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
-| `RunHistoryLimit` | `25` | Runs kept in memory per task |
+| `RunHistoryLimit` | `50` | Runs kept per task, in memory and in the database |
+| `PersistRunHistory` | `true` | Save runs in the database; `false` keeps them in memory on each server only (reset on restart) |
+| `PersistAllRunsFromPeriod` | 1 minute | Tasks running more often than this only save failed, stopped and retried runs |
+| `RunHistoryRetention` | 30 days | Saved runs older than this are deleted (hourly) |
+| `RunHistoryFlushInterval` | 5 seconds | How often each server writes its runs and picks up stop requests (1 second – 1 hour) |
+| `RunLogMinimumLevel` | `Information` | Lowest level of the log lines kept with a run; `None` turns run logs off |
+| `RunLogMaxLines` | `500` | Log lines kept per run; the rest are counted |
+| `AuditRetention` | 365 days | Change log entries older than this are deleted |
 | `SettingsRefreshInterval` | 30 seconds | How often each server re-reads pause / schedule / property values (kept between 1 second and 24 days) |
 | `MinimumPeriod` / `MaximumPeriod` | 1 second / 10 years | Range an editor may set an interval to |
 
@@ -397,15 +508,22 @@ PUT    /umbraco/management/api/v1/backoffice/scheduled-tasks/schedule { "id": "�
 POST   /umbraco/management/api/v1/backoffice/scheduled-tasks/schedule/preview { "schedule": { … }, "count": 5 }
 GET    /umbraco/management/api/v1/backoffice/scheduled-tasks/properties?id={taskId}
 PUT    /umbraco/management/api/v1/backoffice/scheduled-tasks/properties { "id": "…", "values": [{ "alias": "…", "value": … }] }
+POST   /umbraco/management/api/v1/backoffice/scheduled-tasks/stop     { "id": "…" }
+PUT    /umbraco/management/api/v1/backoffice/scheduled-tasks/run-policy { "id": "…", "runPolicy": { "retries": 3, "retryDelaySeconds": 60, "timeoutSeconds": 600 } }
+GET    /umbraco/management/api/v1/backoffice/scheduled-tasks/changes?id={taskId}
+GET    /umbraco/management/api/v1/backoffice/scheduled-tasks/export
+POST   /umbraco/management/api/v1/backoffice/scheduled-tasks/import   { "document": { …export… }, "apply": false, "resetMissing": false }
 ```
 
-Task ids are `recurring:<job type full name>` or `distributed:<job name>`. A `periodSeconds` of `null` restores the task's own schedule (dropping an interval override or calendar), `schedule: null` goes back to an interval, and `values: null` restores all property defaults. Schedule kinds are `daily`, `weekly`, `monthly` (with `dayOfMonth`), `yearly` (with `dayOfMonth` and `month`) and `cron` (with `cron`).
+Task ids are `recurring:<job type full name>` or `distributed:<job name>`. A `periodSeconds` of `null` restores the task's own schedule (dropping an interval override or calendar), `schedule: null` goes back to an interval, and `values: null` restores all property defaults. In a run policy a value left out (or `null`) follows the job's default, `timeoutSeconds: 0` means no time limit, and `runPolicy: null` restores all defaults. An import with `apply: false` only compares. Schedule kinds are `daily`, `weekly`, `monthly` (with `dayOfMonth`), `yearly` (with `dayOfMonth` and `month`) and `cron` (with `cron`).
 Errors come back as ProblemDetails; invalid property values as a 400 ProblemDetails whose `errors` lists the problems by property alias (`{ "olderThanDays": ["…"] }`). Property values left out of `values` keep their defaults.
 All endpoints require `AuthorizationPolicies.SectionAccessSettings`.
 
 ## Database
 
-- Table: `ScheduledTaskSettings`, with one row per task an editor changed (pause, interval or calendar schedule, property values as JSON, and the last calendar occurrence a distributed task served). Resetting a task to its defaults deletes the row.
+- Table: `ScheduledTaskSettings`, with one row per task an editor changed (pause, interval or calendar schedule, property values as JSON, retries and time limit as JSON, and the last calendar occurrence a distributed task served). Resetting a task to its defaults deletes the row.
+- Table: `ScheduledTaskRuns`, the run history (one row per run and server: outcome, error, attempt, pending retry, stop request, captured log). Indexes `IX_ScheduledTaskRuns_runId` (unique) and `IX_ScheduledTaskRuns_taskId_startedUtc`.
+- Table: `ScheduledTaskAudit`, the change log (index `IX_ScheduledTaskAudit_taskId_utc`).
 - Unique index: `IX_ScheduledTaskSettings_taskId`
 - Table: `ScheduledTaskOccurrences`, with the last calendar occurrence each server handled for each recurring task (unique index `IX_ScheduledTaskOccurrences_taskId_server`; the server is its machine name, as in the run history).
 - Created and extended by idempotent migrations at startup (SQL Server and SQLite). Until they have run, no settings are read: distributed tasks wait for the next poll rather than ignore a pause, and stored distributed schedules are applied once the settings can be read.

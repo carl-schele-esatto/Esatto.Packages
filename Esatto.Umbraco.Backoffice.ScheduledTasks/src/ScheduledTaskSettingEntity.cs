@@ -17,6 +17,7 @@ public sealed class ScheduledTaskSettingEntity
     public const string PropertiesColumn = "propertiesJson";
     public const string ScheduleColumn = "scheduleJson";
     public const string LastScheduledColumn = "lastScheduledUtc";
+    public const string RunPolicyColumn = "runPolicyJson";
 
     [Column("id")]
     [PrimaryKeyColumn(AutoIncrement = true, IdentitySeed = 1)]
@@ -51,6 +52,12 @@ public sealed class ScheduledTaskSettingEntity
     [SpecialDbType(SpecialDbTypes.NVARCHARMAX)]
     [NullSetting(NullSetting = NullSettings.Null)]
     public string? PropertiesJson { get; set; }
+
+    /// <summary>Retries and time limit (<see cref="ScheduledTaskRunPolicy"/>) as JSON; null = the job's defaults.</summary>
+    [Column(RunPolicyColumn)]
+    [Length(1000)]
+    [NullSetting(NullSetting = NullSettings.Null)]
+    public string? RunPolicyJson { get; set; }
 
     [Column("updatedUtc")]
     public DateTime UpdatedUtc { get; set; }

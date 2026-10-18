@@ -3,25 +3,27 @@ import { UmbModalBaseElement } from '@umbraco-cms/backoffice/modal';
 import { errorMessage, previewSchedule, setPeriod, setSchedule } from '@esatto/scheduled-tasks/api.js';
 import {
     INTERVAL_UNITS,
-    MONTHS,
     WEEKDAYS,
     formatInterval,
     formatLength,
     formatRelative,
     initialIntervalSeconds,
     minimumIntervalError,
+    monthNames,
     splitInterval,
+    termsOf,
     timeZoneOptions,
     toSeconds,
+    weekdayNames,
 } from '@esatto/scheduled-tasks/format.js';
 
 const MODES = [
-    { mode: 'interval', label: 'Interval' },
-    { mode: 'daily', label: 'Daily' },
-    { mode: 'weekly', label: 'Weekly' },
-    { mode: 'monthly', label: 'Monthly' },
-    { mode: 'yearly', label: 'Yearly' },
-    { mode: 'cron', label: 'Cron' },
+    { mode: 'interval', term: 'modeInterval' },
+    { mode: 'daily', term: 'modeDaily' },
+    { mode: 'weekly', term: 'modeWeekly' },
+    { mode: 'monthly', term: 'modeMonthly' },
+    { mode: 'yearly', term: 'modeYearly' },
+    { mode: 'cron', term: 'modeCron' },
 ];
 const UNITS_ASCENDING = [...INTERVAL_UNITS].reverse();
 const DAY_SECONDS = 86400;
@@ -74,6 +76,10 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
         this._preview = null;
         this._error = '';
         this._saving = false;
+    }
+
+    get #t() {
+        return termsOf(this.localize);
     }
 
     connectedCallback() {
@@ -139,7 +145,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
             const { data, error } = await previewSchedule(this, schedule);
             if (seq !== this.#previewSeq) return; // a newer edit is on its way
             this._preview = error
-                ? { nextRunsUtc: [], error: errorMessage(error, 'Could not preview the schedule.') }
+                ? { nextRunsUtc: [], error: errorMessage(error, this.#t('previewFailed')) }
                 : data;
         }, 250);
     }
@@ -155,22 +161,25 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     }
 
     async #save() {
+        const t = this.#t;
         const task = this.data.task;
         let result;
+        let message;
 
         if (this._mode === 'interval') {
             const seconds = toSeconds(this._interval.value, this._interval.unit);
             if (Number.isNaN(seconds)) {
-                this._error = 'Enter a positive number.';
+                this._error = t('enterPositive');
                 return;
             }
-            const tooShort = minimumIntervalError(seconds, task.minimumPeriodSeconds);
+            const tooShort = minimumIntervalError(seconds, task.minimumPeriodSeconds, t);
             if (tooShort) {
                 this._error = tooShort;
                 return;
             }
             this._saving = true;
             result = await setPeriod(this, task.id, seconds);
+            message = seconds === task.defaultPeriodSeconds ? t('ownScheduleRestored') : t('intervalSaved');
         } else {
             const unavailable = this.#calendarUnavailableReason();
             if (unavailable) {
@@ -179,15 +188,16 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
             }
             this._saving = true;
             result = await setSchedule(this, task.id, this.#schedule());
+            message = t('scheduleSaved');
         }
 
         this._saving = false;
         if (result.error) {
-            this._error = errorMessage(result.error, 'Could not save the schedule.');
+            this._error = errorMessage(result.error, t('saveScheduleFailed'));
             return;
         }
 
-        this.#finish({ task: result.data?.task, message: result.data?.message });
+        this.#finish({ task: result.data?.task, message });
     }
 
     /** Back to the task's own interval: clears an interval override and a calendar alike. */
@@ -196,11 +206,11 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
         const { data, error } = await setPeriod(this, this.data.task.id, null);
         this._saving = false;
         if (error) {
-            this._error = errorMessage(error, 'Could not reset the schedule.');
+            this._error = errorMessage(error, this.#t('resetScheduleFailed'));
             return;
         }
 
-        this.#finish({ task: data?.task, message: data?.message });
+        this.#finish({ task: data?.task, message: this.#t('ownScheduleRestored') });
     }
 
     /**
@@ -221,7 +231,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
         const date = new Date(utc);
         let text;
         try {
-            text = new Intl.DateTimeFormat(undefined, {
+            text = new Intl.DateTimeFormat(this.localize.lang(), {
                 timeZone: this._timeZone,
                 weekday: 'short',
                 day: 'numeric',
@@ -233,7 +243,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
         } catch {
             text = date.toLocaleString();
         }
-        return html`<li>${text} <span class="muted">(${formatRelative(utc)})</span></li>`;
+        return html`<li>${text} <span class="muted">(${formatRelative(utc, Date.now(), this.localize.lang())})</span></li>`;
     }
 
     /**
@@ -253,11 +263,12 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     }
 
     #renderInterval() {
+        const t = this.#t;
         const task = this.data.task;
         const seconds = toSeconds(this._interval.value, this._interval.unit);
         return html`
             <div class="field">
-                <label for="interval-value">Run every</label>
+                <label for="interval-value">${t('runEvery')}</label>
                 <div class="row">
                     <input
                         id="interval-value"
@@ -268,19 +279,19 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
                         @input=${(e) => { this._interval = { ...this._interval, value: e.target.value }; this._error = ''; }}>
                     <select
                         class="text-input"
-                        aria-label="Unit"
+                        aria-label=${t('unit')}
                         @change=${(e) => { this._interval = { ...this._interval, unit: e.target.value }; this._error = ''; }}>
-                        ${UNITS_ASCENDING.map((u) => html`<option value=${u.unit} ?selected=${u.unit === this._interval.unit}>${u.label}</option>`)}
+                        ${UNITS_ASCENDING.map((u) => html`<option value=${u.unit} ?selected=${u.unit === this._interval.unit}>${t(u.term)}</option>`)}
                     </select>
                 </div>
                 ${task.defaultPeriodSeconds != null
-                    ? html`<p class="muted">The task’s own interval: ${formatInterval(task.defaultPeriodSeconds).toLowerCase()}.</p>`
+                    ? html`<p class="muted">${t('ownInterval', formatInterval(task.defaultPeriodSeconds, t).toLowerCase())}</p>`
                     : nothing}
                 ${task.minimumPeriodSeconds > 0
-                    ? html`<p class="muted">Shortest allowed: ${formatLength(task.minimumPeriodSeconds)}.</p>`
+                    ? html`<p class="muted">${t('shortestAllowed', formatLength(task.minimumPeriodSeconds, t))}</p>`
                     : nothing}
                 ${task.kind === 'recurring' && seconds >= DAY_SECONDS
-                    ? html`<p class="muted">On an interval, recurring tasks also run once shortly after every restart of the site; a calendar schedule doesn’t.</p>`
+                    ? html`<p class="muted">${t('restartNote')}</p>`
                     : nothing}
             </div>
         `;
@@ -289,7 +300,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     #renderTime() {
         return html`
             <div class="field">
-                <label for="time">At</label>
+                <label for="time">${this.#t('at')}</label>
                 <input
                     id="time"
                     class="text-input"
@@ -306,7 +317,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
             <select
                 id="day"
                 class="text-input"
-                aria-label="Day of the month"
+                aria-label=${this.#t('dayOfMonth')}
                 @change=${(e) => this.#set({ _dayOfMonth: Number(e.target.value) })}>
                 ${Array.from({ length: 31 }, (_, i) => i + 1).map((d) => html`<option value=${d} ?selected=${d === Number(this._dayOfMonth)}>${d}</option>`)}
             </select>
@@ -314,17 +325,20 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     }
 
     #renderCalendar() {
+        const t = this.#t;
         switch (this._mode) {
             case 'daily':
                 return this.#renderTime();
-            case 'weekly':
+            case 'weekly': {
+                const names = weekdayNames(t);
+                const shortNames = weekdayNames(t, true);
                 return html`
                     <div class="field">
-                        <span class="label" id="weekdays-label">On</span>
+                        <span class="label" id="weekdays-label">${t('on')}</span>
                         <div class="weekdays" role="group" aria-labelledby="weekdays-label">
-                            ${WEEKDAYS.map((day) => this.#renderToggle({
-                                label: day.slice(0, 3),
-                                name: day,
+                            ${WEEKDAYS.map((day, i) => this.#renderToggle({
+                                label: shortNames[i] ?? day.slice(0, 3),
+                                name: names[i] ?? day,
                                 pressed: this._weekdays.includes(day),
                                 onClick: () => this.#toggleWeekday(day),
                             }))}
@@ -332,26 +346,27 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
                     </div>
                     ${this.#renderTime()}
                 `;
+            }
             case 'monthly':
                 return html`
                     <div class="field">
-                        <label for="day">On day</label>
+                        <label for="day">${t('onDay')}</label>
                         ${this.#renderDayOfMonth()}
-                        ${Number(this._dayOfMonth) > 28 ? html`<p class="muted">Months without this day are skipped.</p>` : nothing}
+                        ${Number(this._dayOfMonth) > 28 ? html`<p class="muted">${t('skippedMonths')}</p>` : nothing}
                     </div>
                     ${this.#renderTime()}
                 `;
             case 'yearly':
                 return html`
                     <div class="field">
-                        <label for="day">On</label>
+                        <label for="day">${t('on')}</label>
                         <div class="row">
                             ${this.#renderDayOfMonth()}
                             <select
                                 class="text-input"
-                                aria-label="Month"
+                                aria-label=${t('month')}
                                 @change=${(e) => this.#set({ _month: Number(e.target.value) })}>
-                                ${MONTHS.map((m, i) => html`<option value=${i + 1} ?selected=${i + 1 === Number(this._month)}>${m}</option>`)}
+                                ${monthNames(t).map((m, i) => html`<option value=${i + 1} ?selected=${i + 1 === Number(this._month)}>${m}</option>`)}
                             </select>
                         </div>
                     </div>
@@ -360,7 +375,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
             case 'cron':
                 return html`
                     <div class="field">
-                        <label for="cron">Cron expression</label>
+                        <label for="cron">${t('cronExpression')}</label>
                         <input
                             id="cron"
                             class="text-input"
@@ -369,7 +384,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
                             placeholder="0 7 * * 1-5"
                             .value=${this._cron}
                             @input=${(e) => this.#set({ _cron: e.target.value })}>
-                        <p class="muted">Five fields: minute, hour, day of month, month, day of week. <code>0 7 * * 1-5</code> is 07:00 on weekdays.</p>
+                        <p class="muted">${t('cronHelp')}</p>
                     </div>
                 `;
             default:
@@ -378,10 +393,11 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     }
 
     #renderTimeZoneAndPreview() {
+        const t = this.#t;
         const preview = this._preview;
         return html`
             <div class="field">
-                <label for="time-zone">Time zone</label>
+                <label for="time-zone">${t('timeZone')}</label>
                 <select id="time-zone" class="text-input" @change=${(e) => this.#set({ _timeZone: e.target.value })}>
                     ${timeZoneOptions(this._timeZone, TIME_ZONES).map(
                         (zone) => html`<option value=${zone} ?selected=${zone === this._timeZone}>${zone}</option>`,
@@ -389,7 +405,7 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
                 </select>
             </div>
             <div class="preview" aria-live="polite">
-                <strong>Next runs</strong>
+                <strong>${t('nextRuns')}</strong>
                 ${!preview
                     ? html`<p class="muted">…</p>`
                     : preview.error
@@ -400,16 +416,17 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
     }
 
     render() {
+        const t = this.#t;
         const task = this.data?.task;
         const customised = task?.hasPeriodOverride || task?.schedule;
         const unavailable = this.#calendarUnavailableReason();
 
         return html`
-            <umb-body-layout headline=${`Schedule: ${task?.name ?? ''}`}>
+            <umb-body-layout headline=${t('scheduleHeadline', task?.name ?? '')}>
                 <uui-box>
-                    <div class="modes" role="group" aria-label="How the task is scheduled">
-                        ${MODES.map(({ mode, label }) => this.#renderToggle({
-                            label,
+                    <div class="modes" role="group" aria-label=${t('modesLabel')}>
+                        ${MODES.map(({ mode, term }) => this.#renderToggle({
+                            label: t(term),
                             pressed: this._mode === mode,
                             // A task that can't have a calendar keeps Interval (and the mode it's in).
                             disabled: Boolean(unavailable) && mode !== 'interval' && mode !== this._mode,
@@ -430,15 +447,15 @@ class EsattoScheduledTaskScheduleModal extends UmbModalBaseElement {
                     ${customised
                         ? html`<uui-button
                             look="secondary"
-                            label="Use the task’s own schedule"
+                            label=${t('useOwnSchedule')}
                             ?disabled=${this._saving}
                             @click=${() => this.#useOwnSchedule()}></uui-button>`
                         : nothing}
-                    <uui-button label="Cancel" ?disabled=${this._saving} @click=${() => this._rejectModal()}></uui-button>
+                    <uui-button label=${t('cancel')} ?disabled=${this._saving} @click=${() => this._rejectModal()}></uui-button>
                     <uui-button
                         look="primary"
                         color="positive"
-                        label="Save"
+                        label=${t('save')}
                         .state=${this._saving ? 'waiting' : undefined}
                         ?disabled=${this._saving}
                         @click=${() => this.#save()}></uui-button>

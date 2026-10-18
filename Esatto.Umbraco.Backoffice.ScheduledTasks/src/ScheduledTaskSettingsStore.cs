@@ -23,7 +23,10 @@ public sealed record ScheduledTaskSettingState(
 {
     public static readonly ScheduledTaskSettingState Default = new(false, null, null);
 
-    public bool IsDefault => !IsPaused && PeriodOverride is null && PropertiesJson is null && Calendar is null;
+    /// <summary>Retries and time limit an editor set; null = the job's defaults.</summary>
+    public ScheduledTaskRunPolicy? RunPolicy { get; init; }
+
+    public bool IsDefault => !IsPaused && PeriodOverride is null && PropertiesJson is null && Calendar is null && RunPolicy is null;
 }
 
 /// <summary>An editor's changes to one task. Absent = the task runs on its defaults.</summary>
@@ -38,7 +41,10 @@ public sealed record ScheduledTaskSetting(
     ScheduledTaskCalendar? Calendar = null,
     DateTime? LastScheduledUtc = null)
 {
-    public ScheduledTaskSettingState State => new(IsPaused, PeriodOverride, PropertiesJson, Calendar);
+    /// <summary>Retries and time limit an editor set; null = the job's defaults.</summary>
+    public ScheduledTaskRunPolicy? RunPolicy { get; init; }
+
+    public ScheduledTaskSettingState State => new(IsPaused, PeriodOverride, PropertiesJson, Calendar) { RunPolicy = RunPolicy };
 }
 
 public interface IScheduledTaskSettingsStore
@@ -383,6 +389,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
             entity.IsPaused = next.IsPaused;
             entity.PeriodTicks = next.PeriodOverride?.Ticks;
             entity.PropertiesJson = next.PropertiesJson;
+            entity.RunPolicyJson = ScheduledTaskRunPolicies.Serialize(next.RunPolicy);
             entity.ScheduleJson = keptJson ?? (next.Calendar is null ? null : JsonSerializer.Serialize(next.Calendar, CalendarJson));
             // The occurrence bookkeeping belongs to the calendar it was recorded under.
             if (keptJson is null && !SameSchedule(next.Calendar, current.Calendar)) entity.LastScheduledUtc = null;
@@ -452,7 +459,10 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
         DateTime.SpecifyKind(entity.UpdatedUtc, DateTimeKind.Utc),
         entity.UpdatedBy,
         ReadCalendar(entity.TaskId, entity.ScheduleJson),
-        entity.LastScheduledUtc is { } last ? DateTime.SpecifyKind(last, DateTimeKind.Utc) : null);
+        entity.LastScheduledUtc is { } last ? DateTime.SpecifyKind(last, DateTimeKind.Utc) : null)
+    {
+        RunPolicy = ScheduledTaskRunPolicies.Deserialize(entity.RunPolicyJson),
+    };
 
     /// <summary>One task's handled occurrence on this server, and the schedule (its saved time in ticks) it belongs to.</summary>
     private readonly record struct ServerOccurrence(DateTime OccurrenceUtc, long ScheduleSavedTicks);

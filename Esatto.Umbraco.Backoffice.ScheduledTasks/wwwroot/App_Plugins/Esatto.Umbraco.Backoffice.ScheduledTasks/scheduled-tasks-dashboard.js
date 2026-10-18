@@ -2,7 +2,7 @@ import { LitElement, css, html, nothing } from '@umbraco-cms/backoffice/external
 import { UmbElementMixin } from '@umbraco-cms/backoffice/element-api';
 import { UMB_NOTIFICATION_CONTEXT } from '@umbraco-cms/backoffice/notification';
 import { UmbModalToken, umbConfirmModal, umbOpenModal } from '@umbraco-cms/backoffice/modal';
-import { errorMessage, getOverview, resetRun, runNow, setPaused } from '@esatto/scheduled-tasks/api.js';
+import { errorMessage, exportSettings, getOverview, resetRun, runNow, setPaused, stopTask } from '@esatto/scheduled-tasks/api.js';
 import {
     describeSchedule,
     formatElapsed,
@@ -11,22 +11,22 @@ import {
     isOnDemand,
     matchesFilter,
     shortTypeName,
+    summarizeRunPolicy,
+    termsOf,
 } from '@esatto/scheduled-tasks/format.js';
 
 // Modals are opened by alias (their element modules are only ever loaded through the manifest).
-const RUNS_MODAL = new UmbModalToken('Esatto.Umbraco.Backoffice.ScheduledTasks.RunsModal', {
+const sidebar = (alias) => new UmbModalToken(`Esatto.Umbraco.Backoffice.ScheduledTasks.${alias}`, {
     modal: { type: 'sidebar', size: 'medium' },
 });
-const SCHEDULE_MODAL = new UmbModalToken('Esatto.Umbraco.Backoffice.ScheduledTasks.ScheduleModal', {
-    modal: { type: 'sidebar', size: 'medium' },
-});
-const PROPERTIES_MODAL = new UmbModalToken('Esatto.Umbraco.Backoffice.ScheduledTasks.PropertiesModal', {
-    modal: { type: 'sidebar', size: 'medium' },
-});
-
+const RUNS_MODAL = sidebar('RunsModal');
+const SCHEDULE_MODAL = sidebar('ScheduleModal');
+const PROPERTIES_MODAL = sidebar('PropertiesModal');
+const RUN_POLICY_MODAL = sidebar('RunPolicyModal');
+const IMPORT_MODAL = sidebar('ImportModal');
 
 // Relative times re-render every TICK_MS; data reloads every REFRESH_TICKS ticks while visible
-// (every tick while a task is running).
+// (every tick while a task is running or waiting to retry).
 const TICK_MS = 2500;
 const REFRESH_TICKS = 4;
 
@@ -40,6 +40,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         _showUmbraco: { state: true },
         _autoRefresh: { state: true },
         _now: { state: true },
+        _exporting: { state: true },
     };
 
     #notifications;
@@ -60,8 +61,14 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         this._showUmbraco = true;
         this._autoRefresh = true;
         this._now = Date.now();
+        this._exporting = false;
 
         this.consumeContext(UMB_NOTIFICATION_CONTEXT, (ctx) => { this.#notifications = ctx; });
+    }
+
+    /** The dashboard's texts in the user's language (lang/*.js). */
+    get #t() {
+        return termsOf(this.localize);
     }
 
     connectedCallback() {
@@ -79,8 +86,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         this._now = Date.now();
         this.#ticks = (this.#ticks + 1) % REFRESH_TICKS;
         // While something runs, refresh on every tick so its progress bar moves.
-        const running = this._overview?.tasks.some((t) => t.isRunning);
-        if ((this.#ticks === 0 || running) && this._autoRefresh && document.visibilityState === 'visible') {
+        const busy = this._overview?.tasks.some((t) => t.isRunning || t.retryAtUtc);
+        if ((this.#ticks === 0 || busy) && this._autoRefresh && document.visibilityState === 'visible') {
             this.#load({ quiet: true });
         }
     }
@@ -97,7 +104,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
             this._loadError = '';
         } catch (err) {
             // A background refresh failing (e.g. an expired session) shouldn't spam toasts.
-            if (!quiet) this._loadError = errorMessage(err, 'Could not load the scheduled tasks.');
+            if (!quiet) this._loadError = errorMessage(err, this.#t('loadError'));
         } finally {
             this._loaded = true;
             this._now = Date.now();
@@ -125,70 +132,115 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         }
     }
 
-    async #resetRun(task) {
+    /** Asks before a command; false when cancelled. */
+    async #confirm(headline, content, confirmLabel) {
         try {
-            await umbConfirmModal(this, {
-                headline: `Reset “${task.name}”?`,
-                content: 'It has been marked as running for longer than Umbraco allows for a run, usually because the site stopped in the middle of it. Only reset it if no server is running it any more; it then runs again when it’s due.',
-                confirmLabel: 'Reset',
-                color: 'danger',
-            });
+            await umbConfirmModal(this, { headline, content, confirmLabel, color: 'danger' });
+            return true;
         } catch {
-            return; // cancelled
+            return false;
         }
+    }
+
+    async #resetRun(task) {
+        const t = this.#t;
+        if (!(await this.#confirm(t('resetHeadline', task.name), t('resetContent'), t('reset')))) return;
 
         await this.#withBusy(task, async () => {
             const { data, error } = await resetRun(this, task.id, task.runningSinceUtc ?? null);
             if (error) {
-                this.#peek('warning', errorMessage(error, 'Could not reset the task.'));
+                this.#peek('warning', errorMessage(error, t('couldNotReset')));
                 return;
             }
             this.#replaceTask(data?.task);
-            this.#peek('positive', `${task.name}: ${data?.message ?? 'reset.'}`);
+            this.#peek('positive', t('toast', task.name, t('resetDone')));
         });
     }
 
     async #runNow(task) {
+        const t = this.#t;
         await this.#withBusy(task, async () => {
             const { data, error } = await runNow(this, task.id);
             if (error) {
-                this.#peek('warning', errorMessage(error, 'Could not start the task.'));
+                this.#peek('warning', errorMessage(error, t('couldNotStart')));
                 return;
             }
             this.#replaceTask(data?.task);
-            this.#peek('positive', `${task.name}: ${data?.message ?? 'run started.'}`);
+            this.#peek('positive', t('toast', task.name, t('runStarted')));
             // The run starts on the job's own thread; refresh shortly to show it running/finished.
             setTimeout(() => this.#load({ quiet: true }), 1500);
         });
     }
 
-    async #togglePaused(task) {
-        const pause = !task.isPaused;
-        if (pause && task.isUmbraco) {
-            try {
-                await umbConfirmModal(this, {
-                    headline: `Pause “${task.name}”?`,
-                    content: 'This is one of Umbraco’s own tasks. Pausing it can stop housekeeping Umbraco relies on, such as cache synchronisation, scheduled publishing or clean-up, until you resume it.',
-                    confirmLabel: 'Pause',
-                    color: 'danger',
-                });
-            } catch {
-                return; // cancelled
+    async #stop(task) {
+        const t = this.#t;
+        const retryOnly = task.retryAtUtc && !task.isRunning;
+        if (!retryOnly && !(await this.#confirm(t('stopHeadline', task.name), t('stopContent'), t('stop')))) return;
+
+        await this.#withBusy(task, async () => {
+            const { data, error } = await stopTask(this, task.id);
+            if (error) {
+                this.#peek('warning', errorMessage(error, t('couldNotStop')));
+                return;
             }
-        }
+            this.#replaceTask(data?.task);
+            this.#peek('positive', t('toast', task.name, t(retryOnly ? 'retryCanceled' : 'stopRequested')));
+            setTimeout(() => this.#load({ quiet: true }), 1500);
+        });
+    }
+
+    async #togglePaused(task) {
+        const t = this.#t;
+        const pause = !task.isPaused;
+        if (pause && task.isUmbraco && !(await this.#confirm(t('pauseHeadline', task.name), t('pauseUmbracoContent'), t('pause')))) return;
 
         await this.#withBusy(task, async () => {
             const { data, error } = await setPaused(this, task.id, pause);
             if (error) {
-                this.#peek('danger', errorMessage(error, pause ? 'Pause failed.' : 'Resume failed.'));
+                this.#peek('danger', errorMessage(error, t(pause ? 'pauseFailed' : 'resumeFailed')));
                 return;
             }
             this.#replaceTask(data?.task);
         });
     }
 
+    async #export() {
+        const t = this.#t;
+        this._exporting = true;
+        try {
+            const { data, error } = await exportSettings(this);
+            if (error) {
+                this.#peek('danger', errorMessage(error, t('exportFailed')));
+                return;
+            }
+            const day = new Date().toISOString().slice(0, 10);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = Object.assign(document.createElement('a'), {
+                href: URL.createObjectURL(blob),
+                download: `scheduled-tasks-${(this._overview?.serverName ?? 'site').toLowerCase()}-${day}.json`,
+            });
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+            this.#peek('positive', t('exported'));
+        } finally {
+            this._exporting = false;
+        }
+    }
+
+    async #import() {
+        try {
+            const result = await umbOpenModal(this, IMPORT_MODAL, { data: {} });
+            if (result?.message) this.#peek('positive', result.message);
+        } catch {
+            return; // closed without importing
+        }
+        this.#commandCompletedAt = performance.now();
+        await this.#load();
+    }
+
     #openRuns(task) {
-        umbOpenModal(this, RUNS_MODAL, { data: { task } }).catch(() => {});
+        umbOpenModal(this, RUNS_MODAL, { data: { task, historyPersisted: this._overview?.historyPersisted, runHistoryLimit: this._overview?.runHistoryLimit } })
+            .catch(() => {});
     }
 
     /** Opens a modal that edits the task and submits { task, message }; applies the result. */
@@ -207,7 +259,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
     #applyEditorResult(task, result) {
         this.#commandCompletedAt = performance.now();
         this.#replaceTask(result?.task);
-        if (result?.message) this.#peek('positive', `${task.name}: ${result.message}`);
+        if (result?.message) this.#peek('positive', this.#t('toast', task.name, result.message));
     }
 
     #peek(color, message) {
@@ -219,31 +271,50 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         return tasks.filter((t) => (this._showUmbraco || !t.isUmbraco) && matchesFilter(t, this._filter));
     }
 
+    #date(iso) {
+        return this.localize.date(iso, { dateStyle: 'short', timeStyle: 'medium' });
+    }
+
+    #relative(iso) {
+        return formatRelative(iso, this._now, this.localize.lang());
+    }
+
     // ---- rendering ----
 
     #renderStatus(task) {
-        const since = task.runningSinceUtc ? new Date(task.runningSinceUtc).toLocaleString() : null;
+        const t = this.#t;
+        const since = task.runningSinceUtc ? this.#date(task.runningSinceUtc) : null;
         if (task.isPossiblyStuck) {
-            return html`<uui-tag color="warning" title=${`Marked as running since ${since}, longer than Umbraco allows for a run. If no server is running it any more, reset it.`}>Possibly stuck</uui-tag>`;
+            return html`<uui-tag color="warning" title=${t('stuckHelp', since)}>${t('statusStuck')}</uui-tag>`;
+        }
+        if (task.retryAtUtc) {
+            const when = this.#relative(task.retryAtUtc);
+            return html`<uui-tag color="warning" title=${t('retryHelp', task.nextAttempt, task.maxAttempts, when)}>
+                    <uui-icon name="icon-refresh"></uui-icon> ${t('statusRetry')}
+                </uui-tag>
+                <div class="muted">${t('retryHelp', task.nextAttempt, task.maxAttempts, when)}</div>`;
         }
         if (task.isRunning) {
             return html`
-                <uui-tag color="positive" title=${since ? `Running since ${since}` : ''}><uui-loader-circle></uui-loader-circle> Running</uui-tag>
+                <uui-tag color="positive" title=${since ? t('runningSince', since) : ''}><uui-loader-circle></uui-loader-circle> ${t('statusRunning')}</uui-tag>
+                ${task.stopRequestedBy
+                    ? html`<uui-tag color="warning" class="stopping" title=${t('stoppingHelp', task.stopRequestedBy)}>${t('statusStopping')}</uui-tag>`
+                    : nothing}
                 ${this.#renderProgress(task)}`;
         }
         if (task.isPaused) {
-            return html`<uui-tag color="warning" title=${this.#changedBy(task)}>Paused</uui-tag>`;
+            return html`<uui-tag color="warning" title=${this.#changedBy(task)}>${t('statusPaused')}</uui-tag>`;
         }
         if (!task.runsOnThisServer) {
-            return html`<uui-tag look="outline" title=${`Runs on servers with role ${task.serverRoles.join(' or ')}; this server is ${this._overview.serverRole}.`}>Other servers</uui-tag>`;
+            return html`<uui-tag look="outline" title=${t('otherServersHelp', task.serverRoles.join(' / '), this._overview.serverRole)}>${t('statusOtherServers')}</uui-tag>`;
         }
         if (task.lastRun?.outcome === 'failed') {
-            return html`<uui-tag color="danger">Failing</uui-tag>`;
+            return html`<uui-tag color="danger">${t('statusFailing')}</uui-tag>`;
         }
         if (isOnDemand(task)) {
-            return html`<uui-tag look="secondary">On demand</uui-tag>`;
+            return html`<uui-tag look="secondary">${t('statusOnDemand')}</uui-tag>`;
         }
-        return html`<uui-tag look="secondary">Scheduled</uui-tag>`;
+        return html`<uui-tag look="secondary">${t('statusScheduled')}</uui-tag>`;
     }
 
     /** The progress the running job reported (IScheduledTaskProgress), if any. */
@@ -262,153 +333,211 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
     }
 
     #renderSchedule(task) {
+        const t = this.#t;
         const busy = this._busyIds.has(task.id);
-        const text = task.schedule ? describeSchedule(task.schedule) : formatInterval(task.periodSeconds);
-        const zone = task.schedule?.timeZone ? ` (times in ${task.schedule.timeZone})` : '';
+        const text = task.schedule ? describeSchedule(task.schedule, t) : formatInterval(task.periodSeconds, t);
+        const title = !task.isManaged
+            ? t('notHosted')
+            : task.schedule?.timeZone ? t('changeScheduleIn', task.schedule.timeZone) : t('changeSchedule');
 
         // The schedule itself is the edit button, so it reads as something you can change. Its
         // accessible name starts with the visible text (voice control) and names the task.
         return html`
-            <uui-button
+            <button
+                type="button"
                 class="schedule-button"
-                look="outline"
-                compact
-                label=${`${text}. Change the schedule of ${task.name}`}
-                title=${task.isManaged ? `Change schedule${zone}` : 'Not hosted by Scheduled Tasks'}
+                aria-label=${t('changeScheduleLabel', text, task.name)}
+                title=${title}
                 ?disabled=${busy || !task.isManaged}
                 @click=${() => this.#openEditor(SCHEDULE_MODAL, task)}>
-                ${text}
+                <span>${text}</span>
                 <uui-icon name="icon-edit"></uui-icon>
-            </uui-button>
+            </button>
             ${task.hasPeriodOverride || task.schedule
-                ? html`<div class="muted" title=${this.#changedBy(task)}>Default: ${formatInterval(task.defaultPeriodSeconds).toLowerCase()}</div>`
+                ? html`<div class="muted" title=${this.#changedBy(task)}>${t('defaultSchedule', formatInterval(task.defaultPeriodSeconds, t).toLowerCase())}</div>`
                 : nothing}
         `;
     }
 
     #renderLastRun(task) {
+        const t = this.#t;
         const run = task.lastRun;
         if (run) {
             const when = run.outcome === 'skipped' ? run.lastOccurrenceUtc : run.startedUtc;
+            const elsewhere = run.server && this._overview && run.server !== this._overview.serverName;
             return html`
-                <div class="last-run outcome-${run.outcome}" title=${new Date(when).toLocaleString()}>
+                <div class="last-run outcome-${run.outcome}" title=${this.#date(when)}>
                     <uui-icon name=${OUTCOME_ICONS[run.outcome] ?? 'icon-info'}></uui-icon>
-                    <span>${formatRelative(when, this._now)}</span>
+                    <span>${this.#relative(when)}</span>
                     ${run.durationMs != null && run.outcome !== 'skipped'
                         ? html`<span class="muted">· ${formatElapsed(run.durationMs)}</span>`
                         : nothing}
                 </div>
+                ${elsewhere ? html`<div class="muted">${t('onServer', run.server)}</div>` : nothing}
                 ${run.message ? html`<div class="run-message" title=${run.message}>${run.message}</div>` : nothing}
             `;
         }
         if (task.lastRunUtc) {
-            return html`<span class="muted" title="Last finish recorded in Umbraco’s distributed job table: any server, including before the last restart">
-                ${formatRelative(task.lastRunUtc, this._now)} · any server
+            return html`<span class="muted" title=${t('lastFinishHelp')}>
+                ${this.#relative(task.lastRunUtc)} · ${t('anyServer')}
             </span>`;
         }
-        return html`<span class="muted">Not since startup</span>`;
+        return html`<span class="muted">${this._overview?.historyPersisted ? t('noRunsYet') : t('notSinceStartup')}</span>`;
     }
 
     #renderNextRun(task) {
-        if (task.isPaused) return html`<span class="muted">Paused</span>`;
+        const t = this.#t;
+        if (task.isPaused) return html`<span class="muted">${t('statusPaused')}</span>`;
+        if (task.retryAtUtc) return html`<span title=${this.#date(task.retryAtUtc)}>${this.#relative(task.retryAtUtc)}</span>`;
         if (!task.runsOnThisServer || task.isRunning) return html`<span class="muted">—</span>`;
         // A calendar task's next run comes from its schedule, even when its own period is infinite.
-        if (isOnDemand(task)) return html`<span class="muted">On demand</span>`;
+        if (isOnDemand(task)) return html`<span class="muted">${t('statusOnDemand')}</span>`;
         if (!task.nextRunUtc) return html`<span class="muted">—</span>`;
 
         const due = Date.parse(task.nextRunUtc) <= this._now;
-        return html`<span title=${new Date(task.nextRunUtc).toLocaleString()}>${due ? 'Due now' : formatRelative(task.nextRunUtc, this._now)}</span>`;
+        return html`<span title=${this.#date(task.nextRunUtc)}>${due ? t('dueNow') : this.#relative(task.nextRunUtc)}</span>`;
     }
 
     #renderActions(task) {
+        const t = this.#t;
         const busy = this._busyIds.has(task.id);
-        const canRun = task.isManaged && task.runsOnThisServer && !task.isRunning;
-        // A run that looks stuck can't be started again until it's reset.
-        const runButton = task.isPossiblyStuck
-            ? html`
+        const canRun = task.isManaged && task.runsOnThisServer && !task.isRunning && !task.retryAtUtc;
+        const stoppable = task.isManaged && (task.isRunning || task.retryAtUtc);
+        const retryOnly = task.retryAtUtc && !task.isRunning;
+
+        let primary;
+        if (task.isPossiblyStuck) {
+            // A run that looks stuck can't be started again until it's reset.
+            primary = html`
                 <uui-button
                     look="secondary"
                     color="warning"
                     compact
-                    label=${`Reset: ${task.name}`}
-                    title="Clear the running flag left by an interrupted run"
+                    label=${t('actionLabel', t('reset'), task.name)}
+                    title=${t('resetTitle')}
                     ?disabled=${busy}
                     @click=${() => this.#resetRun(task)}>
-                    <uui-icon name="icon-refresh"></uui-icon> Reset
-                </uui-button>`
-            : html`
+                    <uui-icon name="icon-refresh"></uui-icon> ${t('reset')}
+                </uui-button>`;
+        } else if (stoppable) {
+            const label = retryOnly ? t('cancelRetry') : t('stop');
+            primary = html`
+                <uui-button
+                    look="secondary"
+                    color="danger"
+                    compact
+                    label=${t('actionLabel', label, task.name)}
+                    title=${task.stopRequestedBy ? t('stoppingHelp', task.stopRequestedBy) : retryOnly ? t('cancelRetryTitle') : t('stopTitle')}
+                    ?disabled=${busy || Boolean(task.stopRequestedBy)}
+                    @click=${() => this.#stop(task)}>
+                    <uui-icon name="icon-stop"></uui-icon> ${label}
+                </uui-button>`;
+        } else {
+            primary = html`
                 <uui-button
                     look="secondary"
                     compact
-                    label=${`Run now: ${task.name}`}
-                    title=${canRun ? `Run ${task.name} now` : task.isRunning ? 'Already running' : 'Can’t be started from this server'}
+                    label=${t('actionLabel', t('runNow'), task.name)}
+                    title=${canRun ? t('runNowTitle', task.name) : task.isRunning ? t('alreadyRunning') : t('cantStartHere')}
                     ?disabled=${busy || !canRun}
                     @click=${() => this.#runNow(task)}>
-                    <uui-icon name="icon-play"></uui-icon> Run now
+                    <uui-icon name="icon-play"></uui-icon> ${t('runNow')}
                 </uui-button>`;
+        }
 
+        const pauseText = task.isPaused ? t('resume') : t('pause');
         return html`
             <div class="row-actions">
-                ${runButton}
+                ${primary}
                 <uui-button
                     look="secondary"
                     compact
-                    label=${`${task.isPaused ? 'Resume' : 'Pause'}: ${task.name}`}
+                    label=${t('actionLabel', pauseText, task.name)}
                     ?disabled=${busy || !task.isManaged}
                     @click=${() => this.#togglePaused(task)}>
-                    <uui-icon name=${task.isPaused ? 'icon-play' : 'icon-pause'}></uui-icon> ${task.isPaused ? 'Resume' : 'Pause'}
+                    <uui-icon name=${task.isPaused ? 'icon-play' : 'icon-pause'}></uui-icon> ${pauseText}
                 </uui-button>
-                <uui-button look="secondary" compact label=${`History: ${task.name}`} @click=${() => this.#openRuns(task)}>
-                    <uui-icon name="icon-history"></uui-icon> History
+                <uui-button look="secondary" compact label=${t('actionLabel', t('history'), task.name)} @click=${() => this.#openRuns(task)}>
+                    <uui-icon name="icon-history"></uui-icon> ${t('history')}
                 </uui-button>
             </div>
         `;
     }
 
+    #renderTaskExtras(task) {
+        const t = this.#t;
+        const policy = task.runPolicy;
+        return html`
+            <div class="task-extras">
+                ${task.propertyCount > 0
+                    ? html`
+                        <span class="extra">
+                            <uui-button
+                                look="outline"
+                                compact
+                                label=${t('propertiesOf', task.name)}
+                                title=${t('propertiesHelp')}
+                                @click=${() => this.#openEditor(PROPERTIES_MODAL, task)}>
+                                <uui-icon name="icon-settings"></uui-icon> ${t('properties')}
+                            </uui-button>
+                            <span class="muted">${task.hasCustomProperties ? t('customised') : t('defaults')}</span>
+                        </span>`
+                    : nothing}
+                ${task.isManaged && policy
+                    ? html`
+                        <span class="extra">
+                            <uui-button
+                                look="outline"
+                                compact
+                                label=${t('runPolicyOf', task.name)}
+                                title=${t('runPolicyHelp')}
+                                @click=${() => this.#openEditor(RUN_POLICY_MODAL, task)}>
+                                <uui-icon name="icon-refresh"></uui-icon> ${t('runPolicy')}
+                            </uui-button>
+                            ${policy.retries > 0 || policy.timeoutSeconds
+                                ? html`<span class="muted ${policy.isCustomised ? 'customised' : ''}">${summarizeRunPolicy(policy, t)}</span>`
+                                : nothing}
+                        </span>`
+                    : nothing}
+            </div>
+        `;
+    }
+
     #renderRow(task) {
+        const t = this.#t;
         return html`
             <uui-table-row class=${task.isPaused ? 'paused' : ''}>
                 <uui-table-cell>
                     <div class="task-name">${task.name}</div>
                     <div class="task-meta">
-                        <uui-tag look="outline" class="kind" title=${KIND_HELP[task.kind]}>${task.kind === 'distributed' ? 'Distributed' : 'Recurring'}</uui-tag>
-                        ${task.isUmbraco ? html`<uui-tag look="outline" class="kind">Umbraco</uui-tag>` : nothing}
+                        <uui-tag look="outline" class="kind" title=${t(task.kind === 'distributed' ? 'kindDistributedHelp' : 'kindRecurringHelp')}>
+                            ${t(task.kind === 'distributed' ? 'kindDistributed' : 'kindRecurring')}
+                        </uui-tag>
+                        ${task.isUmbraco ? html`<uui-tag look="outline" class="kind">${t('kindUmbraco')}</uui-tag>` : nothing}
                         <code title=${task.typeName}>${shortTypeName(task.typeName)}</code>
                     </div>
-                    ${task.isManaged ? nothing : html`<div class="muted">Not hosted by Scheduled Tasks — controls unavailable.</div>`}
-                    ${task.propertyCount > 0
-                        ? html`
-                            <div class="task-properties">
-                                <uui-button
-                                    look="outline"
-                                    compact
-                                    label=${`Properties of ${task.name}`}
-                                    title="Values the task reads when it runs"
-                                    @click=${() => this.#openEditor(PROPERTIES_MODAL, task)}>
-                                    <uui-icon name="icon-settings"></uui-icon> Properties
-                                </uui-button>
-                                <span class="muted">${task.hasCustomProperties ? 'Customised' : 'Defaults'}</span>
-                            </div>`
-                        : nothing}
+                    ${task.isManaged ? nothing : html`<div class="muted">${t('notManaged')}</div>`}
+                    ${this.#renderTaskExtras(task)}
                 </uui-table-cell>
-                <uui-table-cell>${this.#renderSchedule(task)}</uui-table-cell>
+                <uui-table-cell class="schedule">${this.#renderSchedule(task)}</uui-table-cell>
                 <uui-table-cell class="nowrap">${this.#renderStatus(task)}</uui-table-cell>
                 <uui-table-cell>${this.#renderLastRun(task)}</uui-table-cell>
                 <uui-table-cell class="nowrap">${this.#renderNextRun(task)}</uui-table-cell>
-                <uui-table-cell class="nowrap">${this.#renderActions(task)}</uui-table-cell>
+                <uui-table-cell class="actions">${this.#renderActions(task)}</uui-table-cell>
             </uui-table-row>
         `;
     }
 
     #changedBy(task) {
         if (!task.settingsUpdatedUtc) return '';
-        const who = task.settingsUpdatedBy ? ` by ${task.settingsUpdatedBy}` : '';
-        return `Changed${who} ${new Date(task.settingsUpdatedUtc).toLocaleString()}`;
+        const when = this.#date(task.settingsUpdatedUtc);
+        return task.settingsUpdatedBy ? this.#t('changedBy', task.settingsUpdatedBy, when) : this.#t('changedAt', when);
     }
 
     render() {
+        const t = this.#t;
         if (!this._loaded) {
-            return html`<uui-box headline="Scheduled tasks"><uui-loader></uui-loader></uui-box>`;
+            return html`<uui-box><strong slot="headline">${t('headline')}</strong><uui-loader></uui-loader></uui-box>`;
         }
 
         const overview = this._overview;
@@ -416,27 +545,28 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         const total = overview?.tasks.length ?? 0;
 
         return html`
-            <uui-box headline="Scheduled tasks">
+            <uui-box>
+                <!-- Slotted, not the attribute: the box's own h3 isn't bold. -->
+                <strong slot="headline">${t('headline')}</strong>
                 <div slot="header-actions" class="header-actions">
                     <uui-toggle
-                        label="Auto-refresh"
+                        label=${t('autoRefresh')}
                         .checked=${this._autoRefresh}
                         @change=${(e) => { this._autoRefresh = e.target.checked; }}></uui-toggle>
-                    <uui-button look="secondary" compact label="Refresh" @click=${() => this.#load()}>
-                        <uui-icon name="icon-refresh"></uui-icon> Refresh
+                    <uui-button look="secondary" compact label=${t('export')} title=${t('exportTitle')} ?disabled=${this._exporting} @click=${() => this.#export()}>
+                        <uui-icon name="icon-download-alt"></uui-icon> ${t('export')}
+                    </uui-button>
+                    <uui-button look="secondary" compact label=${t('import')} title=${t('importTitle')} @click=${() => this.#import()}>
+                        <uui-icon name="icon-page-up"></uui-icon> ${t('import')}
+                    </uui-button>
+                    <uui-button look="secondary" compact label=${t('refresh')} @click=${() => this.#load()}>
+                        <uui-icon name="icon-refresh"></uui-icon> ${t('refresh')}
                     </uui-button>
                 </div>
 
-                <p class="intro">
-                    Background jobs registered in this Umbraco instance — Umbraco’s own and your site’s.
-                    <strong>Recurring</strong> tasks run in-process on every server whose role matches;
-                    <strong>distributed</strong> tasks run on one server at a time, scheduled through the database.
-                    Pausing, schedules and properties are saved and survive restarts. Run history is kept in memory on this server.
-                </p>
+                <p class="intro">${t('intro')} ${t('introSaved', Boolean(overview?.historyPersisted))}</p>
 
-                ${overview
-                    ? html`<p class="server">This server: <strong>${overview.serverName}</strong> · role <strong>${overview.serverRole}</strong></p>`
-                    : nothing}
+                ${overview ? html`<p class="server">${t('thisServer', overview.serverName, overview.serverRole)}</p>` : nothing}
 
                 ${this._loadError ? html`<p role="alert" class="error">${this._loadError}</p>` : nothing}
 
@@ -444,27 +574,27 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     <input
                         class="text-input search"
                         type="search"
-                        aria-label="Filter tasks"
-                        placeholder="Filter by name or type"
+                        aria-label=${t('filterLabel')}
+                        placeholder=${t('filterPlaceholder')}
                         .value=${this._filter}
                         @input=${(e) => { this._filter = e.target.value; }}>
                     <uui-toggle
-                        label="Show Umbraco’s tasks"
+                        label=${t('showUmbraco')}
                         .checked=${this._showUmbraco}
                         @change=${(e) => { this._showUmbraco = e.target.checked; }}></uui-toggle>
                 </div>
 
                 ${tasks.length === 0
-                    ? html`<p class="empty">${total === 0 ? 'No scheduled tasks are registered.' : 'No tasks match the filter.'}</p>`
+                    ? html`<p class="empty">${total === 0 ? t('noTasks') : t('noMatches')}</p>`
                     : html`
-                        <uui-table aria-label="Scheduled tasks">
+                        <uui-table aria-label=${t('headline')}>
                             <uui-table-head>
-                                <uui-table-head-cell>Task</uui-table-head-cell>
-                                <uui-table-head-cell>Schedule</uui-table-head-cell>
-                                <uui-table-head-cell>Status</uui-table-head-cell>
-                                <uui-table-head-cell>Last run</uui-table-head-cell>
-                                <uui-table-head-cell>Next run</uui-table-head-cell>
-                                <uui-table-head-cell><span class="visually-hidden">Actions</span></uui-table-head-cell>
+                                <uui-table-head-cell>${t('colTask')}</uui-table-head-cell>
+                                <uui-table-head-cell>${t('colSchedule')}</uui-table-head-cell>
+                                <uui-table-head-cell>${t('colStatus')}</uui-table-head-cell>
+                                <uui-table-head-cell>${t('colLastRun')}</uui-table-head-cell>
+                                <uui-table-head-cell>${t('colNextRun')}</uui-table-head-cell>
+                                <uui-table-head-cell><span class="visually-hidden">${t('colActions')}</span></uui-table-head-cell>
                             </uui-table-head>
                             ${tasks.map((task) => this.#renderRow(task))}
                         </uui-table>
@@ -475,7 +605,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
 
     static styles = css`
         :host { display: block; padding: var(--uui-size-space-5); }
-        .header-actions { display: flex; align-items: center; gap: var(--uui-size-space-4); }
+        .header-actions { display: flex; align-items: center; gap: var(--uui-size-space-3); }
+        .header-actions uui-toggle { margin-inline-end: var(--uui-size-space-3); }
         .intro { margin-block: 0 var(--uui-size-space-3); max-width: 80ch; }
         .server { margin-block: 0 var(--uui-size-space-5); color: var(--uui-color-text-alt); }
         .toolbar { display: flex; align-items: center; gap: var(--uui-size-space-5); margin-block-end: var(--uui-size-space-4); }
@@ -500,16 +631,45 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         .task-name { font-weight: var(--uui-font-weight-bold, 700); }
         .task-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--uui-size-space-2); margin-block-start: var(--uui-size-space-1); }
         .task-meta code { font-size: var(--uui-font-size-small, 0.875em); color: var(--uui-color-text-alt); }
-        .task-properties { display: flex; align-items: center; gap: var(--uui-size-space-3); margin-block-start: var(--uui-size-space-3); }
+        .task-extras { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2) var(--uui-size-space-5); margin-block-start: var(--uui-size-space-3); }
+        .task-extras:empty { display: none; }
+        .extra { display: flex; flex-wrap: wrap; align-items: center; gap: var(--uui-size-space-1) var(--uui-size-space-2); }
+        .extra .muted { white-space: nowrap; }
+        .extra uui-button { white-space: nowrap; }
+        .extra .customised { color: var(--uui-color-text); }
         uui-tag.kind { font-size: 11px; }
-        uui-tag uui-loader-circle { font-size: 0.9em; margin-inline-end: 4px; }
+        /* Icons default to sitting on the text baseline, which rides high next to a label. */
+        uui-button uui-icon { vertical-align: text-top; }
+        /* The loader defaults to --uui-color-default (dark navy); in the tag it must follow the tag's text (white). */
+        uui-tag uui-loader-circle { font-size: 0.9em; margin-inline-end: 4px; color: inherit; }
+        uui-tag.stopping { margin-inline-start: var(--uui-size-space-1); }
         .progress { display: flex; align-items: center; gap: var(--uui-size-space-2); margin-block-start: var(--uui-size-space-2); min-width: 9rem; }
         .progress uui-progress-bar { flex: 1; }
         .progress-message { white-space: normal; max-width: 14rem; margin-block-start: var(--uui-size-space-1); overflow-wrap: anywhere; }
-        .schedule-button { white-space: nowrap; }
-        .schedule-button uui-icon { margin-inline-start: var(--uui-size-space-2); }
+        /* A native button, so a long schedule ("Every Monday and Thursday at 07:00") wraps tidily. */
+        uui-table-cell.schedule { min-width: 10rem; }
+        .schedule-button {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--uui-size-space-2);
+            max-width: 100%;
+            padding: var(--uui-size-space-2) var(--uui-size-space-3);
+            border: 1px solid var(--uui-color-border-standalone, #c2c2c2);
+            border-radius: var(--uui-border-radius, 3px);
+            background: none;
+            font: inherit;
+            line-height: 1.35;
+            text-align: start;
+            color: var(--uui-color-interactive, inherit);
+            cursor: pointer;
+        }
+        .schedule-button:hover:not(:disabled) { border-color: var(--uui-color-interactive-emphasis, #3544b1); color: var(--uui-color-interactive-emphasis, #3544b1); }
+        .schedule-button:focus-visible { outline: 2px solid var(--uui-color-focus, #3879ff); outline-offset: 2px; }
+        .schedule-button:disabled { cursor: default; color: var(--uui-color-disabled-contrast, #9d9d9d); }
+        .schedule-button uui-icon { flex: none; }
         .schedule-button + .muted { margin-block-start: var(--uui-size-space-2); }
         .muted { color: var(--uui-color-text-alt); font-size: var(--uui-font-size-small, 0.875em); }
+        uui-table-cell.nowrap .muted { white-space: normal; max-width: 14rem; margin-block-start: var(--uui-size-space-1); }
         .last-run { display: flex; align-items: center; gap: var(--uui-size-space-2); white-space: nowrap; }
         .outcome-succeeded uui-icon { color: var(--uui-color-positive); }
         .outcome-failed uui-icon { color: var(--uui-color-danger); }
@@ -526,8 +686,11 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
             color: var(--uui-color-text-alt);
             font-size: var(--uui-font-size-small, 0.875em);
         }
-        .outcome-failed + .run-message { color: var(--uui-color-danger); }
-        .row-actions { display: flex; gap: var(--uui-size-space-2); justify-content: flex-end; }
+        .outcome-failed ~ .run-message { color: var(--uui-color-danger); }
+        /* Wraps onto a second line rather than pushing the table past the box. */
+        .row-actions { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); justify-content: flex-end; min-width: 13rem; }
+        uui-table-cell.actions { width: 1%; }
+        .row-actions uui-button { white-space: nowrap; }
         /* Shrink-to-fit columns that must stay on one line. */
         uui-table-cell.nowrap { white-space: nowrap; width: 1%; }
         .error { color: var(--uui-color-danger); }
@@ -542,11 +705,6 @@ const OUTCOME_ICONS = {
     skipped: 'icon-navigation-last',
     canceled: 'icon-block',
     running: 'icon-time',
-};
-
-const KIND_HELP = {
-    recurring: 'IRecurringBackgroundJob — runs in-process on every server whose role matches.',
-    distributed: 'IDistributedBackgroundJob — runs on one server at a time, scheduled through the database.',
 };
 
 customElements.define('esatto-scheduled-tasks-dashboard', EsattoScheduledTasksDashboard);

@@ -87,6 +87,42 @@ export function setProperties(host, id, values) {
     );
 }
 
+/** Asks the task's runs in progress (on any server) to stop, or cancels its pending retry. */
+export function stopTask(host, id) {
+    return tryExecute(host, umbHttpClient.post({ url: `${API_BASE}/stop`, body: { id }, security: SECURITY }), QUIET);
+}
+
+/**
+ * runPolicy { retries, retryDelaySeconds, timeoutSeconds } (timeoutSeconds 0 = no time limit);
+ * null restores the task's defaults.
+ */
+export function setRunPolicy(host, id, runPolicy) {
+    return tryExecute(
+        host,
+        umbHttpClient.put({ url: `${API_BASE}/run-policy`, body: { id, runPolicy }, security: SECURITY }),
+        QUIET,
+    );
+}
+
+/** The task's change log: [{ utc, performedBy, action, details, server }], newest first. */
+export function getChanges(host, id) {
+    return tryExecute(host, umbHttpClient.get({ url: byId('changes', id), security: SECURITY }), QUIET);
+}
+
+/** Every task's settings, as the export file's JSON. */
+export function exportSettings(host) {
+    return tryExecute(host, umbHttpClient.get({ url: `${API_BASE}/export`, security: SECURITY }), QUIET);
+}
+
+/** Compares (apply false) or applies an export: { applied, hasErrors, tasks: [{ id, name, status, changes, errors }] }. */
+export function importSettings(host, document, apply, resetMissing) {
+    return tryExecute(
+        host,
+        umbHttpClient.post({ url: `${API_BASE}/import`, body: { document, apply, resetMissing }, security: SECURITY }),
+        QUIET,
+    );
+}
+
 /** The message to show for a failed command: the API's ProblemDetails title when there is one. */
 export function errorMessage(error, fallback) {
     return error?.problemDetails?.title ?? error?.message ?? fallback;

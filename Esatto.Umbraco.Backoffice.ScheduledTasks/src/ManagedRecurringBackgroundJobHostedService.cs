@@ -104,6 +104,7 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
     private readonly IScheduledTaskRunLog _runLog;
     private readonly IOptionsMonitor<ScheduledTasksOptions> _options;
     private readonly ScheduledTaskCalendarEvaluator _calendarEvaluator;
+    private readonly ScheduledTaskRunControl _runControl;
     private readonly Lock _periodLock = new();
 
     private CancellationTokenSource _ignoredDelayChangeCts = new();
@@ -153,10 +154,12 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
         IScheduledTaskRunLog runLog,
         IOptionsMonitor<ScheduledTasksOptions> options,
         ScheduledTaskCalendarEvaluator calendarEvaluator,
-        RecurringJobHostRegistry registry)
+        RecurringJobHostRegistry registry,
+        ScheduledTaskRunControl? runControl = null)
         : base(runtimeState, logger, mainDom, serverRoleAccessor, eventAggregator, eventMessagesFactory, job, timeProvider)
     {
         _calendarEvaluator = calendarEvaluator;
+        _runControl = runControl ?? new ScheduledTaskRunControl(runLog, timeProvider);
         _runtimeState = runtimeState;
         _logger = logger;
         _mainDom = mainDom;
@@ -392,12 +395,11 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
         var executingNotification = new RecurringBackgroundJobExecutingNotification(_job, eventMessages);
         await _eventAggregator.PublishAsync(executingNotification, stoppingToken);
 
-        Guid? runId = null;
         try
         {
             if (GetBlockedReason() is { } blockedReason)
             {
-                _runLog.Skip(TaskId, blockedReason, trigger, pendingRun?.TriggeredBy);
+                _runLog.Skip(TaskId, blockedReason, trigger, pendingRun?.TriggeredBy, PersistsAllRuns());
                 await IgnoreAndWaitAsync(blockedReason, eventMessages, executingNotification, stoppingToken);
                 return;
             }
@@ -406,7 +408,7 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
             {
                 // Fail closed: a paused task must not run because its pause couldn't be read yet.
                 const string waitingReason = "The Scheduled Tasks settings haven't been read from the database yet, so it isn't known whether the task is paused.";
-                _runLog.Skip(TaskId, waitingReason, trigger, pendingRun?.TriggeredBy);
+                _runLog.Skip(TaskId, waitingReason, trigger, pendingRun?.TriggeredBy, PersistsAllRuns());
                 await IgnoreAndWaitAsync(waitingReason, eventMessages, executingNotification, stoppingToken);
                 return;
             }
@@ -437,26 +439,38 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
             }
 
             Volatile.Write(ref _running, 1);
-            runId = _runLog.Start(TaskId, trigger, pendingRun?.TriggeredBy);
+            var result = await ExecuteWithPolicyAsync(setting, trigger, pendingRun?.TriggeredBy, stoppingToken);
 
-            await _job.RunJobAsync(stoppingToken);
+            switch (result.Outcome)
+            {
+                case AttemptOutcome.Succeeded:
+                    await _eventAggregator.PublishAsync(
+                        new RecurringBackgroundJobExecutedNotification(_job, eventMessages).WithStateFrom(executingNotification),
+                        stoppingToken);
+                    break;
 
-            _runLog.Succeed(TaskId, runId.Value);
-            await _eventAggregator.PublishAsync(
-                new RecurringBackgroundJobExecutedNotification(_job, eventMessages).WithStateFrom(executingNotification),
-                stoppingToken);
+                case AttemptOutcome.Failed:
+                    _logger.LogError(result.Exception!.SourceException, "Unhandled exception in recurring background job.");
+                    await _eventAggregator.PublishAsync(
+                        new RecurringBackgroundJobFailedNotification(_job, eventMessages).WithStateFrom(executingNotification),
+                        stoppingToken);
+                    break;
+
+                default:
+                    _logger.LogDebug(result.Outcome == AttemptOutcome.Stopped ? "Job stopped from the Scheduled Tasks dashboard." : "Job canceled during shutdown.");
+                    await _eventAggregator.PublishAsync(
+                        new RecurringBackgroundJobCanceledNotification(_job, eventMessages).WithStateFrom(executingNotification),
+                        CancellationToken.None);
+                    break;
+            }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            if (runId is { } id) _runLog.Cancel(TaskId, id);
             _logger.LogDebug("Job canceled during shutdown.");
-            await _eventAggregator.PublishAsync(
-                new RecurringBackgroundJobCanceledNotification(_job, eventMessages).WithStateFrom(executingNotification),
-                CancellationToken.None);
         }
         catch (Exception ex)
         {
-            if (runId is { } id) _runLog.Fail(TaskId, id, ex);
+            // A notification handler threw; the run itself is already recorded.
             _logger.LogError(ex, "Unhandled exception in recurring background job.");
             await _eventAggregator.PublishAsync(
                 new RecurringBackgroundJobFailedNotification(_job, eventMessages).WithStateFrom(executingNotification),
@@ -467,6 +481,57 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
             Volatile.Write(ref _running, 0);
         }
     }
+
+    /// <summary>
+    /// Runs the job with its run policy: within its time limit, and again after a failure as often
+    /// as it allows, waiting in between (the task shows as running meanwhile). A stop from the
+    /// dashboard ends the attempt (if the job observes its token) and any retries; a pause ends a
+    /// scheduled run's retries.
+    /// </summary>
+    private async Task<AttemptResult> ExecuteWithPolicyAsync(
+        ScheduledTaskSetting? setting,
+        ScheduledTaskTrigger trigger,
+        string? triggeredBy,
+        CancellationToken stoppingToken)
+    {
+        var policy = ScheduledTaskRunPolicies.Resolve(_job.GetType(), setting?.RunPolicy);
+        var persistAll = PersistsAllRuns();
+        using var execution = _runControl.Begin(TaskId, stoppingToken);
+
+        for (var attempt = 1; ; attempt++)
+        {
+            var runId = attempt == 1
+                ? _runLog.Start(TaskId, trigger, triggeredBy, attempt, policy.MaxAttempts, persistAll)
+                : _runLog.Start(TaskId, ScheduledTaskTrigger.Retry, null, attempt, policy.MaxAttempts, persistAll);
+            var result = await ScheduledTaskAttempts.RunAsync(
+                _runLog, execution, TaskId, runId, policy.Timeout, _options.CurrentValue.RunLogMinimumLevel, _job.RunJobAsync);
+            if (result.Outcome != AttemptOutcome.Failed || attempt >= policy.MaxAttempts || IsPausedFor(trigger)) return result;
+
+            _runLog.SetRetry(TaskId, runId, AddClamped(UtcNow(), policy.RetryDelay));
+            try
+            {
+                await Task.Delay(policy.RetryDelay, _timeProvider, execution.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                _runLog.SetRetry(TaskId, runId, null);
+                return result with { Outcome = execution.IsShuttingDown ? AttemptOutcome.ShutDown : AttemptOutcome.Stopped };
+            }
+
+            if (IsPausedFor(trigger))
+            {
+                _runLog.SetRetry(TaskId, runId, null);
+                return result;
+            }
+        }
+    }
+
+    // A pause stops the retries of a scheduled or triggered run; one started from the dashboard keeps going.
+    private bool IsPausedFor(ScheduledTaskTrigger trigger)
+        => trigger != ScheduledTaskTrigger.Manual && _settings.Get(TaskId)?.IsPaused == true;
+
+    private bool PersistsAllRuns()
+        => ScheduledTaskAttempts.PersistsAllRuns(EffectivePeriod, CurrentCalendar() is not null, _options.CurrentValue);
 
     /// <summary>Umbraco's reasons not to run on this server right now, or null when clear to run.</summary>
     private string? GetBlockedReason()
@@ -985,15 +1050,17 @@ public class ManagedRecurringBackgroundJobHostedService<TJob> : RecurringBackgro
             if (remaining == TimeSpan.Zero) return;
 
             var ignoredDelayChangeToken = _ignoredDelayChangeCts.Token;
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, ignoredDelayChangeToken);
+            var wakeToken = _wakeCts.Token;
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, ignoredDelayChangeToken, wakeToken);
 
             try
             {
                 await Task.Delay(remaining, _timeProvider, linkedCts.Token);
                 return;
             }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested || wakeToken.IsCancellationRequested)
             {
+                // Shutting down, or a run was requested (it shouldn't wait out the back-off).
                 return;
             }
             catch (OperationCanceledException) when (ignoredDelayChangeToken.IsCancellationRequested)

@@ -2,7 +2,7 @@
   "$schema": "../umbraco-package-schema.json",
   "id": "Esatto.Umbraco.Backoffice.ScheduledTasks",
   "name": "Esatto Scheduled Tasks",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "importmap": {
     "imports": {
       "@esatto/scheduled-tasks/api.js": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/api.js",
@@ -11,12 +11,26 @@
   },
   "extensions": [
     {
+      "type": "localization",
+      "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.Localization.En",
+      "name": "Scheduled Tasks (English)",
+      "meta": { "culture": "en" },
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/lang/en.js"
+    },
+    {
+      "type": "localization",
+      "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.Localization.Sv",
+      "name": "Scheduled Tasks (Swedish)",
+      "meta": { "culture": "sv" },
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/lang/sv.js"
+    },
+    {
       "type": "dashboard",
       "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.Dashboard",
       "name": "Scheduled Tasks",
       "element": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/scheduled-tasks-dashboard.js",
       "elementName": "esatto-scheduled-tasks-dashboard",
-      "meta": { "label": "Scheduled Tasks", "pathname": "scheduled-tasks", "weight": 90 },
+      "meta": { "label": "#esattoScheduledTasks_headline", "pathname": "scheduled-tasks", "weight": 90 },
       "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Settings" }]
     },
     {
@@ -36,6 +50,18 @@
       "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.PropertiesModal",
       "name": "Scheduled Task Properties",
       "element": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/scheduled-task-properties-modal.js"
+    },
+    {
+      "type": "modal",
+      "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.RunPolicyModal",
+      "name": "Scheduled Task Retries and Time Limit",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/scheduled-task-run-policy-modal.js"
+    },
+    {
+      "type": "modal",
+      "alias": "Esatto.Umbraco.Backoffice.ScheduledTasks.ImportModal",
+      "name": "Scheduled Task Settings Import",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/scheduled-task-import-modal.js"
     }
   ]
 }

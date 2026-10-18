@@ -3,8 +3,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
     WEEKDAYS,
+    describeRunPolicy,
     describeSchedule,
-    ordinal,
+    logLines,
+    parseLogLine,
+    summarizeRunPolicy,
+    termsFrom,
     formatDuration,
     formatElapsed,
     formatInterval,
@@ -19,6 +23,12 @@ import {
     splitInterval,
     toSeconds,
 } from '../../Esatto.Umbraco.Backoffice.ScheduledTasks/wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/format.js';
+import en from '../../Esatto.Umbraco.Backoffice.ScheduledTasks/wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/lang/en.js';
+import sv from '../../Esatto.Umbraco.Backoffice.ScheduledTasks/wwwroot/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/lang/sv.js';
+
+// As Umbraco resolves terms: the user's language, then English.
+const t = termsFrom(en);
+const tSv = termsFrom(sv, en);
 
 test('formatDuration keeps the two largest units', () => {
     assert.equal(formatDuration(45), '45 s');
@@ -30,34 +40,37 @@ test('formatDuration keeps the two largest units', () => {
 });
 
 test('formatInterval names the interval in its largest exact unit', () => {
-    assert.equal(formatInterval(1), 'Every second');
-    assert.equal(formatInterval(30), 'Every 30 seconds');
-    assert.equal(formatInterval(3600), 'Every hour');
-    assert.equal(formatInterval(5400), 'Every 90 minutes');
-    assert.equal(formatInterval(86400), 'Every day');
-    assert.equal(formatInterval(7 * 86400), 'Every week');
-    assert.equal(formatInterval(14 * 86400), 'Every 2 weeks');
-    assert.equal(formatInterval(30 * 86400), 'Every 30 days');
-    assert.equal(formatInterval(365 * 86400), 'Every 365 days');
-    assert.equal(formatInterval(null), 'On demand only');
+    assert.equal(formatInterval(1, t), 'Every second');
+    assert.equal(formatInterval(30, t), 'Every 30 seconds');
+    assert.equal(formatInterval(3600, t), 'Every hour');
+    assert.equal(formatInterval(5400, t), 'Every 90 minutes');
+    assert.equal(formatInterval(86400, t), 'Every day');
+    assert.equal(formatInterval(7 * 86400, t), 'Every week');
+    assert.equal(formatInterval(14 * 86400, t), 'Every 2 weeks');
+    assert.equal(formatInterval(30 * 86400, t), 'Every 30 days');
+    assert.equal(formatInterval(365 * 86400, t), 'Every 365 days');
+    assert.equal(formatInterval(null, t), 'On demand only');
 });
 
 test('describeSchedule reads calendar schedules', () => {
-    assert.equal(describeSchedule({ kind: 'daily', time: '07:00' }), 'Every day at 07:00');
-    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: ['Monday'] }), 'Every Monday at 07:00');
-    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: ['Thursday', 'Monday'] }), 'Every Monday and Thursday at 07:00');
-    assert.equal(describeSchedule({ kind: 'weekly', time: '08:30', weekdays: ['Monday', 'Wednesday', 'Friday'] }), 'Every Monday, Wednesday and Friday at 08:30');
-    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: WEEKDAYS.slice(0, 5) }), 'Every weekday at 07:00');
-    assert.equal(describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: 1 }), 'Every month on the 1st at 06:00');
-    assert.equal(describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: 22 }), 'Every month on the 22nd at 06:00');
-    assert.equal(describeSchedule({ kind: 'yearly', time: '09:00', dayOfMonth: 15, month: 3 }), 'Every year on 15 March at 09:00');
-    assert.equal(describeSchedule({ kind: 'cron', cron: '0 7 * * 1-5' }), 'Cron: 0 7 * * 1-5');
-    assert.equal(describeSchedule(null), '');
+    assert.equal(describeSchedule({ kind: 'daily', time: '07:00' }, t), 'Every day at 07:00');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: ['Monday'] }, t), 'Every Monday at 07:00');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: ['Thursday', 'Monday'] }, t), 'Every Monday and Thursday at 07:00');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '08:30', weekdays: ['Monday', 'Wednesday', 'Friday'] }, t), 'Every Monday, Wednesday and Friday at 08:30');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: WEEKDAYS.slice(0, 5) }, t), 'Every weekday at 07:00');
+    assert.equal(describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: 1 }, t), 'Every month on the 1st at 06:00');
+    assert.equal(describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: 22 }, t), 'Every month on the 22nd at 06:00');
+    assert.equal(describeSchedule({ kind: 'yearly', time: '09:00', dayOfMonth: 15, month: 3 }, t), 'Every year on 15 March at 09:00');
+    assert.equal(describeSchedule({ kind: 'cron', cron: '0 7 * * 1-5' }, t), 'Cron: 0 7 * * 1-5');
+    assert.equal(describeSchedule(null, t), '');
 });
 
-test('ordinal', () => {
-    assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 31].map(ordinal),
+test('day ordinals in English and Swedish', () => {
+    const day = (n, terms) => describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: n }, terms);
+    assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 31].map((n) => day(n, t).split(' ')[4]),
         ['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '23rd', '31st']);
+    assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 23, 31].map((n) => day(n, tSv).split(' ')[1]),
+        ['1:a', '2:a', '3:e', '4:e', '11:e', '12:e', '13:e', '21:a', '22:a', '23:e', '31:a']);
 });
 
 test('formatElapsed scales from milliseconds to minutes', () => {
@@ -152,10 +165,52 @@ test('timeZoneOptions always offers UTC and keeps an unknown current zone', () =
 });
 
 test('minimumIntervalError and formatLength', () => {
-    assert.equal(formatLength(1), '1 second');
-    assert.equal(formatLength(300), '5 minutes');
-    assert.equal(minimumIntervalError(2, 5), 'This task can’t run more often than every 5 seconds.');
-    assert.equal(minimumIntervalError(5, 5), '');
-    assert.equal(minimumIntervalError(1, null), '');
-    assert.equal(minimumIntervalError(1, undefined), '');
+    assert.equal(formatLength(1, t), '1 second');
+    assert.equal(formatLength(300, t), '5 minutes');
+    assert.equal(minimumIntervalError(2, 5, t), 'This task can’t run more often than every 5 seconds.');
+    assert.equal(minimumIntervalError(5, 5, t), '');
+    assert.equal(minimumIntervalError(1, null, t), '');
+    assert.equal(minimumIntervalError(1, undefined, t), '');
+});
+
+test('Swedish schedules and intervals', () => {
+    assert.equal(formatInterval(1, tSv), 'Varje sekund');
+    assert.equal(formatInterval(900, tSv), 'Var 15:e minut');
+    assert.equal(formatInterval(2 * 3600, tSv), 'Var 2:a timme');
+    assert.equal(formatInterval(14 * 86400, tSv), 'Var 2:a vecka');
+    assert.equal(formatInterval(null, tSv), 'Endast vid behov');
+    assert.equal(formatLength(1, tSv), '1 sekund');
+    assert.equal(formatLength(7200, tSv), '2 timmar');
+    assert.equal(describeSchedule({ kind: 'daily', time: '07:00' }, tSv), 'Varje dag kl. 07:00');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: ['Thursday', 'Monday'] }, tSv), 'Varje måndag och torsdag kl. 07:00');
+    assert.equal(describeSchedule({ kind: 'weekly', time: '07:00', weekdays: WEEKDAYS.slice(0, 5) }, tSv), 'Varje vardag kl. 07:00');
+    assert.equal(describeSchedule({ kind: 'monthly', time: '06:00', dayOfMonth: 1 }, tSv), 'Den 1:a varje månad kl. 06:00');
+    assert.equal(describeSchedule({ kind: 'yearly', time: '09:00', dayOfMonth: 15, month: 3 }, tSv), 'Varje år den 15 mars kl. 09:00');
+    assert.equal(minimumIntervalError(2, 300, tSv), 'Det här jobbet kan inte köras oftare än var 5 minuter.');
+});
+
+test('termsFrom falls back to the next dictionary and fills {0} placeholders', () => {
+    const terms = termsFrom({ esattoScheduledTasks: { greeting: 'Hej {0}!' } }, en);
+    assert.equal(terms('greeting', 'Carl'), 'Hej Carl!');
+    assert.equal(terms('refresh'), 'Refresh');
+    assert.equal(terms('no-such-key'), 'no-such-key');
+});
+
+test('run policies read as sentences', () => {
+    assert.equal(describeRunPolicy(3, 60, 600, t), '3 retries, 1 minute apart · time limit 10 minutes');
+    assert.equal(describeRunPolicy(0, 60, null, t), 'no retries · no time limit');
+    assert.equal(describeRunPolicy(1, 30, 0, tSv), '1 omförsök med 30 sekunder emellan · ingen tidsgräns');
+    assert.equal(summarizeRunPolicy({ retries: 2, timeoutSeconds: 3600 }, t), '2 retries · limit 1 hour');
+    assert.equal(summarizeRunPolicy({ retries: 0, timeoutSeconds: null }, t), 'No retries');
+    assert.equal(summarizeRunPolicy(null, t), '');
+});
+
+test('captured log lines split into time, level and text', () => {
+    const line = parseLogLine('2026-10-18T07:00:03.120Z WRN ProductFeedImportJob: 3 products had no price');
+    assert.equal(line.time.toISOString(), '2026-10-18T07:00:03.120Z');
+    assert.equal(line.level, 'WRN');
+    assert.equal(line.text, 'ProductFeedImportJob: 3 products had no price');
+    assert.deepEqual(parseLogLine('… 12 more lines not kept'), { time: null, level: null, text: '… 12 more lines not kept' });
+    assert.equal(logLines('2026-10-18T07:00:00Z INF a\n2026-10-18T07:00:01Z ERR b').length, 2);
+    assert.deepEqual(logLines(null), []);
 });

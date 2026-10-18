@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Serilog.Core;
 using Umbraco.Cms.Core.Composing;
 using Umbraco.Cms.Core.DependencyInjection;
 using Umbraco.Cms.Core.Events;
@@ -32,7 +33,15 @@ public sealed class ScheduledTasksComposer : IComposer
         builder.Services.TryAddSingleton(TimeProvider.System);
         builder.Services.TryAddSingleton<ScheduledTasksSchemaState>();
         builder.Services.TryAddSingleton<IScheduledTaskSettingsStore, ScheduledTaskSettingsStore>();
-        builder.Services.TryAddSingleton<IScheduledTaskRunLog, ScheduledTaskRunLog>();
+        builder.Services.TryAddSingleton<IScheduledTaskRunStore, ScheduledTaskRunStore>();
+        builder.Services.TryAddSingleton<ScheduledTaskRunLog>();
+        builder.Services.TryAddSingleton<IScheduledTaskRunLog>(sp => sp.GetRequiredService<ScheduledTaskRunLog>());
+        builder.Services.TryAddSingleton<IScheduledTaskAuditLog, ScheduledTaskAuditLog>();
+        builder.Services.TryAddSingleton<ScheduledTaskRunControl>();
+        builder.Services.AddHostedService<ScheduledTaskHistoryWriter>();
+
+        // Umbraco's Serilog logger reads sinks registered here: this one captures each run's log.
+        builder.Services.AddSingleton<ILogEventSink, ScheduledTaskLogCapture>();
         builder.Services.TryAddSingleton<RecurringJobHostRegistry>();
         builder.Services.TryAddSingleton<IDistributedJobTable, DistributedJobTable>();
         builder.Services.TryAddSingleton<IScheduledTaskService, ScheduledTaskService>();

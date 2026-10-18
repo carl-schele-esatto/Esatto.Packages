@@ -21,7 +21,27 @@ public sealed class ScheduledTasksMigrationPlan : MigrationPlan
             .To<AddScheduledTaskSettingsTableMigration>("add-scheduled-task-settings-table")
             .To<AddScheduledTaskPropertiesColumnMigration>("add-scheduled-task-properties-column")
             .To<AddScheduledTaskCalendarColumnsMigration>("add-scheduled-task-calendar-columns")
-            .To<AddScheduledTaskOccurrencesTableMigration>("add-scheduled-task-occurrences-table");
+            .To<AddScheduledTaskOccurrencesTableMigration>("add-scheduled-task-occurrences-table")
+            .To<AddScheduledTaskRunHistoryMigration>("add-scheduled-task-run-history");
+    }
+}
+
+/// <summary>
+/// 1.1: the <c>ScheduledTaskRuns</c> (run history) and <c>ScheduledTaskAudit</c> (change log)
+/// tables, and the <c>runPolicyJson</c> column (retries and time limit). Each part is skipped when
+/// it already exists.
+/// </summary>
+public sealed class AddScheduledTaskRunHistoryMigration : AsyncMigrationBase
+{
+    public AddScheduledTaskRunHistoryMigration(IMigrationContext context) : base(context) { }
+
+    protected override Task MigrateAsync()
+    {
+        if (!TableExists(ScheduledTaskRunEntity.TableName)) Create.Table<ScheduledTaskRunEntity>().Do();
+        if (!TableExists(ScheduledTaskAuditEntity.TableName)) Create.Table<ScheduledTaskAuditEntity>().Do();
+        if (!ColumnExists(ScheduledTaskSettingEntity.TableName, ScheduledTaskSettingEntity.RunPolicyColumn))
+            AddColumn<ScheduledTaskSettingEntity>(ScheduledTaskSettingEntity.RunPolicyColumn);
+        return Task.CompletedTask;
     }
 }
 
