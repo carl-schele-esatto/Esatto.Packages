@@ -165,6 +165,36 @@
       }
     },
     {
+      "pattern": "ytidb::*",
+      "provider": { "sv": "YouTube", "en": "YouTube" },
+      "category": "marketing",
+      "tracker": true,
+      "purpose": {
+        "sv": "Sparas av den inbäddade YouTube-spelaren när en video spelas, för spelarens egen data i webbläsaren.",
+        "en": "Stored by the embedded YouTube player when a video plays, for the player's own data in the browser."
+      }
+    },
+    {
+      "pattern": "yt-remote-*",
+      "provider": { "sv": "YouTube", "en": "YouTube" },
+      "category": "marketing",
+      "tracker": true,
+      "purpose": {
+        "sv": "Sparas av den inbäddade YouTube-spelaren och kommer ihåg enheter och inställningar för uppspelning.",
+        "en": "Stored by the embedded YouTube player to remember devices and playback settings."
+      }
+    },
+    {
+      "pattern": "yt-player-*",
+      "provider": { "sv": "YouTube", "en": "YouTube" },
+      "category": "marketing",
+      "tracker": true,
+      "purpose": {
+        "sv": "Sparas av den inbäddade YouTube-spelaren och kommer ihåg spelarinställningar som bandbredd och ljud.",
+        "en": "Stored by the embedded YouTube player to remember player settings such as bandwidth and volume."
+      }
+    },
+    {
       "pattern": "vuid",
       "provider": { "sv": "Vimeo", "en": "Vimeo" },
       "category": "statistics",

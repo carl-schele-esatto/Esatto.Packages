@@ -6,7 +6,10 @@ against what the cookie policy page already declares.
 
 - Anything set outside the consent it needed is a **violation** — a non-zero exit code
 - Anything set but undeclared becomes a **draft** addition to the policy page for an editor to review
-- Cookies, `localStorage` and `sessionStorage`, per pass, with the page that set them
+- Cookies, `localStorage` and `sessionStorage`, per pass, with the page that set them - including
+  what embeds keep in their own frames
+- Scrolls every page to the bottom and presses play on click-to-load videos, so lazy-loaded maps
+  and players are seen in the passes that allow them, and proven absent in the ones that do not
 - Keeps the last 50 scans, so two runs can be compared
 - Writes a JSON and a Markdown report; exit code gates CI
 
@@ -64,6 +67,9 @@ reported as declared-but-never-found. On the one cookie that exists to record a 
 - **`/umbraco` is excluded from the crawl.** Backoffice cookies are not a visitor's cookies.
 - The only forms it submits are the member login and the consent decision itself. Nothing here
   books, cancels, registers or pays.
+- The only things it clicks are click-to-load video posters - `[data-youtube-id]`, `lite-youtube`
+  and `lite-vimeo` - which is what a visitor does to watch a video. On a site that gates its player
+  on consent, pressing one without that consent should only open the banner.
 
 ## Writing findings back
 

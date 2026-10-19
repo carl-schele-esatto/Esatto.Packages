@@ -39,6 +39,8 @@ public static class PageCapture
             return new PageObservation([], new HashSet<string>(hosts, StringComparer.OrdinalIgnoreCase));
         }
 
+        await RevealEmbedsAsync(page, log);
+
         List<CapturedEntry> entries = [];
 
         // Read from the context, not the page: a cookie set for the whole site by an earlier page
@@ -52,18 +54,97 @@ public static class PageCapture
                 cookie.Expires < 0 ? null : DateTimeOffset.FromUnixTimeSeconds((long)cookie.Expires)));
         }
 
-        entries.AddRange(await KeysAsync(page, "localStorage", StorageKind.LocalStorage, log));
-        entries.AddRange(await KeysAsync(page, "sessionStorage", StorageKind.SessionStorage, log));
+        // Every frame, not only the page: an embed's player or map keeps its storage in its own
+        // origin's frame, where the page's own localStorage never shows it.
+        foreach (IFrame frame in page.Frames)
+        {
+            entries.AddRange(await KeysAsync(frame, "localStorage", StorageKind.LocalStorage, log));
+            entries.AddRange(await KeysAsync(frame, "sessionStorage", StorageKind.SessionStorage, log));
+        }
 
-        return new PageObservation(entries, new HashSet<string>(hosts, StringComparer.OrdinalIgnoreCase));
+        return new PageObservation(
+            [.. entries.DistinctBy(entry => (entry.Name, entry.Storage))],
+            new HashSet<string>(hosts, StringComparer.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The click-to-load video facades the scanner activates. Nothing else on a page is ever clicked.
+    /// </summary>
+    /// <remarks>
+    /// A facade is a poster standing in for a player until the visitor presses play, so a plain
+    /// page load never shows what the player stores. These are the common open-source facades plus
+    /// the data-youtube-id convention the Esatto sites use. Pressing one is what a visitor does to
+    /// watch a video; it submits nothing. On a site that gates the player on consent, pressing it
+    /// without that consent should open the banner and load nothing - which is exactly what the
+    /// reject passes then prove.
+    /// </remarks>
+    public const string VideoFacades = "[data-youtube-id], lite-youtube, lite-vimeo";
+
+    // A page that keeps growing as it is scrolled would otherwise be scrolled for ever.
+    private const int MaxScrollSteps = 60;
+
+    private static readonly TimeSpan QuietFor = TimeSpan.FromMilliseconds(500);
+    private static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Scrolls the page top to bottom, so lazy-loaded embeds (a map, an iframe with
+    /// loading="lazy") load, then presses every <see cref="VideoFacades"/> match, then waits for the
+    /// network to go quiet again.
+    /// </summary>
+    private static async Task RevealEmbedsAsync(IPage page, IScanLog log)
+    {
+        int inFlight = 0;
+        DateTime lastActivity = DateTime.UtcNow;
+        void Started(object? sender, IRequest request) { Interlocked.Increment(ref inFlight); lastActivity = DateTime.UtcNow; }
+        void Ended(object? sender, IRequest request) { Interlocked.Decrement(ref inFlight); lastActivity = DateTime.UtcNow; }
+
+        page.Request += Started;
+        page.RequestFinished += Ended;
+        page.RequestFailed += Ended;
+        try
+        {
+            await page.EvaluateAsync(
+                """
+                async ([maxSteps, facades]) => {
+                  const step = Math.max(200, Math.floor(innerHeight * 0.8));
+                  for (let i = 0; i < maxSteps && scrollY + innerHeight < document.documentElement.scrollHeight; i++) {
+                    scrollBy(0, step);
+                    await new Promise((resolve) => setTimeout(resolve, 100));
+                  }
+                  // A script click rather than a pointer click: a consent dialog left open by an
+                  // undecided pass covers the page, and a pointer click would wait on it forever.
+                  document.querySelectorAll(facades).forEach((facade) => facade.click());
+                }
+                """,
+                new object[] { MaxScrollSteps, VideoFacades });
+        }
+        catch (PlaywrightException error)
+        {
+            // Not fatal: the page has loaded and is still read. Logged, because a page that could
+            // not be scrolled may hold embeds this scan then never saw.
+            log.Warning($"  could not scroll or press play on {page.Url} ({error.Message.Split('\n')[0]})");
+        }
+
+        // NetworkIdle has already been reached for this navigation, so waiting on it again returns at
+        // once; what is wanted here is quiet after the requests the scroll and the clicks just started.
+        DateTime deadline = DateTime.UtcNow + MaxWait;
+        while (DateTime.UtcNow < deadline
+               && (Volatile.Read(ref inFlight) > 0 || DateTime.UtcNow - lastActivity < QuietFor))
+        {
+            await Task.Delay(100);
+        }
+
+        page.Request -= Started;
+        page.RequestFinished -= Ended;
+        page.RequestFailed -= Ended;
     }
 
     private static async Task<IReadOnlyList<CapturedEntry>> KeysAsync(
-        IPage page, string store, StorageKind kind, IScanLog log)
+        IFrame frame, string store, StorageKind kind, IScanLog log)
     {
         try
         {
-            string[] keys = await page.EvaluateAsync<string[]>($"() => Object.keys({store})");
+            string[] keys = await frame.EvaluateAsync<string[]>($"() => Object.keys({store})");
 
             // Neither store has an expiry; DurationFormatter decides the wording from the kind.
             return keys.Select(key => new CapturedEntry(key, kind, null)).ToArray();
@@ -76,7 +157,7 @@ public static class PageCapture
             // capture failure look identical to a page that simply stores nothing - which is
             // under-reporting with no trace, the one outcome this tool must never produce.
             log.Warning(
-                $"  could not read {store} on {page.Url} ({error.Message.Split('\n')[0]})");
+                $"  could not read {store} on {frame.Url} ({error.Message.Split('\n')[0]})");
 
             return [];
         }

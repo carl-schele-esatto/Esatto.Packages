@@ -5,6 +5,10 @@ The cookie consent audit engine behind
 real headless browser, replays it once per consent decision a visitor can make, and reports every
 cookie and storage entry set outside the consent it needed.
 
+On every page it scrolls to the bottom, so lazy-loaded embeds such as a map load, and presses play
+on click-to-load video posters (`PageCapture.VideoFacades`); then it reads storage from every frame,
+so what an embed keeps in its own origin is found too. Nothing else on a page is ever clicked.
+
 **Install this package to build your own front end.** To just run a scan, install
 `Esatto.CookieScan.Cli` and run `esatto-cookiescan`.
 

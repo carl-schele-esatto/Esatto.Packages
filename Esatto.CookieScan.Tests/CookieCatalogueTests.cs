@@ -132,6 +132,21 @@ public class CookieCatalogueTests
         Assert.True(catalogue.Match("_ga_ABC123")!.Tracker);
     }
 
+    // What the youtube-nocookie.com player stores once a facade is pressed (seen on a real scan:
+    // ytidb::LAST_RESULT_ENTRY_KEY). Without these it would be declared with an unknown provider and
+    // placeholder wording.
+    [Theory]
+    [InlineData("ytidb::LAST_RESULT_ENTRY_KEY")]
+    [InlineData("yt-remote-device-id")]
+    [InlineData("yt-player-bandwidth")]
+    public void The_embedded_catalogue_knows_the_youtube_players_storage(string key)
+    {
+        CatalogueEntry match = CookieCatalogue.Default().Match(key)!;
+
+        Assert.Equal("YouTube", match.Provider.Sv);
+        Assert.Equal("marketing", match.Category);
+    }
+
     // Umbraco 18 on ASP.NET Core Identity issues .AspNetCore.Identity.Application, not
     // UMB_MEMBER - see MemberDimension. The site's own stack sets this one, so its absence from a
     // scan must be a finding.
