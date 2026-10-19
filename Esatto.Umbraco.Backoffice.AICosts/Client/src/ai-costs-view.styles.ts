@@ -7,8 +7,10 @@ import { css } from '@umbraco-cms/backoffice/external/lit';
 export const CELL = 12;
 
 export const styles = css`
+    /* The tab is the container the narrow layouts below ask about (@container ai-costs). */
     :host {
         display: block;
+        container: ai-costs / inline-size;
         padding: var(--uui-size-layout-1);
         --viz-column: #2a78d6;
         --viz-heat-0: #86b6ef;
@@ -77,8 +79,11 @@ export const styles = css`
         border-radius: var(--uui-border-radius);
         padding: var(--uui-size-space-2) var(--uui-size-space-3);
     }
+    /* minmax(0, 1fr): a card is as wide as the tab, not as its widest content (the calendar and the
+       tables scroll inside their cards instead). */
     .content {
         display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--uui-size-space-5);
         transition: opacity 120ms;
     }
@@ -193,9 +198,10 @@ export const styles = css`
     .hit:hover + .bar {
         opacity: 0.8;
     }
+    /* Centred above its bar or cell; --tip-shift (#keepTipInCard) moves it back inside the card at an edge. */
     .tooltip {
         position: absolute;
-        transform: translate(-50%, calc(-100% - 8px));
+        transform: translate(calc(-50% + var(--tip-shift, 0px)), calc(-100% - 8px));
         background: var(--uui-color-surface);
         color: var(--uui-color-text);
         border: 1px solid var(--uui-color-border);
@@ -362,5 +368,66 @@ export const styles = css`
         flex-wrap: wrap;
         align-items: center;
         gap: var(--uui-size-space-3);
+    }
+
+    /* Narrow tab (phone, narrow window). A card's buttons (#cardActions) move from the header, which can't
+       wrap, to the top of the card; "Cost by" shows its rows as a list instead of a 7-column table. */
+    .card-actions-body,
+    .cost-list {
+        display: none;
+    }
+    @media (max-width: 600px) {
+        :host {
+            padding: var(--uui-size-space-4);
+        }
+    }
+    @container ai-costs (width < 600px) {
+        .card-actions-header {
+            display: none;
+        }
+        .card-actions-body {
+            display: flex;
+            margin-bottom: var(--uui-size-space-4);
+        }
+    }
+    @container ai-costs (width < 760px) {
+        .cost-table {
+            display: none;
+        }
+        .cost-list {
+            display: block;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .cost-list li {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: var(--uui-size-space-1) var(--uui-size-space-4);
+            align-items: baseline;
+            padding: var(--uui-size-space-4) 0;
+            border-bottom: 1px solid var(--uui-color-divider);
+        }
+        .cost-list li:last-child {
+            border-bottom: 0;
+        }
+        .cost-list-name {
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+        .cost-list-cost {
+            text-align: right;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .cost-list-tokens {
+            color: var(--uui-color-text-alt);
+            font-size: var(--uui-type-small-size);
+            font-variant-numeric: tabular-nums;
+        }
+        .cost-list-share {
+            font-size: var(--uui-type-small-size);
+            font-variant-numeric: tabular-nums;
+        }
     }
 `;

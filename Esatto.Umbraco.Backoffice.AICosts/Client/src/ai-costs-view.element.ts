@@ -60,6 +60,8 @@ const CHART_H = 220;
 const MONTH_H = 200;
 const MONTH_RIGHT = 56;
 const AXIS_W = 64;
+// The narrowest plot area: a card on a 320px phone still has about 150px beside the axis.
+const MIN_PLOT = 120;
 const AXIS_H = 26;
 const MAX_BAR = 24;
 
@@ -139,7 +141,9 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     if (changed.has('_dark')) this.toggleAttribute('dark', this._dark);
   }
 
-  protected override updated(): void {
+  protected override updated(changed: Map<PropertyKey, unknown>): void {
+    if (changed.has('_report')) void this.#showLatestWeeks();
+    if (changed.has('_tooltip')) this.#keepTipInCard();
     const chart = this.shadowRoot?.querySelector('.column-chart');
     if (chart && chart !== this.#observedChart) {
       this.#resizeObserver.disconnect();
@@ -273,6 +277,30 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const box = card.getBoundingClientRect();
     const rect = target.getBoundingClientRect();
     this._tooltip = { card, x: rect.left - box.left + rect.width / 2, y: rect.top - box.top, title, lines };
+  }
+
+  /**
+   * A year of weeks scrolls on a narrow tab: start at the latest weeks, since the period ends today. Waits for
+   * the card to render, as the calendar has no layout until uui-box slots it.
+   */
+  async #showLatestWeeks(): Promise<void> {
+    const calendar = this.shadowRoot?.querySelector('.heatmap-scroll');
+    await (calendar?.closest('uui-box') as (Element & { updateComplete?: Promise<unknown> }) | null)?.updateComplete;
+    if (calendar) calendar.scrollLeft = calendar.scrollWidth;
+  }
+
+  /** A tooltip is centred on its bar or cell; near the card's edge, shift it back inside. */
+  #keepTipInCard(): void {
+    const tip = this.shadowRoot?.querySelector<HTMLElement>('.tooltip');
+    const card = this._tooltip?.card;
+    if (!tip || !card) return;
+    tip.style.setProperty('--tip-shift', '0px');
+    const margin = 4;
+    const box = card.getBoundingClientRect();
+    const rect = tip.getBoundingClientRect();
+    const shift =
+      rect.left < box.left + margin ? box.left + margin - rect.left : rect.right > box.right - margin ? box.right - margin - rect.right : 0;
+    tip.style.setProperty('--tip-shift', `${shift}px`);
   }
 
   #hideTip = (): void => {
@@ -454,19 +482,17 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const monthLabels = months.filter((m, i) => i === 0 || m.col - months[i - 1].col >= 3);
 
     return html`<uui-box class="card" data-card="heatmap" headline="Usage calendar">
-      <div slot="header-actions">
-        <uui-button-group aria-label="Heatmap metric">
-          ${METRICS.map(
-            (m) => html`<uui-button
-              compact
-              look=${m.key === this._metric ? 'primary' : 'secondary'}
-              aria-pressed=${m.key === this._metric}
-              @click=${() => this.#setMetric(m.key)}
-              >${m.label}</uui-button
-            >`,
-          )}
-        </uui-button-group>
-      </div>
+      ${this.#cardActions(html`<uui-button-group aria-label="Heatmap metric">
+        ${METRICS.map(
+          (m) => html`<uui-button
+            compact
+            look=${m.key === this._metric ? 'primary' : 'secondary'}
+            aria-pressed=${m.key === this._metric}
+            @click=${() => this.#setMetric(m.key)}
+            >${m.label}</uui-button
+          >`,
+        )}
+      </uui-button-group>`)}
       <div class="heatmap-scroll">
         <svg
           class="heatmap"
@@ -518,6 +544,27 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     this._tables = tables;
   }
 
+  /**
+   * A card's buttons: in its header, or at the top of the card when the tab is narrow (uui-box's header
+   * is one row that can't wrap, so a long title and several buttons don't fit). The styles show one of the two.
+   */
+  #cardActions(buttons: unknown) {
+    return html`<div slot="header-actions" class="header-actions card-actions-header">${buttons}</div>
+      <div class="header-actions card-actions-body">${buttons}</div>`;
+  }
+
+  #rowCost(row: CostRow, noPriceTitle: string) {
+    return row.cost === null ? html`<uui-tag look="secondary" title=${noPriceTitle}>No price</uui-tag>` : this.#money(row.cost);
+  }
+
+  #share(cost: number | null, totalCost: number) {
+    if (cost === null || totalCost <= 0) return '–';
+    const percent = (cost / totalCost) * 100;
+    return html`<span class="share"
+      ><span class="share-track"><span class="share-fill" style="width:${percent}%"></span></span>${formatNumber(percent)}%</span
+    >`;
+  }
+
   #tableButton(card: string) {
     return html`<uui-button compact look="secondary" @click=${() => this.#toggleTable(card)}>
       ${this._tables.has(card) ? 'Show chart' : 'Show as table'}
@@ -550,7 +597,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const max = Math.max(0, ...totals);
     const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1] || 1;
-    const plotW = Math.max(200, this._chartWidth - AXIS_W);
+    const plotW = Math.max(MIN_PLOT, this._chartWidth - AXIS_W);
     const slot = plotW / buckets.length;
     const barW = Math.max(1, Math.min(MAX_BAR, slot - GAP));
     const scale = (v: number) => (v / top) * CHART_H;
@@ -633,7 +680,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const max = Math.max(this.#convert(b.max), budgetValue ?? 0);
     const ticks = niceTicks(max);
     const top = ticks[ticks.length - 1] || 1;
-    const plotW = Math.max(200, this._chartWidth - AXIS_W - MONTH_RIGHT);
+    const plotW = Math.max(MIN_PLOT, this._chartWidth - AXIS_W - MONTH_RIGHT);
     const x = (day: number) => dayToX(day, daysInMonth, AXIS_W, plotW);
     const y = (v: number) => MONTH_H - (v / top) * MONTH_H;
     const path = (points: { day: number; value: number }[]) => points.map((p, i) => `${i ? 'L' : 'M'}${x(p.day)},${y(p.value)}`).join(' ');
@@ -728,16 +775,14 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const unpriced = this._report!.totals.unpricedTokens > 0;
 
     return html`<uui-box class="card" data-card="columns" headline=${name}>
-      <div slot="header-actions" class="header-actions">
-        <uui-button-group aria-label="Cost per">
+      ${this.#cardActions(html`<uui-button-group aria-label="Cost per">
           ${(['total', 'model'] as const).map(
             (v) => html`<uui-button compact look=${v === this._costView ? 'primary' : 'secondary'} aria-pressed=${v === this._costView}
               @click=${() => (this._costView = v)}>${v === 'total' ? 'Total' : 'By model'}</uui-button>`,
           )}
         </uui-button-group>
         <uui-button compact look="secondary" @click=${() => this.#downloadPeriodCsv(buckets, weekly, series)}>Download CSV</uui-button>
-        ${this.#tableButton('columns')}
-      </div>
+        ${this.#tableButton('columns')}`)}
       ${this.#renderLegend(series)}
       ${empty
         ? html`<p class="empty">${empty}</p>`
@@ -821,8 +866,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
         ? 'Add this model to Esatto:AICosts:PricesPerMillionTokens in appsettings'
         : 'Some of this usage is from models without a configured price';
     return html`<uui-box class="card" headline="Cost by">
-      <div slot="header-actions" class="header-actions">
-        <uui-button-group aria-label="Group cost by">
+      ${this.#cardActions(html`<uui-button-group aria-label="Group cost by">
           ${DIMENSIONS.map(
             (d) => html`<uui-button
               compact
@@ -835,15 +879,14 @@ export class EsattoAICostsViewElement extends UmbLitElement {
         </uui-button-group>
         <uui-button compact look="secondary" ?disabled=${!rows?.length} @click=${() => this.#downloadCostByCsv(label, rows ?? [])}
           >Download CSV</uui-button
-        >
-      </div>
+        >`)}
       ${result && 'error' in result
         ? html`<p class="error">${result.error}</p>`
         : !rows
           ? html`<uui-loader-bar></uui-loader-bar>`
           : rows.length === 0
             ? html`<p class="empty">No AI usage in this period.</p>`
-            : html`<div class="table-scroll">
+            : html`<div class="table-scroll cost-table">
                 <uui-table aria-label="Cost by ${label.toLowerCase()}">
                   <uui-table-head>
                     <uui-table-head-cell>${label}</uui-table-head-cell>
@@ -861,22 +904,25 @@ export class EsattoAICostsViewElement extends UmbLitElement {
                       <uui-table-cell class="num">${formatNumber(row.inputTokens)}</uui-table-cell>
                       <uui-table-cell class="num">${formatNumber(row.cachedInputTokens)}</uui-table-cell>
                       <uui-table-cell class="num">${formatNumber(row.outputTokens)}</uui-table-cell>
-                      <uui-table-cell class="num">
-                        ${row.cost === null ? html`<uui-tag look="secondary" title=${noPriceTitle}>No price</uui-tag>` : this.#money(row.cost)}
-                      </uui-table-cell>
-                      <uui-table-cell class="num">
-                        ${row.cost !== null && totalCost > 0
-                          ? html`<span class="share"
-                              ><span class="share-track"
-                                ><span class="share-fill" style="width:${(row.cost / totalCost) * 100}%"></span></span
-                              >${formatNumber((row.cost / totalCost) * 100)}%</span
-                            >`
-                          : '–'}
-                      </uui-table-cell>
+                      <uui-table-cell class="num">${this.#rowCost(row, noPriceTitle)}</uui-table-cell>
+                      <uui-table-cell class="num">${this.#share(row.cost, totalCost)}</uui-table-cell>
                     </uui-table-row>`,
                   )}
                 </uui-table>
-              </div>`}
+              </div>
+              <ul class="cost-list" aria-label="Cost by ${label.toLowerCase()}">
+                ${rows.map(
+                  (row) => html`<li>
+                    <span class="cost-list-name">${row.name}</span>
+                    <span class="cost-list-cost">${this.#rowCost(row, noPriceTitle)}</span>
+                    <span class="cost-list-tokens"
+                      >${formatNumber(row.requests)} requests · ${formatNumber(row.inputTokens, { compact: true })} in ·
+                      ${formatNumber(row.cachedInputTokens, { compact: true })} cached · ${formatNumber(row.outputTokens, { compact: true })} out</span
+                    >
+                    <span class="cost-list-share">${this.#share(row.cost, totalCost)}</span>
+                  </li>`,
+                )}
+              </ul>`}
       ${this._breakdownLoading && rows ? html`<uui-loader-bar></uui-loader-bar>` : nothing}
     </uui-box>`;
   }
