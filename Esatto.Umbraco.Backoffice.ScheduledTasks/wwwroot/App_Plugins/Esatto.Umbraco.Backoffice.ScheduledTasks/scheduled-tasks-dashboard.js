@@ -152,8 +152,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                 this.#peek('warning', errorMessage(error, t('couldNotReset')));
                 return;
             }
+            // The row shows the result: no message on success.
             this.#replaceTask(data?.task);
-            this.#peek('positive', t('toast', task.name, t('resetDone')));
         });
     }
 
@@ -165,8 +165,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                 this.#peek('warning', errorMessage(error, t('couldNotStart')));
                 return;
             }
+            // The row shows it running (and its progress): no message on success.
             this.#replaceTask(data?.task);
-            this.#peek('positive', t('toast', task.name, t('runStarted')));
             // The run starts on the job's own thread; refresh shortly to show it running/finished.
             setTimeout(() => this.#load({ quiet: true }), 1500);
         });
@@ -183,8 +183,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                 this.#peek('warning', errorMessage(error, t('couldNotStop')));
                 return;
             }
+            // The row shows "Stopping…" (or the retry gone): no message on success.
             this.#replaceTask(data?.task);
-            this.#peek('positive', t('toast', task.name, t(retryOnly ? 'retryCanceled' : 'stopRequested')));
             setTimeout(() => this.#load({ quiet: true }), 1500);
         });
     }

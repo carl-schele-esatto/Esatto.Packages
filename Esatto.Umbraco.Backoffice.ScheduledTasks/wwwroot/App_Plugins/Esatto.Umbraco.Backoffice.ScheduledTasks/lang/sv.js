@@ -106,10 +106,6 @@ export default {
         stopHeadline: (name) => `Stoppa ”${name}”?`,
         stopContent: 'Jobbet ombeds stoppa via sin cancellation token, på varje server där det körs, och görs inte om. Ett jobb som inte kontrollerar sin token fortsätter tills det är klart.',
 
-        runStarted: 'Körningen har startat.',
-        stopRequested: 'Jobbet har ombetts att stoppa.',
-        retryCanceled: 'Omförsöket är avbrutet.',
-        resetDone: 'Jobbet är inte längre markerat som pågående; det körs igen när det är dags.',
         couldNotStart: 'Kunde inte starta jobbet.',
         couldNotReset: 'Kunde inte återställa jobbet.',
         couldNotStop: 'Kunde inte stoppa jobbet.',

@@ -105,10 +105,6 @@ export default {
         stopHeadline: (name) => `Stop “${name}”?`,
         stopContent: 'The task is asked to stop through its cancellation token, on every server running it, and isn’t retried. A task that doesn’t check its token runs on until it finishes.',
 
-        runStarted: 'Run started.',
-        stopRequested: 'Asked the task to stop.',
-        retryCanceled: 'Retry canceled.',
-        resetDone: 'The task is no longer marked as running; it runs again when it’s due.',
         couldNotStart: 'Could not start the task.',
         couldNotReset: 'Could not reset the task.',
         couldNotStop: 'Could not stop the task.',
