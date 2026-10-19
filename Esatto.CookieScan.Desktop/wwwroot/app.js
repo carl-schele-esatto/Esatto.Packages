@@ -444,6 +444,8 @@ function setRunning(next) {
   cancelButton.hidden = !next;
   cancelButton.disabled = false;
 
+  logPanel.running = next;
+
   // After the loop above and not in it: these two answer to more than `running`.
   syncSiteButtons();
 

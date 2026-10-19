@@ -18,6 +18,13 @@ export class LogPanel extends LitElement {
      * for - and grow it to working height the moment the first line arrives.
      */
     empty: { state: true },
+
+    /**
+     * Whether a scan is running, set by app.js alongside Run and Cancel. While it is, a spinner sits
+     * under the last line: a pass takes several seconds without saying anything, and a log that has
+     * stopped moving otherwise looks exactly like a scan that has stopped.
+     */
+    running: { type: Boolean, reflect: true },
   };
 
   static styles = css`
@@ -109,6 +116,40 @@ export class LogPanel extends LitElement {
       font-weight: 600;
       color: var(--log-ink);
     }
+
+    /* Dimmed like the time stamps, so it reads as the log's state rather than as one more line. */
+    .working {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      color: color-mix(in srgb, var(--log-ink) 70%, var(--log-bg));
+    }
+
+    .spinner {
+      flex: none;
+      width: 0.9em;
+      height: 0.9em;
+      border: 2px solid color-mix(in srgb, currentColor 25%, transparent);
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /*
+        Repeated here because app.css's reduced-motion rule does not cross the shadow boundary. A
+        still ring beside "Scanning..." still says the scan is running; the motion only adds to it.
+    */
+    @media (prefers-reduced-motion: reduce) {
+      .spinner {
+        animation: none;
+      }
+    }
   `;
 
   constructor() {
@@ -121,6 +162,7 @@ export class LogPanel extends LitElement {
     this.queued = [];
     this.frame = 0;
     this.empty = true;
+    this.running = false;
   }
 
   connectedCallback() {
@@ -140,9 +182,21 @@ export class LogPanel extends LitElement {
   }
 
   render() {
-    return html`${this.list}${this.empty
-      ? html`<p class="empty"><strong>Nothing logged yet.</strong>Run a scan and it fills in here.</p>`
-      : nothing}`;
+    // aria-hidden on the spinner line: the log is a live region, and "Scanning..." announced on
+    // every render would drown the lines it sits under. Cancel replacing Run already tells a screen
+    // reader the scan is running.
+    return html`${this.list}${this.running
+      ? html`<div class="working" aria-hidden="true"><span class="spinner"></span>Scanning...</div>`
+      : this.empty
+        ? html`<p class="empty"><strong>Nothing logged yet.</strong>Run a scan and it fills in here.</p>`
+        : nothing}`;
+  }
+
+  updated(changed) {
+    // The spinner line adds height under the last line; a reader following the log should still see it.
+    if (changed.has('running') && this.running) {
+      this.scrollTop = this.scrollHeight;
+    }
   }
 
   /**
