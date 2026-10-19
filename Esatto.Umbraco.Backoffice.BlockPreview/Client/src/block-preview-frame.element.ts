@@ -32,6 +32,8 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
   @state() private _height = 0;
   // Video players shown over the preview (they can't run inside its sandbox); see FrameScript.
   @state() private _embeds: Embed[] = [];
+  // The label with its UFM placeholders (e.g. {=title}) filled in, as umb-ufm-render reports it.
+  @state() private _resolvedLabel = '';
 
   #entry?: typeof UMB_BLOCK_ENTRY_CONTEXT.TYPE;
   #workspace?: typeof UMB_CONTENT_WORKSPACE_CONTEXT.TYPE;
@@ -161,7 +163,11 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
       <div class="bar ${invalid ? 'invalid' : ''}">
         <a class="label" href=${this.config?.editContentPath ?? nothing}>
           ${this.icon ? html`<umb-icon name=${this.icon}></umb-icon>` : nothing}
-          <span>${this.label}</span>
+          <umb-ufm-render
+            inline
+            .markdown=${this.label}
+            .value=${this.content}
+            @umb-ufm-resolved=${(e: CustomEvent<{ text: string }>) => { this._resolvedLabel = e.detail.text; }}></umb-ufm-render>
         </a>
         ${this.config?.showSettingsEdit
           ? html`<a class="settings" href=${this.config.editSettingsPath ?? nothing} title="Settings"><umb-icon name="icon-settings"></umb-icon></a>`
@@ -177,7 +183,7 @@ export class EsattoBlockPreviewFrameElement extends UmbLitElement implements Umb
         return html`<div class="frame">
           <iframe
             class="preview"
-            title=${this.label ?? 'Block preview'}
+            title=${this._resolvedLabel || 'Block preview'}
             sandbox="allow-scripts"
             .srcdoc=${this._view.html}
             style="height:${this._height || 80}px"></iframe>

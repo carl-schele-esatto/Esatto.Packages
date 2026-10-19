@@ -1,4 +1,4 @@
-import { css as K, property as w, state as W, customElement as L, html as v, nothing as b, repeat as q } from "@umbraco-cms/backoffice/external/lit";
+import { css as D, property as w, state as P, customElement as K, html as v, nothing as b, repeat as q } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as z } from "@umbraco-cms/backoffice/lit-element";
 import { tryExecute as H } from "@umbraco-cms/backoffice/resources";
 import { UMB_BLOCK_ENTRY_CONTEXT as X } from "@umbraco-cms/backoffice/block";
@@ -101,45 +101,45 @@ class fe {
 }
 var me = Object.defineProperty, ve = Object.getOwnPropertyDescriptor, A = (e) => {
   throw TypeError(e);
-}, p = (e, t, i, r) => {
+}, h = (e, t, i, r) => {
   for (var n = r > 1 ? void 0 : r ? ve(t, i) : t, o = e.length - 1, c; o >= 0; o--)
     (c = e[o]) && (n = (r ? c(t, i, n) : c(n)) || n);
   return r && n && me(t, i, n), n;
-}, N = (e, t, i) => t.has(e) || A("Cannot " + i), s = (e, t, i) => (N(e, t, "read from private field"), t.get(e)), h = (e, t, i) => t.has(e) ? A("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), d = (e, t, i, r) => (N(e, t, "write to private field"), t.set(e, i), i), u = (e, t, i) => (N(e, t, "access private method"), i), _, k, C, M, E, f, S, y, T, a, m, B, U, x, R, F;
+}, W = (e, t, i) => t.has(e) || A("Cannot " + i), s = (e, t, i) => (W(e, t, "read from private field"), t.get(e)), p = (e, t, i) => t.has(e) ? A("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), d = (e, t, i, r) => (W(e, t, "write to private field"), t.set(e, i), i), u = (e, t, i) => (W(e, t, "access private method"), i), _, k, C, M, E, f, S, y, T, l, m, B, U, x, R, F;
 const ge = 400;
-let l = class extends z {
+let a = class extends z {
   constructor() {
-    super(), h(this, a), this._view = { kind: "loading" }, this._height = 0, this._embeds = [], h(this, _), h(this, k), h(this, C), h(this, M), h(this, E), h(this, f), h(this, S, new fe()), h(this, y, ""), h(this, T), h(this, x, (e) => {
+    super(), p(this, l), this._view = { kind: "loading" }, this._height = 0, this._embeds = [], this._resolvedLabel = "", p(this, _), p(this, k), p(this, C), p(this, M), p(this, E), p(this, f), p(this, S, new fe()), p(this, y, ""), p(this, T), p(this, x, (e) => {
       const t = this.shadowRoot?.querySelector("iframe.preview"), i = re(e, t?.contentWindow, s(this, y));
       i !== null && (this._height = i);
       const r = le(e, t?.contentWindow, s(this, y));
       r !== null && (this._embeds = r);
     }), this.consumeContext(X, (e) => {
-      d(this, _, e), u(this, a, m).call(this, 0);
+      d(this, _, e), u(this, l, m).call(this, 0);
     }), this.consumeContext(j, (e) => {
-      d(this, T, e?.getEntityType()), u(this, a, m).call(this, 0);
+      d(this, T, e?.getEntityType()), u(this, l, m).call(this, 0);
     }), this.consumeContext(G, (e) => {
-      d(this, k, e), u(this, a, m).call(this, 0), this.observe(e?.isNew, (t) => {
-        t === !1 && this._view.kind === "unsaved" && u(this, a, m).call(this, 0);
+      d(this, k, e), u(this, l, m).call(this, 0), this.observe(e?.isNew, (t) => {
+        t === !1 && this._view.kind === "unsaved" && u(this, l, m).call(this, 0);
       }, "_observeIsNew");
     }), this.consumeContext(V, (e) => {
-      d(this, C, e), u(this, a, m).call(this, 0);
+      d(this, C, e), u(this, l, m).call(this, 0);
     }), this.consumeContext(Y, (e) => {
-      d(this, M, e), u(this, a, m).call(this, 0);
+      d(this, M, e), u(this, l, m).call(this, 0);
     });
   }
   connectedCallback() {
-    super.connectedCallback(), window.addEventListener("message", s(this, x)), u(this, a, m).call(this, 0);
+    super.connectedCallback(), window.addEventListener("message", s(this, x)), u(this, l, m).call(this, 0);
   }
   disconnectedCallback() {
     super.disconnectedCallback(), window.removeEventListener("message", s(this, x)), clearTimeout(s(this, E)), s(this, S).cancel();
   }
   updated(e) {
     const t = pe(e, ge);
-    t !== null && u(this, a, m).call(this, t);
+    t !== null && u(this, l, m).call(this, t);
   }
   render() {
-    return v`${u(this, a, R).call(this)}${u(this, a, F).call(this)}`;
+    return v`${u(this, l, R).call(this)}${u(this, l, F).call(this)}`;
   }
 };
 _ = /* @__PURE__ */ new WeakMap();
@@ -151,15 +151,15 @@ f = /* @__PURE__ */ new WeakMap();
 S = /* @__PURE__ */ new WeakMap();
 y = /* @__PURE__ */ new WeakMap();
 T = /* @__PURE__ */ new WeakMap();
-a = /* @__PURE__ */ new WeakSet();
+l = /* @__PURE__ */ new WeakSet();
 m = function(e) {
   clearTimeout(s(this, E)), d(this, E, setTimeout(() => {
-    u(this, a, B).call(this);
+    u(this, l, B).call(this);
   }, e));
 };
 B = async function() {
   try {
-    await u(this, a, U).call(this);
+    await u(this, l, U).call(this);
   } catch (e) {
     d(this, f, void 0), this._view = { kind: "error", message: e?.message ?? "The preview could not be loaded." };
   }
@@ -183,18 +183,18 @@ U = async function() {
   }), g = Z(c);
   if (g === s(this, f)) return;
   d(this, f, g);
-  const P = s(this, S).next(), { data: $, error: I } = await H(this, ue(c, P), { disableNotifications: !0, abortSignal: P });
-  if (P.aborted) {
+  const $ = s(this, S).next(), { data: N, error: I } = await H(this, ue(c, $), { disableNotifications: !0, abortSignal: $ });
+  if ($.aborted) {
     g === s(this, f) && d(this, f, void 0);
     return;
   }
   if (g !== s(this, f)) return;
-  if (I || !$) {
+  if (I || !N) {
     d(this, f, void 0), this._view = { kind: "error", message: "The preview could not be loaded." };
     return;
   }
-  const { view: O, keepFingerprint: D } = de($, o);
-  D || d(this, f, void 0), O.kind === "rendered" && (d(this, y, O.nonce), this._embeds = []), this._view = O;
+  const { view: O, keepFingerprint: L } = de(N, o);
+  L || d(this, f, void 0), O.kind === "rendered" && (d(this, y, O.nonce), this._embeds = []), this._view = O;
 };
 x = /* @__PURE__ */ new WeakMap();
 R = function() {
@@ -203,7 +203,13 @@ R = function() {
       <div class="bar ${e ? "invalid" : ""}">
         <a class="label" href=${this.config?.editContentPath ?? b}>
           ${this.icon ? v`<umb-icon name=${this.icon}></umb-icon>` : b}
-          <span>${this.label}</span>
+          <umb-ufm-render
+            inline
+            .markdown=${this.label}
+            .value=${this.content}
+            @umb-ufm-resolved=${(t) => {
+    this._resolvedLabel = t.detail.text;
+  }}></umb-ufm-render>
         </a>
         ${this.config?.showSettingsEdit ? v`<a class="settings" href=${this.config.editSettingsPath ?? b} title="Settings"><umb-icon name="icon-settings"></umb-icon></a>` : b}
       </div>`;
@@ -216,7 +222,7 @@ F = function() {
       return v`<div class="frame">
           <iframe
             class="preview"
-            title=${this.label ?? "Block preview"}
+            title=${this._resolvedLabel || "Block preview"}
             sandbox="allow-scripts"
             .srcdoc=${this._view.html}
             style="height:${this._height || 80}px"></iframe>
@@ -241,7 +247,7 @@ F = function() {
       return b;
   }
 };
-l.styles = K`
+a.styles = D`
     /* Space between stacked blocks: Block List puts custom views directly on top of each other. */
     :host { display: block; margin-bottom: var(--uui-size-space-4); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); overflow: hidden; background: var(--uui-color-surface); }
     .bar { display: flex; align-items: center; min-height: 40px; padding: 0 var(--uui-size-space-4); gap: var(--uui-size-space-2); }
@@ -256,42 +262,45 @@ l.styles = K`
     .note { padding: var(--uui-size-space-3) var(--uui-size-space-4); border-top: 1px solid var(--uui-color-border); color: var(--uui-color-text-alt); font-size: 0.9em; }
     .note.warning { color: var(--uui-color-warning-standalone); }
   `;
-p([
+h([
   w({ attribute: !1 })
-], l.prototype, "content", 2);
-p([
+], a.prototype, "content", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "settings", 2);
-p([
+], a.prototype, "settings", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "label", 2);
-p([
+], a.prototype, "label", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "icon", 2);
-p([
+], a.prototype, "icon", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "config", 2);
-p([
+], a.prototype, "config", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "contentInvalid", 2);
-p([
+], a.prototype, "contentInvalid", 2);
+h([
   w({ attribute: !1 })
-], l.prototype, "settingsInvalid", 2);
-p([
-  W()
-], l.prototype, "_view", 2);
-p([
-  W()
-], l.prototype, "_height", 2);
-p([
-  W()
-], l.prototype, "_embeds", 2);
-l = p([
-  L("esatto-block-preview-frame")
-], l);
-const Ce = l;
+], a.prototype, "settingsInvalid", 2);
+h([
+  P()
+], a.prototype, "_view", 2);
+h([
+  P()
+], a.prototype, "_height", 2);
+h([
+  P()
+], a.prototype, "_embeds", 2);
+h([
+  P()
+], a.prototype, "_resolvedLabel", 2);
+a = h([
+  K("esatto-block-preview-frame")
+], a);
+const Ce = a;
 export {
-  l as EsattoBlockPreviewFrameElement,
+  a as EsattoBlockPreviewFrameElement,
   Ce as default
 };
 //# sourceMappingURL=block-preview-frame.js.map
