@@ -243,6 +243,11 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     return formatMoney(this.#convert(baseAmount), this.#currency, opts);
   }
 
+  /** A tile's figure; --chars lets the styles shrink a long one to fit the tile (.tile-value). */
+  #figure(text: string, { hero = false } = {}) {
+    return html`<div class="tile-value ${hero ? 'hero' : ''}"><span style="--chars: ${text.length}">${text}</span></div>`;
+  }
+
   #metricValue(day: AICostDay): number {
     if (this._metric === 'tokens') return day.totalTokens;
     if (this._metric === 'requests') return day.requests;
@@ -340,7 +345,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
     const budget = budgetInDisplayCurrency(r, this.#currency);
     return html`<uui-box class="tile">
       <div class="tile-label">This month</div>
-      <div class="tile-value">${this.#money(r.month.cost)}</div>
+      ${this.#figure(this.#money(r.month.cost))}
       <div class="tile-note">Projected ${this.#money(r.month.projectedCost)} by month end</div>
       ${budget.kind === 'set'
         ? html`<div
@@ -371,7 +376,7 @@ export class EsattoAICostsViewElement extends UmbLitElement {
       ${this.#renderMonthTile()}
       <uui-box class="tile tile-hero">
         <div class="tile-label">Estimated cost</div>
-        <div class="tile-value hero">${this.#money(t.cost)}</div>
+        ${this.#figure(this.#money(t.cost), { hero: true })}
         ${t.unpricedTokens > 0
           ? html`<div class="tile-note">
               <uui-icon name="icon-alert"></uui-icon> ${formatNumber(t.unpricedTokens)} tokens from models without a price
@@ -381,19 +386,19 @@ export class EsattoAICostsViewElement extends UmbLitElement {
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Tokens</div>
-        <div class="tile-value">${formatNumber(t.totalTokens, { compact: true })}</div>
+        ${this.#figure(formatNumber(t.totalTokens, { compact: true }))}
         <div class="tile-note">${formatNumber(input, { compact: true })} in · ${formatNumber(output, { compact: true })} out</div>
         ${this.#renderChange(t.totalTokens, p?.totalTokens)}
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Requests</div>
-        <div class="tile-value">${formatNumber(t.requests)}</div>
+        ${this.#figure(formatNumber(t.requests))}
         <div class="tile-note">${formatNumber(t.requests / r.days.length)} per day on average</div>
         ${this.#renderChange(t.requests, p?.requests)}
       </uui-box>
       <uui-box class="tile">
         <div class="tile-label">Cost per request</div>
-        <div class="tile-value">${t.requests > 0 ? this.#money(perRequest) : '–'}</div>
+        ${this.#figure(t.requests > 0 ? this.#money(perRequest) : '–')}
         <div class="tile-note">Priced models only</div>
         ${this.#renderChange(perRequest, previousPerRequest)}
       </uui-box>

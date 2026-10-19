@@ -93,7 +93,10 @@ export const styles = css`
     .tile-label {
         color: var(--uui-color-text-alt);
     }
+    /* A figure can't wrap (the currency formatter joins code and amount with a no-break space), so in a
+       narrow tile it shrinks to fit: --chars is its length (#figure), at about 0.56em a character in Lato. */
     .tile-value {
+        container-type: inline-size;
         font-size: 1.75rem;
         font-weight: 600;
         line-height: 1.2;
@@ -102,6 +105,11 @@ export const styles = css`
     }
     .tile-value.hero {
         font-size: 3rem;
+    }
+    .tile-value > span {
+        display: block;
+        font-size: min(1em, 100cqi / (var(--chars) * 0.56));
+        white-space: nowrap;
     }
     .tile-note {
         color: var(--uui-color-text-alt);
