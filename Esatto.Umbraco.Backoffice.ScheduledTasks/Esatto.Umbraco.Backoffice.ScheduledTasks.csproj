@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <RootNamespace>Esatto.Umbraco.Backoffice.ScheduledTasks</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.ScheduledTasks</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591;NU1902</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.ScheduledTasks</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Backoffice GUI for Umbraco 18's scheduled background jobs. A Settings-section dashboard lists every recurring (IRecurringBackgroundJob) and distributed (IDistributedBackgroundJob) task — Umbraco's own and yours — with its schedule, status, last and next run. Editors can run a task now, pause and resume it, change its schedule (an interval, or calendar times such as every Monday at 07:00, the 1st of every month, a date every year, or cron, in their time zone), set the task's own properties with Umbraco's property editors (e.g. a content-tree picker for the page a clean-up job works below), stop a running task, set retries and a time limit, and inspect every server's runs (saved in the database) with error details and the log lines each run wrote. A change log records who changed what, settings move between environments with export/import, and the UI is in English and Swedish. Works with existing jobs unchanged.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;backoffice;scheduled-tasks;background-jobs;scheduling;recurring-jobs;cron;retries;hangfire-alternative</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.ScheduledTasks</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+    <None Include="docs\**\*.png" Pack="true" PackagePath="docs\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.ScheduledTasks.Tests" />
+    <!-- Lets NSubstitute proxy the internal interfaces in tests. -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- 18.0.0 is the floor. The package subclasses RecurringBackgroundJobHostedService (TimeProvider
+         constructor, IgnoredDelay, cancellable RunJobAsync) and targets Umbraco 18 only. -->
+    <PackageReference Include="Umbraco.Cms.Core" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Infrastructure" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="18.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- These pin patched floors for high-severity vulnerabilities (NU1903) that Umbraco 18.0 pulls in
+         transitively. Drop each once Umbraco bumps its own dependency past them.
+         - Microsoft.OpenApi 2.0.0 (via Api.Management -> Swashbuckle): circular-ref stack overflow (GHSA-v5pm-xwqc-g5wc), fixed 2.7.5.
+         - System.Security.Cryptography.Pkcs 10.0.0: DoS (GHSA-846f-f764-76mx), fixed 10.0.13. -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. CI opts in
+         explicitly with `-p:AutoPushToFeed=true` after review/merge. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>
