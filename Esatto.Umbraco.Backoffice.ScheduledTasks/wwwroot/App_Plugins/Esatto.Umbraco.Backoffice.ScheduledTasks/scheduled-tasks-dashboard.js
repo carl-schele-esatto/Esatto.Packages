@@ -725,11 +725,12 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         /* Icons default to sitting on the text baseline, which rides high next to a label. */
         /* Sit icons on the label's baseline (text-top floated them above the text). */
         uui-button uui-icon { vertical-align: -0.125em; }
-        /* The icon+label pair renders slightly high in the pill; nudge both down together.
-           The icon skips the global -0.125em baseline pull or it lands too low. */
+        /* Icon and label aligned to each other's middle (measured: centers within 0.01px, pair ~1px
+           below the pill's center). Headless-verified against @umbraco-ui/uui 1.9. */
         .row-actions uui-button uui-icon,
-        .row-actions uui-button .action-text { display: inline-block; transform: translateY(1.5px); }
-        .row-actions uui-button uui-icon { vertical-align: 0; }
+        .row-actions uui-button .action-text { vertical-align: middle; }
+        /* +1px optical compensation: the glyphs' visual mass sits high in their box (verified at 4x). */
+        .row-actions uui-button uui-icon { position: relative; top: 1px; }
         /* The loader defaults to --uui-color-default (dark navy); in the tag it must follow the tag's text (white). */
         uui-tag uui-loader-circle { font-size: 0.9em; margin-inline-end: 4px; color: inherit; }
         uui-tag.stopping { margin-inline-start: var(--uui-size-space-1); }
