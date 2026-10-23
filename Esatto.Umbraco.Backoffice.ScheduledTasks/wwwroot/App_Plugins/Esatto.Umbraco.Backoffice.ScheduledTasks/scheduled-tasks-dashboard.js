@@ -437,7 +437,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     title=${t('resetTitle')}
                     ?disabled=${busy}
                     @click=${() => this.#resetRun(task)}>
-                    <uui-icon name="icon-refresh"></uui-icon> ${t('reset')}
+                    <uui-icon name="icon-refresh"></uui-icon> <span class="action-text">${t('reset')}</span>
                 </uui-button>`;
         } else if (stoppable) {
             const label = retryOnly ? t('cancelRetry') : t('stop');
@@ -450,7 +450,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     title=${task.stopRequestedBy ? t('stoppingHelp', task.stopRequestedBy) : retryOnly ? t('cancelRetryTitle') : t('stopTitle')}
                     ?disabled=${busy || Boolean(task.stopRequestedBy)}
                     @click=${() => this.#stop(task)}>
-                    <uui-icon name="icon-stop"></uui-icon> ${label}
+                    <uui-icon name="icon-stop"></uui-icon> <span class="action-text">${label}</span>
                 </uui-button>`;
         } else {
             primary = html`
@@ -461,7 +461,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     title=${canRun ? t('runNowTitle', task.name) : task.isRunning ? t('alreadyRunning') : t('cantStartHere')}
                     ?disabled=${busy || !canRun}
                     @click=${() => this.#runNow(task)}>
-                    <uui-icon name="icon-play"></uui-icon> ${t('runNow')}
+                    <uui-icon name="icon-play"></uui-icon> <span class="action-text">${t('runNow')}</span>
                 </uui-button>`;
         }
 
@@ -475,10 +475,10 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     label=${t('actionLabel', pauseText, task.name)}
                     ?disabled=${busy || !task.isManaged}
                     @click=${() => this.#togglePaused(task)}>
-                    <uui-icon name=${task.isPaused ? 'icon-play' : 'icon-pause'}></uui-icon> ${pauseText}
+                    <uui-icon name=${task.isPaused ? 'icon-play' : 'icon-pause'}></uui-icon> <span class="action-text">${pauseText}</span>
                 </uui-button>
                 <uui-button look="secondary" compact label=${t('actionLabel', t('history'), task.name)} @click=${() => this.#openRuns(task)}>
-                    <uui-icon name="icon-history"></uui-icon> ${t('history')}
+                    <uui-icon name="icon-history"></uui-icon> <span class="action-text">${t('history')}</span>
                 </uui-button>
             </div>
         `;
@@ -669,7 +669,13 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         .extra .customised { color: var(--uui-color-text); }
         uui-tag.kind { font-size: 11px; }
         /* Icons default to sitting on the text baseline, which rides high next to a label. */
-        uui-button uui-icon { vertical-align: text-top; }
+        /* Sit icons on the label's baseline (text-top floated them above the text). */
+        uui-button uui-icon { vertical-align: -0.125em; }
+        /* The icon+label pair renders slightly high in the pill; nudge both down together.
+           The icon skips the global -0.125em baseline pull or it lands too low. */
+        .row-actions uui-button uui-icon,
+        .row-actions uui-button .action-text { display: inline-block; transform: translateY(1.5px); }
+        .row-actions uui-button uui-icon { vertical-align: 0; }
         /* The loader defaults to --uui-color-default (dark navy); in the tag it must follow the tag's text (white). */
         uui-tag uui-loader-circle { font-size: 0.9em; margin-inline-end: 4px; color: inherit; }
         uui-tag.stopping { margin-inline-start: var(--uui-size-space-1); }
