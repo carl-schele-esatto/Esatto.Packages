@@ -729,8 +729,9 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
            below the pill's center). Headless-verified against @umbraco-ui/uui 1.9. */
         .row-actions uui-button uui-icon,
         .row-actions uui-button .action-text { vertical-align: middle; }
-        /* +1px optical compensation: the glyphs' visual mass sits high in their box (verified at 4x). */
-        .row-actions uui-button uui-icon { position: relative; top: 1px; }
+        /* -1px puts the icon ink within 0.4px of the label's cap-height centre in the backoffice font
+           (Lato), measured from rendered pixels in the Umbraco 18.2.1 backoffice; middle alone sits ~1.4px low. */
+        .row-actions uui-button uui-icon { position: relative; top: -1px; }
         /* The loader defaults to --uui-color-default (dark navy); in the tag it must follow the tag's text (white). */
         uui-tag uui-loader-circle { font-size: 0.9em; margin-inline-end: 4px; color: inherit; }
         uui-tag.stopping { margin-inline-start: var(--uui-size-space-1); }
