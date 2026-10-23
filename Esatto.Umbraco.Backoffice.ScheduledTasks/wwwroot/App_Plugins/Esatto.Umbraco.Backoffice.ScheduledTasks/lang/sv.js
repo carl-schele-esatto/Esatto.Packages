@@ -30,6 +30,9 @@ export default {
         showUmbraco: 'Visa Umbracos jobb',
         noTasks: 'Inga schemalagda jobb är registrerade.',
         noMatches: 'Inga jobb matchar filtret.',
+        allUmbraco: (count) => count === 1
+            ? 'Det enda jobbet här är Umbracos eget.'
+            : `Alla ${count} jobb här är Umbracos egna.`,
         colTask: 'Jobb',
         colSchedule: 'Schema',
         colStatus: 'Status',

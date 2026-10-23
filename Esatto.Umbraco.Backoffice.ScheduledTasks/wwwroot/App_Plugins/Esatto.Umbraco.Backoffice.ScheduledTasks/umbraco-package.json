@@ -2,7 +2,7 @@
   "$schema": "../umbraco-package-schema.json",
   "id": "Esatto.Umbraco.Backoffice.ScheduledTasks",
   "name": "Esatto Scheduled Tasks",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "importmap": {
     "imports": {
       "@esatto/scheduled-tasks/api.js": "/App_Plugins/Esatto.Umbraco.Backoffice.ScheduledTasks/api.js",

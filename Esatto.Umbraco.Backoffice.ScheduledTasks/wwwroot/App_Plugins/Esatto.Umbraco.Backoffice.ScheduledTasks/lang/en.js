@@ -29,6 +29,9 @@ export default {
         showUmbraco: 'Show Umbraco’s tasks',
         noTasks: 'No scheduled tasks are registered.',
         noMatches: 'No tasks match the filter.',
+        allUmbraco: (count) => count === 1
+            ? 'The only task here is Umbraco’s own.'
+            : `All ${count} tasks here are Umbraco’s own.`,
         colTask: 'Task',
         colSchedule: 'Schedule',
         colStatus: 'Status',

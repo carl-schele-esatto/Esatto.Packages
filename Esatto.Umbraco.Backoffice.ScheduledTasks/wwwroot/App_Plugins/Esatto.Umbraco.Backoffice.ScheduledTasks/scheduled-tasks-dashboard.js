@@ -43,6 +43,9 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         _exporting: { state: true },
     };
 
+    /** Remembered per user in the browser; Umbraco's own tasks are hidden by default. */
+    static #showUmbracoKey = 'esatto-scheduled-tasks:show-umbraco';
+
     #notifications;
     #timer;
     #ticks = 0;
@@ -58,12 +61,29 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         this._loadError = '';
         this._busyIds = new Set();
         this._filter = '';
-        this._showUmbraco = true;
+        this._showUmbraco = this.#readShowUmbraco();
         this._autoRefresh = true;
         this._now = Date.now();
         this._exporting = false;
 
         this.consumeContext(UMB_NOTIFICATION_CONTEXT, (ctx) => { this.#notifications = ctx; });
+    }
+
+    #readShowUmbraco() {
+        try {
+            return localStorage.getItem(EsattoScheduledTasksDashboard.#showUmbracoKey) === '1';
+        } catch {
+            return false;
+        }
+    }
+
+    #saveShowUmbraco(on) {
+        this._showUmbraco = on;
+        try {
+            localStorage.setItem(EsattoScheduledTasksDashboard.#showUmbracoKey, on ? '1' : '0');
+        } catch {
+            // A per-user convenience only; a blocked localStorage just loses the memory.
+        }
     }
 
     /** The dashboard's texts in the user's language (lang/*.js). */
@@ -581,11 +601,21 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     <uui-toggle
                         label=${t('showUmbraco')}
                         .checked=${this._showUmbraco}
-                        @change=${(e) => { this._showUmbraco = e.target.checked; }}></uui-toggle>
+                        @change=${(e) => this.#saveShowUmbraco(e.target.checked)}></uui-toggle>
                 </div>
 
                 ${tasks.length === 0
-                    ? html`<p class="empty">${total === 0 ? t('noTasks') : t('noMatches')}</p>`
+                    ? html`<p class="empty">
+                          ${total === 0
+                              ? t('noTasks')
+                              : this._filter
+                                  ? t('noMatches')
+                                  : html`${t('allUmbraco', total)}
+                                        <uui-button
+                                            look="secondary"
+                                            label=${t('showUmbraco')}
+                                            @click=${() => this.#saveShowUmbraco(true)}>${t('showUmbraco')}</uui-button>`}
+                      </p>`
                     : html`
                         <uui-table aria-label=${t('headline')}>
                             <uui-table-head>
@@ -695,6 +725,8 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         uui-table-cell.nowrap { white-space: nowrap; width: 1%; }
         .error { color: var(--uui-color-danger); }
         .empty { color: var(--uui-color-text-alt); font-style: italic; }
+        /* The inline "Show Umbraco's tasks" action when the toggle hides every task. */
+        .empty uui-button { margin-inline-start: var(--uui-size-space-2); font-style: normal; }
         .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
     `;
 }
