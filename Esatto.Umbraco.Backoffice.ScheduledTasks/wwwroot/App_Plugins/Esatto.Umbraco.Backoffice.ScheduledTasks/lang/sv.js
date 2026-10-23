@@ -80,7 +80,6 @@ export default {
         changeScheduleLabel: (text, name) => `${text}. Ändra schemat för ${name}`,
         changeSchedule: 'Ändra schema',
         changeScheduleIn: (zone) => `Ändra schema (tider i ${zone})`,
-        defaultSchedule: (text) => `Standard: ${text}`,
 
         notSinceStartup: 'Inte sedan start',
         noRunsYet: 'Inga körningar registrerade',

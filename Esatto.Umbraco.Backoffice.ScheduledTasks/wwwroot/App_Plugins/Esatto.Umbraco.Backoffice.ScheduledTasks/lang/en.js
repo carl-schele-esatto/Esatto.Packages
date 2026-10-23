@@ -79,7 +79,6 @@ export default {
         changeScheduleLabel: (text, name) => `${text}. Change the schedule of ${name}`,
         changeSchedule: 'Change schedule',
         changeScheduleIn: (zone) => `Change schedule (times in ${zone})`,
-        defaultSchedule: (text) => `Default: ${text}`,
 
         notSinceStartup: 'Not since startup',
         noRunsYet: 'No runs recorded',

@@ -375,9 +375,6 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                 <span>${text}</span>
                 <uui-icon name="icon-edit"></uui-icon>
             </button>
-            ${task.hasPeriodOverride || task.schedule
-                ? html`<div class="muted" title=${this.#changedBy(task)}>${t('defaultSchedule', formatInterval(task.defaultPeriodSeconds, t).toLowerCase())}</div>`
-                : nothing}
         `;
     }
 
