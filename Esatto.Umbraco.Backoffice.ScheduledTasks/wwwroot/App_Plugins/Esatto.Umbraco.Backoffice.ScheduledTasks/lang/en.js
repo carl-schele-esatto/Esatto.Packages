@@ -43,6 +43,8 @@ export default {
         kindUmbraco: 'Umbraco',
         kindRecurringHelp: 'IRecurringBackgroundJob — runs in-process on every server whose role matches.',
         kindDistributedHelp: 'IDistributedBackgroundJob — runs on one server at a time, scheduled through the database.',
+        showDescription: (name) => `Show what ${name} does`,
+        noDescription: 'No description has been provided for this task.',
         notManaged: 'Not hosted by Scheduled Tasks — controls unavailable.',
         notHosted: 'Not hosted by Scheduled Tasks',
         properties: 'Properties',

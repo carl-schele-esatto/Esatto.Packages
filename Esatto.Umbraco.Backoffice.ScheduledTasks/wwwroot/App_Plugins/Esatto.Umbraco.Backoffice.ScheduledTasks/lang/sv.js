@@ -44,6 +44,8 @@ export default {
         kindUmbraco: 'Umbraco',
         kindRecurringHelp: 'IRecurringBackgroundJob – körs i processen på varje server vars roll matchar.',
         kindDistributedHelp: 'IDistributedBackgroundJob – körs på en server i taget och schemaläggs via databasen.',
+        showDescription: (name) => `Visa vad ${name} gör`,
+        noDescription: 'Ingen beskrivning finns för det här jobbet.',
         notManaged: 'Hanteras inte av Scheduled Tasks – kan inte styras härifrån.',
         notHosted: 'Hanteras inte av Scheduled Tasks',
         properties: 'Egenskaper',

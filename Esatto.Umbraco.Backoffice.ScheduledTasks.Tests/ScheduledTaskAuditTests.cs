@@ -20,6 +20,7 @@ public sealed class FeedProperties
     public int Timeout { get; set; } = 30;
 }
 
+[ScheduledTaskDescription("Imports the product feed.", Swedish = "Importerar produktflödet.")]
 public sealed class FeedJob : RecurringBackgroundJobBase, IScheduledTaskWithProperties<FeedProperties>
 {
     public FeedJob() : base(TimeSpan.FromHours(1)) { }

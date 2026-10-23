@@ -41,6 +41,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         _autoRefresh: { state: true },
         _now: { state: true },
         _exporting: { state: true },
+        _expandedId: { state: true },
     };
 
     /** Remembered per user in the browser; Umbraco's own tasks are hidden by default. */
@@ -65,6 +66,7 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         this._autoRefresh = true;
         this._now = Date.now();
         this._exporting = false;
+        this._expandedId = null; // the task whose description is open (one at a time)
 
         this.consumeContext(UMB_NOTIFICATION_CONTEXT, (ctx) => { this.#notifications = ctx; });
     }
@@ -523,12 +525,46 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         `;
     }
 
+    /** The job's description in the user's language: Swedish users get Swedish ?? English, everyone else English. */
+    #description(task) {
+        const swedish = this.localize.lang().toLowerCase().startsWith('sv');
+        return (swedish ? task.descriptionSv ?? task.descriptionEn : task.descriptionEn) || '';
+    }
+
+    #toggleExpanded(task) {
+        this._expandedId = this._expandedId === task.id ? null : task.id;
+    }
+
+    // A click on the row toggles its description, unless it lands on something interactive
+    // (the row's buttons, toggles, links) or ends a text selection.
+    #onRowClick(e, task) {
+        const interactive = e.composedPath().some((el) =>
+            el !== e.currentTarget && el instanceof Element && el.matches('button, a, input, select, textarea, uui-button, uui-toggle, [role="button"], .description'));
+        if (interactive || window.getSelection()?.toString()) return;
+        this.#toggleExpanded(task);
+    }
+
+    // Enter/Space on the focused row itself (not on a button inside it).
+    #onRowKeydown(e, task) {
+        if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        this.#toggleExpanded(task);
+    }
+
     #renderRow(task) {
         const t = this.#t;
+        const expanded = this._expandedId === task.id;
+        const description = expanded ? this.#description(task) : '';
         return html`
-            <uui-table-row class=${task.isPaused ? 'paused' : ''}>
+            <uui-table-row
+                class="${task.isPaused ? 'paused' : ''} expandable ${expanded ? 'expanded' : ''}"
+                tabindex="0"
+                aria-expanded=${expanded ? 'true' : 'false'}
+                aria-label=${t('showDescription', task.name)}
+                @click=${(e) => this.#onRowClick(e, task)}
+                @keydown=${(e) => this.#onRowKeydown(e, task)}>
                 <uui-table-cell>
-                    <div class="task-name">${task.name}</div>
+                    <div class="task-name"><uui-icon class="chevron" name="icon-navigation-right"></uui-icon>${task.name}</div>
                     <div class="task-meta">
                         <uui-tag look="outline" class="kind" title=${t(task.kind === 'distributed' ? 'kindDistributedHelp' : 'kindRecurringHelp')}>
                             ${t(task.kind === 'distributed' ? 'kindDistributed' : 'kindRecurring')}
@@ -538,6 +574,9 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
                     </div>
                     ${task.isManaged ? nothing : html`<div class="muted">${t('notManaged')}</div>`}
                     ${this.#renderTaskExtras(task)}
+                    ${expanded
+                        ? html`<div class="description ${description ? '' : 'muted'}">${description || t('noDescription')}</div>`
+                        : nothing}
                 </uui-table-cell>
                 <uui-table-cell class="schedule">${this.#renderSchedule(task)}</uui-table-cell>
                 <uui-table-cell class="nowrap">${this.#renderStatus(task)}</uui-table-cell>
@@ -659,6 +698,21 @@ class EsattoScheduledTasksDashboard extends UmbElementMixin(LitElement) {
         uui-table-cell { vertical-align: top; padding-block: var(--uui-size-space-3); }
         uui-table-row.paused uui-table-cell:first-child .task-name { color: var(--uui-color-text-alt); }
         .task-name { font-weight: var(--uui-font-weight-bold, 700); }
+        uui-table-row.expandable { cursor: pointer; }
+        uui-table-row.expandable:focus-visible { outline: 2px solid var(--uui-color-focus, #3879ff); outline-offset: -2px; }
+        .chevron { display: inline-block; margin-inline-end: var(--uui-size-space-2); font-size: 0.8em; vertical-align: 0.05em; transition: transform 120ms ease; }
+        uui-table-row.expanded .chevron { transform: rotate(90deg); }
+        @media (prefers-reduced-motion: reduce) { .chevron { transition: none; } }
+        /* Indented under the name (past the chevron); selectable text, so the cursor is a text one. */
+        .description {
+            margin-block-start: var(--uui-size-space-3);
+            margin-inline-start: var(--uui-size-space-5);
+            max-width: 70ch;
+            padding-inline-start: var(--uui-size-space-3);
+            border-inline-start: 2px solid var(--uui-color-border, #d8d7d9);
+            cursor: text;
+            user-select: text;
+        }
         .task-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--uui-size-space-2); margin-block-start: var(--uui-size-space-1); }
         .task-meta code { font-size: var(--uui-font-size-small, 0.875em); color: var(--uui-color-text-alt); }
         .task-extras { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2) var(--uui-size-space-5); margin-block-start: var(--uui-size-space-3); }

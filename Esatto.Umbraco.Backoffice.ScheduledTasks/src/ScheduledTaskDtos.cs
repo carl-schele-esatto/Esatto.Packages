@@ -15,7 +15,8 @@ public sealed record ScheduledTasksOverviewDto(
 /// A task as the dashboard sees it. Periods are in seconds; null means "never on its own"
 /// (an infinite period or delay: the task only runs when triggered).
 /// <c>CalendarUnavailableReason</c>: why the task can't use a calendar schedule (null when it can);
-/// <c>MinimumPeriodSeconds</c>: the shortest interval the server accepts for it (besides its own period).
+/// <c>MinimumPeriodSeconds</c>: the shortest interval the server accepts for it (besides its own period);
+/// <c>DescriptionEn</c>/<c>DescriptionSv</c>: what the job does in each language (null when unknown); the dashboard picks one.
 /// </summary>
 public sealed record ScheduledTaskDto(
     string Id,
@@ -53,7 +54,9 @@ public sealed record ScheduledTaskDto(
     string? StopRequestedBy = null,
     DateTime? RetryAtUtc = null,
     int? NextAttempt = null,
-    int? MaxAttempts = null);
+    int? MaxAttempts = null,
+    string? DescriptionEn = null,
+    string? DescriptionSv = null);
 
 /// <summary>
 /// Retries and time limit: what the task runs with, and the job's own defaults. Seconds;
@@ -206,7 +209,9 @@ internal static class ScheduledTaskDtoMapper
         task.StopRequestedBy,
         task.Stats.PendingRetry?.RetryAtUtc,
         task.Stats.PendingRetry is { } retry ? retry.Attempt + 1 : null,
-        task.Stats.PendingRetry?.MaxAttempts);
+        task.Stats.PendingRetry?.MaxAttempts,
+        task.Description?.English,
+        task.Description?.Swedish);
 
     public static ScheduledTaskAuditEntryDto ToDto(this ScheduledTaskAuditEntry entry)
         => new(entry.Utc, entry.PerformedBy, entry.Action, entry.Details, entry.Server);

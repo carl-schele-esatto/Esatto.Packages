@@ -59,6 +59,9 @@ public sealed record ScheduledTaskInfo(
 
     /// <summary>Who asked the task's run in progress on this server to stop, if anyone has.</summary>
     public string? StopRequestedBy { get; init; }
+
+    /// <summary>What the job does (<see cref="ScheduledTaskDescriptionAttribute"/>, else Umbraco's canned list); null when unknown.</summary>
+    public ScheduledTaskJobDescription? Description { get; init; }
 }
 
 public enum ScheduledTaskCommandStatus
@@ -667,6 +670,7 @@ internal sealed partial class ScheduledTaskService : IScheduledTaskService
             RunPolicy = ScheduledTaskRunPolicies.Resolve(type, setting?.RunPolicy),
             DefaultRunPolicy = ScheduledTaskRunPolicies.Defaults(type),
             StopRequestedBy = _runControl.StopRequestedBy(id),
+            Description = ScheduledTaskJobDescriptions.For(type),
         };
     }
 
@@ -717,6 +721,7 @@ internal sealed partial class ScheduledTaskService : IScheduledTaskService
             StopRequestedBy = _runControl.StopRequestedBy(id)
                 ?? stats.Current?.StopRequestedBy
                 ?? (isRunning && !runningHere ? RemoteStopRequestedBy(id) : null),
+            Description = ScheduledTaskJobDescriptions.For(type),
         };
     }
 
