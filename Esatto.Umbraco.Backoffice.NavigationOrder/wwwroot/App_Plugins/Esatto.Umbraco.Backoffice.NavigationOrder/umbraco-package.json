@@ -1,0 +1,29 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.NavigationOrder",
+  "name": "Esatto Umbraco Backoffice Navigation Order",
+  "version": "1.0.0",
+  "allowTelemetry": false,
+  "extensions": [
+    {
+      "type": "localization",
+      "alias": "Esatto.Umbraco.Backoffice.NavigationOrder.Localization.En",
+      "name": "Navigation Order (English)",
+      "meta": { "culture": "en" },
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.NavigationOrder/lang/en.js"
+    },
+    {
+      "type": "localization",
+      "alias": "Esatto.Umbraco.Backoffice.NavigationOrder.Localization.Sv",
+      "name": "Navigation Order (Swedish)",
+      "meta": { "culture": "sv" },
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.NavigationOrder/lang/sv.js"
+    },
+    {
+      "type": "backofficeEntryPoint",
+      "alias": "Esatto.Umbraco.Backoffice.NavigationOrder.EntryPoint",
+      "name": "Navigation Order",
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.NavigationOrder/navigation-order.js"
+    }
+  ]
+}
