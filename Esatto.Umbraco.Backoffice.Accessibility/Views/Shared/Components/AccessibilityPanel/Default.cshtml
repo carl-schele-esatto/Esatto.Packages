@@ -1,0 +1,36 @@
+@model Esatto.Umbraco.Backoffice.Accessibility.Public.PanelViewModel
+@*
+    The visitor preferences panel. Behaviour: /esatto-accessibility/a11y-panel.js (Client/public-site).
+    Built to WCAG 2.2 AAA: a real button with a visible label (48px target), a modal <dialog> that takes and
+    returns focus, native checkboxes with labels, Esc closes, works at 400% zoom and in forced colours.
+*@
+<div class="esatto-a11y" data-position="@Model.Position" lang="@Model.Language">
+    <button type="button" class="esatto-a11y__button" aria-haspopup="dialog" aria-controls="esatto-a11y-dialog">
+        <svg class="esatto-a11y__icon" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="24" height="24">
+            <circle cx="12" cy="4" r="2" fill="currentColor" />
+            <path d="M4 7.5c2.6.8 5.3 1.2 8 1.2s5.4-.4 8-1.2l.5 1.9c-2.1.7-4.3 1.1-6.5 1.3V14l2.3 7.2-1.9.6L12 15h0l-2.4 6.8-1.9-.6L10 14v-3.3c-2.2-.2-4.4-.6-6.5-1.3z" fill="currentColor" />
+        </svg>
+        <span class="esatto-a11y__label">@Model.ButtonLabel</span>
+    </button>
+    <dialog id="esatto-a11y-dialog" class="esatto-a11y__dialog" aria-labelledby="esatto-a11y-title">
+        <form method="dialog">
+            <h2 id="esatto-a11y-title" class="esatto-a11y__title">@Model.DialogTitle</h2>
+            <fieldset class="esatto-a11y__options">
+                <legend class="esatto-a11y__visually-hidden">@Model.DialogTitle</legend>
+                @foreach (var option in Model.Options)
+                {
+                    <label class="esatto-a11y__option">
+                        <input type="checkbox" data-pref="@option.Pref" />
+                        <span>@option.Label</span>
+                    </label>
+                }
+            </fieldset>
+            <p class="esatto-a11y__note">@Model.Note</p>
+            <div class="esatto-a11y__actions">
+                <button type="button" class="esatto-a11y__secondary" data-a11y-reset>@Model.Reset</button>
+                <button type="submit" class="esatto-a11y__primary" value="close">@Model.Close</button>
+            </div>
+        </form>
+    </dialog>
+</div>
+<script src="@Model.ScriptUrl" defer></script>

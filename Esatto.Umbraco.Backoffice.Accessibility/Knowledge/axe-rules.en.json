@@ -1,0 +1,202 @@
+{
+  "image-alt": {
+    "owner": "Editor",
+    "howToFix": "Open the image's media item in Umbraco (use \"Edit in Umbraco\") and fill in its alternative text, or the alt text field of the block that shows it. Describe what the image tells the reader on this page. If the image is purely decorative, a developer should render it with alt=\"\" instead.",
+    "caveats": "Don't use the file name or \"image\"/\"picture\" as alt text. If the template never outputs the media item's alt field, the fix belongs to a developer even when editors filled it in."
+  },
+  "role-img-alt": {
+    "owner": "Developer",
+    "howToFix": "Give elements with role=\"img\" (often SVG icons or CSS background images) an accessible name with aria-label or aria-labelledby, or hide purely decorative ones with aria-hidden=\"true\".",
+    "caveats": "Inline SVG icons inside a labelled button should be aria-hidden; the button carries the name."
+  },
+  "input-image-alt": {
+    "owner": "Developer",
+    "howToFix": "Add an alt attribute to <input type=\"image\"> describing the action, e.g. alt=\"Search\".",
+    "caveats": "Describe the action, not the picture."
+  },
+  "svg-img-alt": {
+    "owner": "Developer",
+    "howToFix": "Give SVGs with role=\"img\" a <title> or aria-label, or aria-hidden=\"true\" if decorative.",
+    "caveats": null
+  },
+  "object-alt": {
+    "owner": "Developer",
+    "howToFix": "Give <object> elements a text alternative with aria-label, title or fallback content.",
+    "caveats": null
+  },
+  "area-alt": {
+    "owner": "Developer",
+    "howToFix": "Give every <area> in an image map an alt text describing its link destination.",
+    "caveats": null
+  },
+  "link-name": {
+    "owner": "Both",
+    "howToFix": "Every link needs text. Editors: don't leave a linked image without alt text or a link with no words. Developers: give icon-only links (social media, logo, arrows) an aria-label or visually hidden text, and make card links include the card's title.",
+    "caveats": "A link wrapping only an image takes its name from the image's alt text, so an empty alt makes the link nameless."
+  },
+  "button-name": {
+    "owner": "Developer",
+    "howToFix": "Give every button visible text or, for icon-only buttons (close, menu, search, play), an aria-label that says what it does, e.g. aria-label=\"Close\".",
+    "caveats": "If the button has visible text, the accessible name must include it (2.5.3)."
+  },
+  "color-contrast": {
+    "owner": "Developer",
+    "howToFix": "Darken the text or lighten the background until normal text reaches 4.5:1 and large text 3:1. Fix it in the site's colour variables or component CSS so every page benefits. Check hover/focus states and text over images too.",
+    "caveats": "axe can't judge text over background images or gradients; those show up under \"Needs review\". If editors pick text colours in the Rich Text Editor, limit the palette to accessible colours."
+  },
+  "color-contrast-enhanced": {
+    "owner": "Developer",
+    "howToFix": "For AAA, raise contrast to 7:1 for normal text and 4.5:1 for large text, starting with body text.",
+    "caveats": "Often conflicts with brand colours; prioritise long-form text."
+  },
+  "heading-order": {
+    "owner": "Both",
+    "howToFix": "Headings should go down one level at a time (h2 → h3, not h2 → h4). Editors: pick the heading level in the Rich Text Editor by its place in the outline, not its size. Developers: make block and component headings follow the page's outline, or make their level configurable.",
+    "caveats": "Skipping back up (h4 → h2) is fine. Don't use headings for styling short text."
+  },
+  "empty-heading": {
+    "owner": "Both",
+    "howToFix": "Remove empty headings or give them text. Editors: delete blank heading lines in the Rich Text Editor. Developers: don't render a heading element when its field is empty.",
+    "caveats": null
+  },
+  "page-has-heading-one": {
+    "owner": "Developer",
+    "howToFix": "Make each page template output exactly one <h1>, usually the page's title or hero heading.",
+    "caveats": "If the h1 comes from an optional editor field, fall back to the page name when it's empty."
+  },
+  "html-has-lang": {
+    "owner": "Developer",
+    "howToFix": "Add lang to <html> in the master layout, using the current page's culture.",
+    "caveats": "Don't hard-code one language on a multilingual site."
+  },
+  "html-lang-valid": {
+    "owner": "Developer",
+    "howToFix": "Use a valid language code in <html lang>, e.g. \"sv\", \"en\" or \"en-GB\".",
+    "caveats": null
+  },
+  "valid-lang": {
+    "owner": "Both",
+    "howToFix": "Use valid language codes on elements that set lang, e.g. lang=\"en\".",
+    "caveats": null
+  },
+  "document-title": {
+    "owner": "Developer",
+    "howToFix": "Output a <title> in every template, built from the page's SEO title or name plus the site name.",
+    "caveats": "Editors should make sure page names and SEO titles are unique and descriptive."
+  },
+  "label": {
+    "owner": "Developer",
+    "howToFix": "Give every form field a <label for> that matches its id, or wrap the field in its label. Search fields with no visible label need an aria-label.",
+    "caveats": "Placeholder text is not a label. Form builder packages may need configuring to output labels."
+  },
+  "select-name": {
+    "owner": "Developer",
+    "howToFix": "Give every <select> a label, the same way as other form fields.",
+    "caveats": null
+  },
+  "frame-title": {
+    "owner": "Both",
+    "howToFix": "Give every iframe a title describing its content, e.g. title=\"Map of our office\" or title=\"Video: Product introduction\". Developers: set it in the embed component, using the embed's name.",
+    "caveats": "Embeds pasted into the Rich Text Editor often lack a title."
+  },
+  "list": {
+    "owner": "Both",
+    "howToFix": "Lists (<ul>/<ol>) may only contain <li> elements directly. Editors: use the Rich Text Editor's list buttons rather than pasting lists from Word. Developers: don't put other elements directly inside ul/ol.",
+    "caveats": null
+  },
+  "listitem": {
+    "owner": "Developer",
+    "howToFix": "Make sure every <li> is inside a <ul> or <ol>.",
+    "caveats": null
+  },
+  "region": {
+    "owner": "Developer",
+    "howToFix": "Put all content inside landmark elements: header, nav, main, aside, footer. Cookie banners and skip links can be in their own region or dialog.",
+    "caveats": null
+  },
+  "landmark-one-main": {
+    "owner": "Developer",
+    "howToFix": "Wrap the page's main content in exactly one <main> element in the master layout.",
+    "caveats": null
+  },
+  "target-size": {
+    "owner": "Developer",
+    "howToFix": "Make the control at least 24×24 CSS pixels (padding counts), or add space so it's at least 24px from the next target. Icon buttons, close buttons, pagination and social icons are the usual suspects. For people with motor impairments, 44×44 is much better.",
+    "caveats": "Links inside running text are exempt."
+  },
+  "video-caption": {
+    "owner": "Editor",
+    "howToFix": "Add a captions track to the video: upload a WebVTT file with the video, or enable and correct captions on the hosting platform before embedding.",
+    "caveats": "Automatic captions must be proofread."
+  },
+  "meta-viewport": {
+    "owner": "Developer",
+    "howToFix": "Remove maximum-scale and user-scalable=no from the viewport meta tag so visitors can zoom.",
+    "caveats": null
+  },
+  "aria-valid-attr": {
+    "owner": "Developer",
+    "howToFix": "Fix misspelled or invented aria-* attributes; only attributes from the ARIA specification work.",
+    "caveats": null
+  },
+  "aria-valid-attr-value": {
+    "owner": "Developer",
+    "howToFix": "Give aria-* attributes valid values, e.g. aria-expanded=\"true\"/\"false\", and make id references point to existing elements.",
+    "caveats": null
+  },
+  "aria-required-attr": {
+    "owner": "Developer",
+    "howToFix": "Add the attributes the role requires, e.g. aria-checked on role=\"checkbox\", aria-level on role=\"heading\".",
+    "caveats": "Prefer native elements (input type=checkbox, h2) which need no ARIA."
+  },
+  "aria-allowed-attr": {
+    "owner": "Developer",
+    "howToFix": "Remove aria-* attributes that aren't allowed on the element's role.",
+    "caveats": null
+  },
+  "aria-hidden-focus": {
+    "owner": "Developer",
+    "howToFix": "Elements inside aria-hidden=\"true\" must not be focusable: add tabindex=\"-1\" or use the inert attribute.",
+    "caveats": "Hidden carousel slides and closed menus are common causes."
+  },
+  "duplicate-id-aria": {
+    "owner": "Developer",
+    "howToFix": "Make ids referenced by aria-labelledby, aria-describedby or label[for] unique on the page. Components rendered several times need unique ids per instance.",
+    "caveats": null
+  },
+  "link-in-text-block": {
+    "owner": "Developer",
+    "howToFix": "Underline links in running text (or give them another non-colour cue). Colour alone isn't enough unless it has 3:1 contrast with the surrounding text.",
+    "caveats": null
+  },
+  "scrollable-region-focusable": {
+    "owner": "Developer",
+    "howToFix": "Make scrollable areas (wide tables, code blocks) keyboard-focusable with tabindex=\"0\" and give them an accessible name, so keyboard users can scroll them.",
+    "caveats": null
+  },
+  "nested-interactive": {
+    "owner": "Developer",
+    "howToFix": "Don't put links or buttons inside other links or buttons. For clickable cards, make one link (usually the title) and stretch its click area with CSS.",
+    "caveats": null
+  },
+  "bypass": {
+    "owner": "Developer",
+    "howToFix": "Add a \"Skip to main content\" link as the first focusable element, and use landmark elements.",
+    "caveats": null
+  },
+  "autocomplete-valid": {
+    "owner": "Developer",
+    "howToFix": "Use valid autocomplete tokens such as name, email, tel, street-address.",
+    "caveats": null
+  },
+  "td-headers-attr": {
+    "owner": "Both",
+    "howToFix": "Make table header references point to header cells in the same table, or use simple tables with <th> cells.",
+    "caveats": null
+  },
+  "th-has-data-cells": {
+    "owner": "Both",
+    "howToFix": "Every table header cell should describe some data cells; remove header cells from layout tables.",
+    "caveats": "Tables used only for layout should be replaced with CSS layout."
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.Accessibility",
+  "name": "Esatto Umbraco Backoffice Accessibility",
+  "version": "1.0.0",
+  "allowTelemetry": false,
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Esatto.Umbraco.Backoffice.Accessibility.Dashboard",
+      "name": "Accessibility",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.Accessibility/accessibility-dashboard.js",
+      "elementName": "esatto-accessibility-dashboard",
+      "weight": -100,
+      "meta": { "label": "Accessibility", "pathname": "accessibility" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

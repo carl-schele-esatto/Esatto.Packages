@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ButtonLabel" xml:space="preserve"><value>Tillgänglighet</value></data>
+  <data name="DialogTitle" xml:space="preserve"><value>Tillgänglighetsinställningar</value></data>
+  <data name="LargerText" xml:space="preserve"><value>Större text</value></data>
+  <data name="Spacing" xml:space="preserve"><value>Större knappar och mer luft</value></data>
+  <data name="HighContrast" xml:space="preserve"><value>Hög kontrast</value></data>
+  <data name="ReduceMotion" xml:space="preserve"><value>Minska rörelser</value></data>
+  <data name="ReadableFont" xml:space="preserve"><value>Lättläst typsnitt</value></data>
+  <data name="HighlightLinks" xml:space="preserve"><value>Markera länkar</value></data>
+  <data name="ReadingGuide" xml:space="preserve"><value>Läslinjal</value></data>
+  <data name="Reset" xml:space="preserve"><value>Återställ</value></data>
+  <data name="Close" xml:space="preserve"><value>Stäng</value></data>
+  <data name="Note" xml:space="preserve"><value>Inställningarna sparas bara i den här webbläsaren.</value></data>
+</root>
