@@ -27,7 +27,9 @@ export class NavigationOrderApplier {
   #scheduled = false;
   #unsubscribe?: () => void;
 
-  constructor(source: ManifestSource, schedule: (task: () => void) => void = queueMicrotask) {
+  // The default calls queueMicrotask unbound: called as this.#schedule(...) browsers throw "Illegal invocation", which left
+  // #scheduled stuck and every section registered after the first apply (Umbraco Forms, for one) at its own weight.
+  constructor(source: ManifestSource, schedule: (task: () => void) => void = (task) => queueMicrotask(task)) {
     this.#source = source;
     this.#schedule = schedule;
   }

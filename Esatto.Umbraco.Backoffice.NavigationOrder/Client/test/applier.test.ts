@@ -122,4 +122,29 @@ describe('NavigationOrderApplier', () => {
 
     expect(registry.replaced.map((r) => r.alias)).toEqual(['A', 'B', 'C']);
   });
+
+  it('keeps applying to late manifests with the default scheduler, which browsers only accept unbound', async () => {
+    // Browsers throw "Illegal invocation" when queueMicrotask is called as a method of another object; Node doesn't.
+    const original = globalThis.queueMicrotask;
+    globalThis.queueMicrotask = function (this: unknown, task: VoidFunction) {
+      if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+      original(task);
+    };
+    try {
+      const registry = fakeRegistry([section('A', 1000), section('B', 900)]);
+      const applier = new NavigationOrderApplier(registry.source);
+      applier.start();
+      applier.setOrder({ sections: ['B', 'A', 'C', 'D'], tabs: [] });
+
+      registry.add(section('C', 0));
+      await settle();
+      registry.add(section('D', 0));
+      await settle();
+
+      expect(applier.effectiveList({ kind: 'sections' })).toEqual(['B', 'A', 'C', 'D']);
+      expect([registry.weightOf('B'), registry.weightOf('A'), registry.weightOf('C'), registry.weightOf('D')]).toEqual([40, 30, 20, 10]);
+    } finally {
+      globalThis.queueMicrotask = original;
+    }
+  });
 });

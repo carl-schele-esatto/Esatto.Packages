@@ -97,7 +97,9 @@ function H(i, t, e, n = []) {
 }
 const J = ["section", "dashboard", "sectionView"], Q = { sections: null, tabs: [] };
 class Z {
-  constructor(t, e = queueMicrotask) {
+  // The default calls queueMicrotask unbound: called as this.#schedule(...) browsers throw "Illegal invocation", which left
+  // #scheduled stuck and every section registered after the first apply (Umbraco Forms, for one) at its own weight.
+  constructor(t, e = (n) => queueMicrotask(n)) {
     this.#r = /* @__PURE__ */ new Map(), this.#t = Q, this.#s = !1, this.#e = !1, this.originalWeight = (n) => this.#r.get(n) ?? this.#i.current().find((s) => s.alias === n)?.weight ?? 0, this.#i = t, this.#n = e;
   }
   #i;
