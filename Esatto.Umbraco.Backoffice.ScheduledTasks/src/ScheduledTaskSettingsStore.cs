@@ -110,6 +110,8 @@ public interface IScheduledTaskSettingsStore
 /// costs nothing and other servers in a load-balanced setup converge within that window.
 /// Nothing is read before the package's migration has brought the table up to date
 /// (<see cref="ScheduledTasksSchemaState"/>), and a failed first read isn't cached as "no settings".
+/// No lock is held while the database is read: one caller reloads and the others go on with what is
+/// cached, so a reload stuck on the database (a lock held elsewhere) can't hold up every job tick.
 /// </summary>
 internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
 {
@@ -126,7 +128,22 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
     private readonly TimeProvider _timeProvider;
     private readonly IOptionsMonitor<ScheduledTasksOptions> _options;
     private readonly ILogger<ScheduledTaskSettingsStore> _logger;
-    private readonly Lock _loadLock = new();
+
+    // Guards what is published to the cache; never held while the database is read or written.
+    private readonly Lock _cacheLock = new();
+
+    // One write at a time on this server, so their results reach the cache in the order they were saved.
+    // Reads never take it.
+    private readonly Lock _writeLock = new();
+
+    // 1 while a caller reloads the settings; the others don't wait for it.
+    private int _loading;
+
+    // Stamps each reload when it starts and each write when it is published (under _cacheLock), so a
+    // reload that read before a write, or before a newer reload, doesn't overwrite it.
+    private long _version;
+    private long _publishedVersion;
+    private long _writtenVersion;
 
     private static readonly IReadOnlyDictionary<string, ServerOccurrence> NoOccurrences =
         new Dictionary<string, ServerOccurrence>(StringComparer.Ordinal);
@@ -175,13 +192,16 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
         // A failed first read is retried after a short back-off, not on every call.
         if (snapshot is null && IsFirstLoadBackingOff()) return Empty;
 
-        lock (_loadLock)
+        // Another caller is reloading: go on with what is cached rather than wait for the database.
+        if (Interlocked.CompareExchange(ref _loading, 1, 0) != 0) return snapshot ?? Empty;
+
+        try
         {
-            if (_snapshot is not null && !IsStale()) return _snapshot;
+            if (_snapshot is { } current && !IsStale()) return current;
 
             try
             {
-                Publish(Load());
+                LoadAndPublish();
             }
             catch (Exception ex) when (_snapshot is not null)
             {
@@ -196,7 +216,11 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
                 return Empty;
             }
 
-            return _snapshot!;
+            return _snapshot ?? Empty;
+        }
+        finally
+        {
+            Volatile.Write(ref _loading, 0);
         }
     }
 
@@ -204,10 +228,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
     {
         if (!_schema.IsReady) return;
 
-        lock (_loadLock)
-        {
-            Publish(Load());
-        }
+        LoadAndPublish();
     }
 
     public ScheduledTaskSetting? Update(
@@ -220,7 +241,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
 
         ScheduledTaskSetting? saved;
 
-        lock (_loadLock)
+        lock (_writeLock)
         {
             for (var attempt = 1; ; attempt++)
             {
@@ -236,7 +257,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
                 }
             }
 
-            PublishOne(taskId, saved);
+            PublishWritten(() => PublishOne(taskId, saved));
         }
 
         return saved;
@@ -247,7 +268,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
         if (!_schema.IsReady) return;
         utc = DateTime.SpecifyKind(utc, DateTimeKind.Utc);
 
-        lock (_loadLock)
+        lock (_writeLock)
         {
             ScheduledTaskSetting? saved;
             using (var scope = _scopeProvider.CreateScope())
@@ -274,7 +295,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
                 scope.Complete();
             }
 
-            PublishOne(taskId, saved);
+            PublishWritten(() => PublishOne(taskId, saved));
         }
     }
 
@@ -293,7 +314,7 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
         var savedTicks = SavedTicks(scheduleSavedUtc);
         var server = Truncate(ServerName, 255)!;
 
-        lock (_loadLock)
+        lock (_writeLock)
         {
             ServerOccurrence recorded;
             using (var scope = _scopeProvider.CreateScope())
@@ -318,8 +339,8 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
                 scope.Complete();
             }
 
-            var occurrences = new Dictionary<string, ServerOccurrence>(_serverOccurrences, StringComparer.Ordinal) { [taskId] = recorded };
-            _serverOccurrences = occurrences;
+            PublishWritten(() => _serverOccurrences =
+                new Dictionary<string, ServerOccurrence>(_serverOccurrences, StringComparer.Ordinal) { [taskId] = recorded });
         }
     }
 
@@ -417,6 +438,40 @@ internal sealed class ScheduledTaskSettingsStore : IScheduledTaskSettingsStore
             .GroupBy(o => o.TaskId, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => ToServerOccurrence(g.First()), StringComparer.Ordinal);
         return (settings, occurrences);
+    }
+
+    /// <summary>
+    /// Reads all settings, holding no lock meanwhile, and publishes them unless a write on this server
+    /// or a newer reload was published since the read started. A reload that lost to a write leaves
+    /// the cache stale, so the next <see cref="GetAll"/> reads again.
+    /// </summary>
+    private void LoadAndPublish()
+    {
+        var version = Interlocked.Increment(ref _version);
+        var loaded = Load();
+
+        lock (_cacheLock)
+        {
+            if (version < _publishedVersion) return;
+            if (version < _writtenVersion)
+            {
+                Interlocked.Exchange(ref _loadedAtTimestamp, 0); // stale, as if never loaded
+                return;
+            }
+
+            _publishedVersion = version;
+            Publish(loaded);
+        }
+    }
+
+    /// <summary>Puts a write's result into the cache, after it was saved, so a reload that read before it doesn't overwrite it.</summary>
+    private void PublishWritten(Action publish)
+    {
+        lock (_cacheLock)
+        {
+            _writtenVersion = Interlocked.Increment(ref _version);
+            publish();
+        }
     }
 
     private void Publish((IReadOnlyDictionary<string, ScheduledTaskSetting> Settings, IReadOnlyDictionary<string, ServerOccurrence> Occurrences) loaded)

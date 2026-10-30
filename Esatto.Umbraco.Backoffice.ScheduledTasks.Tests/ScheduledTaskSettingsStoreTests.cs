@@ -113,6 +113,88 @@ public class ScheduledTaskSettingsStoreTests
         Assert.NotNull(_store.Get(TaskId));
     }
 
+    // Every job tick asks for its settings; a reload stuck on the database (a lock held elsewhere) must
+    // not hold them all up. On 2026-10-30 that queued 15 job threads, Umbraco's cache sync among them.
+    private static readonly TimeSpan NotHeldUp = TimeSpan.FromSeconds(5);
+
+    /// <summary>Makes the next settings read wait for <c>release</c>, returning <paramref name="rows"/>.</summary>
+    private (ManualResetEventSlim Entered, ManualResetEventSlim Release) BlockNextRead(params ScheduledTaskSettingEntity[] rows)
+    {
+        var entered = new ManualResetEventSlim();
+        var release = new ManualResetEventSlim();
+        _db.Fetch<ScheduledTaskSettingEntity>().Returns(_ =>
+        {
+            entered.Set();
+            release.Wait(TimeSpan.FromSeconds(30));
+            return rows.ToList();
+        });
+        return (entered, release);
+    }
+
+    [Fact]
+    public void A_reload_stuck_on_the_database_does_not_hold_up_other_callers()
+    {
+        _schema.MarkReady();
+        _db.Fetch<ScheduledTaskSettingEntity>().Returns([Row()]);
+        Assert.True(_store.Get(TaskId)!.IsPaused);
+        _time.Advance(TimeSpan.FromMinutes(1));
+        var (entered, release) = BlockNextRead(Row(isPaused: false));
+
+        var reload = Task.Run(() => _store.GetAll());
+        Assert.True(entered.Wait(NotHeldUp));
+        var other = Task.Run(() => _store.Get(TaskId));
+
+        Assert.True(other.Wait(NotHeldUp), "A second caller waited for the reload.");
+        Assert.True(other.Result!.IsPaused); // the settings it had
+        release.Set();
+        Assert.True(reload.Wait(NotHeldUp));
+        Assert.False(_store.Get(TaskId)!.IsPaused);
+    }
+
+    [Fact]
+    public void While_the_first_read_is_stuck_other_callers_hear_the_settings_are_not_read_yet()
+    {
+        _schema.MarkReady();
+        var (entered, release) = BlockNextRead(Row());
+
+        var first = Task.Run(() => _store.GetAll());
+        Assert.True(entered.Wait(NotHeldUp));
+        var other = Task.Run(() => _store.GetAll());
+
+        Assert.True(other.Wait(NotHeldUp), "A second caller waited for the first read.");
+        Assert.Empty(other.Result);
+        Assert.True(_store.IsWaitingForDatabase);
+        release.Set();
+        Assert.True(first.Wait(NotHeldUp));
+        Assert.False(_store.IsWaitingForDatabase);
+    }
+
+    [Fact]
+    public void A_save_does_not_wait_for_a_reload_and_is_not_overwritten_by_it()
+    {
+        _schema.MarkReady();
+        _db.Fetch<ScheduledTaskSettingEntity>().Returns([Row()]);
+        Assert.Null(_store.Get(TaskId)!.PeriodOverride);
+        _time.Advance(TimeSpan.FromMinutes(1));
+        // The reload read the row before the save below changed it.
+        var (entered, release) = BlockNextRead(Row());
+        _db.FirstOrDefault<ScheduledTaskSettingEntity>(Arg.Any<Sql>()).Returns(Row());
+        _db.Update(Arg.Any<ScheduledTaskSettingEntity>()).Returns(1);
+        var hourly = TimeSpan.FromHours(1);
+
+        var reload = Task.Run(() => _store.GetAll());
+        Assert.True(entered.Wait(NotHeldUp));
+        var save = Task.Run(() => _store.Update(TaskId, s => s with { PeriodOverride = hourly }, "Carl"));
+
+        Assert.True(save.Wait(NotHeldUp), "The save waited for the reload.");
+        release.Set();
+        Assert.True(reload.Wait(NotHeldUp));
+        var savedRow = Row();
+        savedRow.PeriodTicks = hourly.Ticks;
+        _db.Fetch<ScheduledTaskSettingEntity>().Returns([savedRow]); // the database has the save by now
+        Assert.Equal(hourly, _store.Get(TaskId)!.PeriodOverride);
+    }
+
     [Fact]
     public void Saving_before_the_migration_has_run_is_refused()
     {
