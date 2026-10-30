@@ -5,7 +5,7 @@ import { UMB_ACTION_EVENT_CONTEXT as se } from "@umbraco-cms/backoffice/action";
 import { UmbRequestReloadChildrenOfEntityEvent as ue } from "@umbraco-cms/backoffice/entity-action";
 import { tryExecute as V } from "@umbraco-cms/backoffice/resources";
 const Z = /* @__PURE__ */ new Map();
-function ae(t) {
+function ce(t) {
   Z.set(t.entityType, t);
 }
 function J(t) {
@@ -34,7 +34,7 @@ function f(t) {
   const e = t;
   return !e || e.nodeType !== 1 || e.tagName !== "UMB-TREE-ITEM" || e.props?.isMenu !== !0 || e.props?.item?.isTrashed === !0 ? !1 : J(U(e)) !== void 0;
 }
-function ce(t) {
+function ae(t) {
   return t.getClientRects().length > 0;
 }
 function de(t) {
@@ -47,7 +47,7 @@ function A(t) {
 function m(t) {
   return t.props?.item?.unique ?? t.api?.unique ?? t._item?.unique ?? t.getAttribute?.("data-unique") ?? null;
 }
-function v(t) {
+function T(t) {
   const e = t.props?.item?.parent;
   if (e !== void 0)
     return e.unique ?? null;
@@ -86,7 +86,7 @@ function le(t) {
   }
   return null;
 }
-function T(t, e) {
+function v(t, e) {
   let n = null;
   return b(document.documentElement, (r) => {
     n || f(r) && U(r) === e && m(r) === t && (n = r);
@@ -95,13 +95,13 @@ function T(t, e) {
 function N(t) {
   const e = [];
   return b(document.documentElement, (n) => {
-    f(n) && U(n) === t && ce(n) && e.push(n);
+    f(n) && U(n) === t && ae(n) && e.push(n);
   }), e;
 }
 function fe(t, e) {
   const n = [];
   for (const r of N(e)) {
-    if (v(r) !== t) continue;
+    if (T(r) !== t) continue;
     const o = m(r);
     o && n.push(o);
   }
@@ -113,16 +113,16 @@ function B(t) {
   q = t, t && Q();
 }
 function Q() {
-  P(document);
+  M(document);
 }
-function P(t) {
+function M(t) {
   if (!t) return;
   const e = t.nodeType === 9 ? t.documentElement : t;
   b(e, (n) => {
-    f(n) && (q?.attachItem(n), C(n)), n.shadowRoot && !S.has(n.shadowRoot) && M(n.shadowRoot);
+    f(n) && (q?.attachItem(n), C(n)), n.shadowRoot && !S.has(n.shadowRoot) && P(n.shadowRoot);
   });
 }
-function M(t) {
+function P(t) {
   if (!t || S.has(t)) return;
   S.add(t), new MutationObserver((n) => {
     for (const r of n) {
@@ -132,7 +132,7 @@ function M(t) {
       }
       for (const o of r.addedNodes) {
         if (!(o instanceof Element)) continue;
-        f(o) && q?.attachItem(o), P(o);
+        f(o) && q?.attachItem(o), M(o);
         const i = le(o);
         i && (q?.attachItem(i), C(i));
       }
@@ -144,7 +144,7 @@ function M(t) {
     // Lit reflects `entityType` to lowercase `entitytype` (no hyphen) in 17.0.0.
     // Watch both forms in case of version drift.
     attributeFilter: ["entitytype", "entity-type"]
-  }), P(t);
+  }), M(t);
 }
 function me() {
   const t = window;
@@ -154,12 +154,12 @@ function me() {
   Element.prototype.attachShadow = function(n) {
     const r = e.call(this, n);
     try {
-      M(r);
+      P(r);
     } catch (o) {
       console.warn(`${k} observeRoot failed:`, o);
     }
     return r;
-  }, M(document);
+  }, P(document);
 }
 const ye = "umb-default-tree-item";
 function $(t) {
@@ -196,7 +196,7 @@ function we(t) {
   const e = t.zone === "into" ? t.targetUnique : t.targetParentUnique;
   return e === t.sourceParentUnique ? { kind: "noop" } : { kind: "move", parentUnique: e };
 }
-function Te(t) {
+function ve(t) {
   const e = t.targetParentUnique === t.sourceParentUnique;
   if (t.zone === "into")
     return t.targetUnique === t.sourceParentUnique ? { kind: "noop" } : { kind: "move", parentUnique: t.targetUnique };
@@ -204,15 +204,15 @@ function Te(t) {
   return n === null ? e ? { kind: "noop" } : { kind: "move", parentUnique: t.targetParentUnique } : e ? n.length === t.siblings.length && n.every((o, i) => o === t.siblings[i]) ? { kind: "noop" } : { kind: "reorder", parentUnique: t.targetParentUnique, order: n } : { kind: "move+sort", parentUnique: t.targetParentUnique, order: n };
 }
 function ee(t, e, n, r) {
-  const o = t.filter((a) => a !== e), i = o.indexOf(n);
+  const o = t.filter((c) => c !== e), i = o.indexOf(n);
   if (i === -1) return null;
   const s = r === "before" ? i : i + 1;
   return [...o.slice(0, s), e, ...o.slice(s)];
 }
-function H(t) {
+function F(t) {
   return t !== null && t.kind !== "noop";
 }
-function ve(t, e, n, r) {
+function Te(t, e, n, r) {
   return t.kind === "noop" ? "No change: already here" : e === "into" ? `Move into ${n}` : t.kind === "reorder" || t.kind === "move+sort" ? e === "before" ? `Move above ${n}` : `Move below ${n}` : r === null ? `Move to root (next to ${n})` : `Move next to ${n} (under ${r})`;
 }
 function qe(t, e, n) {
@@ -220,7 +220,7 @@ function qe(t, e, n) {
   const r = e.parentNode;
   r && r.insertBefore(t, n === "before" ? e : e.nextSibling);
 }
-const F = "var(--uui-color-selected, #3879ff)", Ue = "rgba(56, 121, 255, 0.08)", O = (() => {
+const H = "var(--uui-color-selected, #3879ff)", Ue = "rgba(56, 121, 255, 0.08)", O = (() => {
   const t = document.createElement("div");
   return t.id = "esatto-tree-dnd-indicator", t.style.cssText = `
     position: fixed;
@@ -244,7 +244,7 @@ function I(t, e) {
     O.style.cssText = `${r}
       top: ${n.top}px;
       height: ${n.height}px;
-      border: 2px solid ${F};
+      border: 2px solid ${H};
       background: ${Ue};
     `;
     return;
@@ -252,15 +252,15 @@ function I(t, e) {
   O.style.cssText = `${r}
     top: ${(e === "line-above" ? n.top : n.bottom) - 1}px;
     height: 2px;
-    background: ${F};
+    background: ${H};
   `;
 }
-function c() {
+function a() {
   O.style.display = "none";
 }
 function Y(t, e, n, r) {
   if (t.kind === "noop") {
-    c();
+    a();
     return;
   }
   if (t.kind === "reorder" || t.kind === "move+sort") {
@@ -272,12 +272,12 @@ function Y(t, e, n, r) {
     return;
   }
   if (t.parentUnique !== null) {
-    const i = T(t.parentUnique, e.entityType);
-    i ? I(i, "outline") : c();
+    const i = v(t.parentUnique, e.entityType);
+    i ? I(i, "outline") : a();
     return;
   }
-  const o = N(e.entityType).find((i) => v(i) === null);
-  o ? I(o, "line-above") : c();
+  const o = N(e.entityType).find((i) => T(i) === null);
+  o ? I(o, "line-above") : a();
 }
 const y = (() => {
   const t = document.createElement("div");
@@ -299,6 +299,30 @@ function K(t) {
 function Ee() {
   y.style.display = "none";
 }
+class xe {
+  #n;
+  #r;
+  #e = null;
+  #t = null;
+  constructor(e, n) {
+    this.#n = e, this.#r = n;
+  }
+  // Called on every dragover of a legal target. Repeats on the middle of the
+  // same row keep the running timer; an edge cancels it.
+  over(e, n) {
+    if (n !== "into") {
+      this.cancel();
+      return;
+    }
+    this.#t !== e && (this.cancel(), this.#t = e, this.#e = setTimeout(() => this.#n(e), this.#r));
+  }
+  leave(e) {
+    this.#t === e && this.cancel();
+  }
+  cancel() {
+    this.#e && clearTimeout(this.#e), this.#e = null, this.#t = null;
+  }
+}
 function X(t, e, n) {
   let r = t + e;
   for (; r >= 0 && r < n.length; ) {
@@ -307,7 +331,7 @@ function X(t, e, n) {
   }
   return t;
 }
-function xe(t, e, n) {
+function Ie(t, e, n) {
   switch (e) {
     case "ArrowDown":
       return { type: "none", state: { ...t, targetIndex: X(t.targetIndex, 1, n), zone: "before" } };
@@ -342,7 +366,7 @@ const W = (() => {
 function p(t) {
   W.textContent = "", W.textContent = t;
 }
-const Ie = /* @__PURE__ */ new Set([
+const ke = /* @__PURE__ */ new Set([
   "UMB-ENTITY-ACTIONS-BUNDLE",
   // "…" button and the row's first action
   "UMB-ENTITY-ACTIONS-DROPDOWN",
@@ -354,87 +378,86 @@ const Ie = /* @__PURE__ */ new Set([
   "TEXTAREA",
   "SELECT"
 ]);
-function ke(t) {
-  return t.tagName !== void 0 && Ie.has(t.tagName) || t.id === "caret-button" || t.isContentEditable === !0;
+function Ae(t) {
+  return t.tagName !== void 0 && ke.has(t.tagName) || t.id === "caret-button" || t.isContentEditable === !0;
 }
-function Ae(t, e) {
+function Ce(t, e) {
   for (const n of t) {
     if (n === e) return !0;
-    if (ke(n)) return !1;
+    if (Ae(n)) return !1;
   }
   return !1;
 }
 function j(t, e) {
   return t.some((n) => f(n) && U(n) === e);
 }
-const Ce = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "Escape"];
-class Re extends oe(re) {
-  #a;
-  #c;
+const Re = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "Escape"];
+class De extends oe(re) {
+  #n;
+  #r;
   #e = null;
   #t = null;
-  #r = !1;
-  #o = null;
-  #i = null;
-  #l = !1;
+  #i = !1;
+  #s = new xe(de, he);
+  #a = !1;
   constructor() {
     super(), this.consumeContext(ie, (e) => {
-      this.#a = e;
+      this.#n = e;
     }), this.consumeContext(se, (e) => {
-      this.#c = e;
+      this.#r = e;
     });
   }
   connectedCallback() {
-    super.connectedCallback(), B(this), this.#b();
+    super.connectedCallback(), B(this), this.#m();
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), B(null), this.#s();
+    super.disconnectedCallback(), B(null), this.#s.cancel();
   }
   attachItem(e) {
     const n = e;
     if (n.dataset[L]) return;
     n.dataset[L] = "1", e.setAttribute("draggable", "true"), C(e), new MutationObserver(() => C(e)).observe(e, { childList: !0, subtree: !0 });
   }
-  #b() {
-    this.#l || (this.#l = !0, document.addEventListener("dragstart", (e) => {
-      const n = this.#n(e);
-      n && this.#g(e, n);
+  #m() {
+    this.#a || (this.#a = !0, document.addEventListener("dragstart", (e) => {
+      const n = this.#o(e);
+      n && this.#y(e, n);
     }, !0), document.addEventListener("dragenter", (e) => {
-      !this.#n(e) || !this.#e || e.preventDefault();
+      !this.#o(e) || !this.#e || e.preventDefault();
     }, !0), document.addEventListener("dragover", (e) => {
-      const n = this.#n(e);
+      const n = this.#o(e);
       if (!n) {
-        c();
+        a();
         return;
       }
-      this.#w(e, n);
+      this.#b(e, n);
     }, !0), document.addEventListener("dragleave", (e) => {
-      const n = this.#n(e);
-      n && this.#v(e, n);
+      const n = this.#o(e);
+      n && this.#g(e, n);
     }, !0), document.addEventListener("drop", (e) => {
-      const n = this.#n(e);
-      n && this.#q(e, n);
-    }, !0), document.addEventListener("dragend", () => this.#U(), !0), document.addEventListener("keydown", (e) => this.#x(e), !0), document.addEventListener("pointerdown", (e) => {
+      const n = this.#o(e);
+      n && this.#w(e, n);
+    }, !0), document.addEventListener("dragend", () => this.#v(), !0), document.addEventListener("keydown", (e) => this.#q(e), !0), document.addEventListener("pointerdown", (e) => {
       this.#t && this.#e && !j(e.composedPath(), this.#e.adapter.entityType) && (this.#u(), p("Move cancelled."));
     }, !0));
   }
-  #n(e) {
+  #o(e) {
     for (const n of e.composedPath?.() ?? [])
       if (f(n)) return n;
     return null;
   }
-  #f(e) {
+  #d(e) {
     const n = A(e), r = m(e);
     return !n || !r ? null : {
       adapter: n,
       sourceUnique: r,
-      sourceParentUnique: v(e),
+      sourceParentUnique: T(e),
       descendantUniques: ge(e)
     };
   }
   // What dropping on `el` in `zone` would do, or null if `el` is not a legal
   // target for the current drag (other tree, itself, or one of its descendants).
-  #d(e, n) {
+  #c(e, n) {
     const r = this.#e;
     if (!r || A(e) !== r.adapter) return null;
     const o = m(e);
@@ -443,52 +466,46 @@ class Re extends oe(re) {
       zone: n,
       sourceParentUnique: r.sourceParentUnique,
       targetUnique: o,
-      targetParentUnique: v(e)
+      targetParentUnique: T(e)
     };
     if (!r.adapter.sort) return we(i);
     const s = n === "into" ? [] : fe(i.targetParentUnique, r.adapter.entityType);
-    return Te({ ...i, sourceUnique: r.sourceUnique, siblings: s });
+    return ve({ ...i, sourceUnique: r.sourceUnique, siblings: s });
   }
-  #g(e, n) {
-    if (this.#r) {
+  #y(e, n) {
+    if (this.#i) {
       e.preventDefault();
       return;
     }
-    const r = this.#f(n);
+    const r = this.#d(n);
     if (!r) {
       e.preventDefault();
       return;
     }
     e.dataTransfer.effectAllowed = "move", e.dataTransfer.setData(pe, r.sourceUnique), this.#e = r;
   }
-  #w(e, n) {
+  #b(e, n) {
     if (!this.#e) return;
-    const r = z(n, e.clientY), o = this.#d(n, r);
+    const r = z(n, e.clientY), o = this.#c(n, r);
     if (o === null) {
-      c();
+      a();
       return;
     }
-    if (this.#T(n), o.kind === "noop") {
-      c();
+    if (this.#s.over(n, r), o.kind === "noop") {
+      a();
       return;
     }
     e.preventDefault(), e.dataTransfer.dropEffect = "move", Y(o, this.#e.adapter, n, r);
   }
-  #T(e) {
-    this.#i !== e && (this.#s(), this.#i = e, this.#o = setTimeout(() => de(e), he));
+  #g(e, n) {
+    e.relatedTarget && n.contains(e.relatedTarget) || (a(), this.#s.leave(n));
   }
-  #s() {
-    this.#o && clearTimeout(this.#o), this.#o = null, this.#i = null;
+  async #w(e, n) {
+    const r = z(n, e.clientY), o = this.#c(n, r);
+    F(o) && (e.preventDefault(), a(), await this.#l(o, n, r));
   }
-  #v(e, n) {
-    e.relatedTarget && n.contains(e.relatedTarget) || (c(), this.#i === n && this.#s());
-  }
-  async #q(e, n) {
-    const r = z(n, e.clientY), o = this.#d(n, r);
-    H(o) && (e.preventDefault(), c(), await this.#h(o, n, r));
-  }
-  #U() {
-    this.#e = null, c(), this.#s();
+  #v() {
+    this.#e = null, a(), this.#s.cancel();
   }
   // Run a plan for the current #dragState. Returns whether it fully succeeded.
   //   move       → move.
@@ -500,11 +517,11 @@ class Re extends oe(re) {
   // Both branches are always reloaded afterwards: chevrons come from the data
   // store, Dictionary re-sorts alphabetically, and after a failure the tree
   // must match the server again (e.g. a cycle through a collapsed branch).
-  async #h(e, n, r) {
+  async #l(e, n, r) {
     const o = this.#e;
-    if (!o || this.#r) return !1;
-    this.#r = !0;
-    const { adapter: i, sourceUnique: s, sourceParentUnique: a } = o, g = m(n), u = T(s, i.entityType);
+    if (!o || this.#i) return !1;
+    this.#i = !0;
+    const { adapter: i, sourceUnique: s, sourceParentUnique: c } = o, g = m(n), u = v(s, i.entityType);
     u && (u.style.opacity = "0.4", K(u));
     const w = u?.parentNode ?? null, R = u?.nextSibling ?? null, h = () => {
       u && w && w.insertBefore(u, R);
@@ -514,19 +531,19 @@ class Re extends oe(re) {
       if (e.kind === "move")
         await i.move(this, s, e.parentUnique), d = !0;
       else if (e.kind === "reorder")
-        qe(u, n, r), u && K(u), await this.#p(i, e.parentUnique, s, g, r), d = !0;
+        qe(u, n, r), u && K(u), await this.#f(i, e.parentUnique, s, g, r), d = !0;
       else {
         await i.move(this, s, e.parentUnique);
         try {
-          await this.#p(i, e.parentUnique, s, g, r), d = !0;
+          await this.#f(i, e.parentUnique, s, g, r), d = !0;
         } catch (l) {
-          this.#I(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${l?.message ?? l})`);
+          this.#U(`Moved, but couldn't set the position — it's at the bottom of the new parent. (${l?.message ?? l})`);
         }
       }
     } catch (l) {
-      this.#k(l?.message ?? String(l));
+      this.#E(l?.message ?? String(l));
     } finally {
-      h(), this.#y(i, a), e.parentUnique !== a && this.#y(i, e.parentUnique), Ee(), u && (u.style.opacity = ""), this.#r = !1;
+      h(), this.#p(i, c), e.parentUnique !== c && this.#p(i, e.parentUnique), Ee(), u && (u.style.opacity = ""), this.#i = !1;
     }
     return d;
   }
@@ -535,59 +552,59 @@ class Re extends oe(re) {
   // sidebar may have rendered only a window of a large parent, so the order is
   // built from the parent's full child list on the server — never from the
   // rendered rows. If that order can't be built, nothing is sorted.
-  async #p(e, n, r, o, i) {
+  async #f(e, n, r, o, i) {
     if (!e.sort || !e.childOrder) throw new Error("This tree cannot be sorted");
-    const s = await e.childOrder(this, n), a = ee(s, r, o, i);
-    if (!a) throw new Error("The drop target is no longer under that parent");
-    await e.sort(this, n, a);
+    const s = await e.childOrder(this, n), c = ee(s, r, o, i);
+    if (!c) throw new Error("The drop target is no longer under that parent");
+    await e.sort(this, n, c);
   }
   // --- Keyboard "grab & place" ------------------------------------------------
   // All rendered rows of the grabbed item's tree, in visual order, with a
   // parallel element array so a reducer index maps back to a DOM row.
-  #m() {
+  #h() {
     const e = this.#e, n = [], r = [];
     if (!e) return { candidates: n, els: r };
     for (const o of N(e.adapter.entityType)) {
       const i = m(o);
       i && (n.push({
         unique: i,
-        parentUnique: v(o),
+        parentUnique: T(o),
         blocked: G(i, e.sourceUnique, e.descendantUniques)
       }), r.push(o));
     }
     return { candidates: n, els: r };
   }
-  #E(e, n, r) {
-    const o = this.#e.adapter, i = e.kind === "move" && e.parentUnique !== null ? T(e.parentUnique, o.entityType) : null;
-    return ve(e, n, E(r), i ? E(i) : null);
+  #T(e, n, r) {
+    const o = this.#e.adapter, i = e.kind === "move" && e.parentUnique !== null ? v(e.parentUnique, o.entityType) : null;
+    return Te(e, n, E(r), i ? E(i) : null);
   }
   #u() {
-    c(), this.#t = null, this.#e = null;
+    a(), this.#t = null, this.#e = null;
   }
-  #x(e) {
+  #q(e) {
     if (this.#t === null) {
-      if (e.key !== " " || this.#r) return;
-      const h = this.#n(e);
-      if (!h || !Ae(e.composedPath(), h)) return;
-      const d = this.#f(h);
+      if (e.key !== " " || this.#i) return;
+      const h = this.#o(e);
+      if (!h || !Ce(e.composedPath(), h)) return;
+      const d = this.#d(h);
       if (!d) return;
       e.preventDefault(), e.stopPropagation(), this.#e = d;
-      const { candidates: l } = this.#m(), te = l.findIndex((ne) => ne.unique === d.sourceUnique);
-      this.#t = { sourceUnique: d.sourceUnique, targetIndex: Math.max(te, 0), zone: "before" }, c(), p(`Grabbed ${E(h)}. Use arrow keys to choose where to move it, space to drop, escape to cancel.`);
+      const { candidates: l } = this.#h(), te = l.findIndex((ne) => ne.unique === d.sourceUnique);
+      this.#t = { sourceUnique: d.sourceUnique, targetIndex: Math.max(te, 0), zone: "before" }, a(), p(`Grabbed ${E(h)}. Use arrow keys to choose where to move it, space to drop, escape to cancel.`);
       return;
     }
-    if (!Ce.includes(e.key)) return;
+    if (!Re.includes(e.key)) return;
     if (!j(e.composedPath(), this.#e.adapter.entityType)) {
       this.#u(), p("Move cancelled.");
       return;
     }
     e.preventDefault(), e.stopPropagation();
-    const { candidates: n, els: r } = this.#m();
+    const { candidates: n, els: r } = this.#h();
     if (n.length === 0) {
       this.#u();
       return;
     }
-    const o = Math.min(Math.max(this.#t.targetIndex, 0), n.length - 1), i = xe({ ...this.#t, targetIndex: o }, e.key, n);
+    const o = Math.min(Math.max(this.#t.targetIndex, 0), n.length - 1), i = Ie({ ...this.#t, targetIndex: o }, e.key, n);
     if (i.type === "cancel") {
       this.#u(), p("Move cancelled.");
       return;
@@ -596,55 +613,55 @@ class Re extends oe(re) {
       p("Can't move an item into itself or its own children. Choose another position, or press escape to cancel.");
       return;
     }
-    const s = r[i.state.targetIndex], a = s ? this.#d(s, i.state.zone) : null;
+    const s = r[i.state.targetIndex], c = s ? this.#c(s, i.state.zone) : null;
     if (i.type === "none") {
-      if (this.#t = i.state, !s || !a) {
-        c();
+      if (this.#t = i.state, !s || !c) {
+        a();
         return;
       }
-      Y(a, this.#e.adapter, s, i.state.zone), p(this.#E(a, i.state.zone, s));
+      Y(c, this.#e.adapter, s, i.state.zone), p(this.#T(c, i.state.zone, s));
       return;
     }
-    if (!H(a)) {
+    if (!F(c)) {
       p("Nothing to move here. Choose another position, or press escape to cancel.");
       return;
     }
-    const { sourceUnique: g, adapter: u } = this.#e, w = E(T(g, u.entityType)), R = i.state.zone;
-    this.#t = null, c(), (async () => {
-      const h = await this.#h(a, s, R);
+    const { sourceUnique: g, adapter: u } = this.#e, w = E(v(g, u.entityType)), R = i.state.zone;
+    this.#t = null, a(), (async () => {
+      const h = await this.#l(c, s, R);
       p(h ? `Moved ${w}.` : `Could not move ${w}.`);
-      const d = T(g, u.entityType), l = d?.querySelector("[tabindex],a,button");
+      const d = v(g, u.entityType), l = d?.querySelector("[tabindex],a,button");
       l?.focus ? l.focus() : d?.focus?.(), this.#e = null;
     })();
   }
   // --- Server sync -------------------------------------------------------------
-  #y(e, n) {
-    if (!this.#c) {
+  #p(e, n) {
+    if (!this.#r) {
       console.warn(`${k} reload: action-event context not available — tree won't auto-refresh`);
       return;
     }
-    this.#c.dispatchEvent(
+    this.#r.dispatchEvent(
       new ue({
         unique: n,
         entityType: n ? e.entityType : e.rootEntityType
       })
     );
   }
-  #I(e) {
-    console.warn(k, e), this.#a?.peek("warning", { data: { message: e } });
+  #U(e) {
+    console.warn(k, e), this.#n?.peek("warning", { data: { message: e } });
   }
-  #k(e) {
-    console.error(k, e), this.#a?.peek("danger", { data: { message: e } });
+  #E(e) {
+    console.error(k, e), this.#n?.peek("danger", { data: { message: e } });
   }
   render() {
     return null;
   }
 }
-function Le(t) {
-  ae(t), me(), De(), Q();
+function _e(t) {
+  ce(t), me(), Se(), Q();
 }
-function De() {
-  if (customElements.get(x) || customElements.define(x, Re), document.querySelector(x)) return;
+function Se() {
+  if (customElements.get(x) || customElements.define(x, De), document.querySelector(x)) return;
   const t = document.createElement(x);
   t.style.display = "none";
   const e = document.querySelector("umb-app");
@@ -659,19 +676,19 @@ function De() {
   });
   n.observe(document.body, { childList: !0 });
 }
-async function _e(t, e) {
+async function Be(t, e) {
   const { error: n } = await V(t, e, { disableNotifications: !0 });
   if (n) throw n;
 }
-async function Be(t, e) {
+async function ze(t, e) {
   const { data: n, error: r } = await V(t, e, { disableNotifications: !0 });
   if (r) throw r;
   if (n == null) throw new Error("Empty response from the server");
   return n;
 }
 export {
-  Be as a,
-  Le as b,
-  _e as r
+  ze as a,
+  _e as b,
+  Be as r
 };
-//# sourceMappingURL=core-B7lI1kZv.js.map
+//# sourceMappingURL=core-BZVFXrQ_.js.map

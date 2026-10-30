@@ -36,6 +36,7 @@ import { optimisticReorder } from './reorder-dom';
 import { showPlan } from './plan-view';
 import { hideIndicator } from './indicator';
 import { showSpinner, hideSpinner } from './spinner';
+import { HoverExpand } from './hover-expand';
 import { reduceKey, type KbCandidate, type KbState } from './keyboard';
 import { announce } from './announce';
 import { isGrabStartPath, isInsideTree } from './key-path';
@@ -56,8 +57,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
   #dragState: DragState | null = null;
   #kbState: KbState | null = null;
   #movePending = false;
-  #hoverTimer: ReturnType<typeof setTimeout> | null = null;
-  #lastHoverTarget: AnyTreeItem | null = null;
+  #hoverExpand = new HoverExpand<AnyTreeItem>(expandRow, HOVER_EXPAND_MS);
   #globalListenersInstalled = false;
 
   constructor() {
@@ -75,7 +75,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     setHost(null);
-    this.#clearHoverTimer();
+    this.#hoverExpand.cancel();
   }
 
   attachItem(el: Element): void {
@@ -202,8 +202,8 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
       return;
     }
     // Hover-to-expand runs for no-op rows too: hovering a sibling is how you
-    // open it to drop onto one of its children.
-    this.#scheduleHoverExpand(el);
+    // open it to drop onto one of its children. Only its middle opens it.
+    this.#hoverExpand.over(el, zone);
     if (plan.kind === 'noop') {
       // Not calling preventDefault leaves the browser's "no drop" cursor.
       hideIndicator();
@@ -214,23 +214,10 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
     showPlan(plan, this.#dragState.adapter, el, zone);
   }
 
-  #scheduleHoverExpand(el: AnyTreeItem): void {
-    if (this.#lastHoverTarget === el) return;
-    this.#clearHoverTimer();
-    this.#lastHoverTarget = el;
-    this.#hoverTimer = setTimeout(() => expandRow(el), HOVER_EXPAND_MS);
-  }
-
-  #clearHoverTimer(): void {
-    if (this.#hoverTimer) clearTimeout(this.#hoverTimer);
-    this.#hoverTimer = null;
-    this.#lastHoverTarget = null;
-  }
-
   #onDragLeave(event: DragEvent, el: AnyTreeItem): void {
     if (event.relatedTarget && el.contains(event.relatedTarget as Node)) return;
     hideIndicator();
-    if (this.#lastHoverTarget === el) this.#clearHoverTimer();
+    this.#hoverExpand.leave(el);
   }
 
   async #onDrop(event: DragEvent, el: AnyTreeItem): Promise<void> {
@@ -245,7 +232,7 @@ export class EsattoTreeDnd extends UmbElementMixin(LitElement) {
   #onDragEnd(): void {
     this.#dragState = null;
     hideIndicator();
-    this.#clearHoverTimer();
+    this.#hoverExpand.cancel();
   }
 
   // Run a plan for the current #dragState. Returns whether it fully succeeded.

@@ -1,4 +1,4 @@
-import { r as m, a as u, b as c } from "./core-B7lI1kZv.js";
+import { r as m, a as u, b as c } from "./core-BZVFXrQ_.js";
 import { DocumentService as n } from "@umbraco-cms/backoffice/external/backend-api";
 import { c as i } from "./core-By19G-8s.js";
 const l = {

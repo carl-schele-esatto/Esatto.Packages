@@ -6,7 +6,7 @@ Drag-and-drop **and keyboard moving** for the Umbraco 17/18 backoffice **Content
 - Real ordering for content and media: drop above, inside or below an item
 - Instant visual feedback when reordering, rolled back if saving fails
 - A spinner on the item while it's being saved
-- Hover over a collapsed item mid-drag to expand it
+- Hover over the middle of a collapsed item mid-drag to expand it (its top and bottom edges leave it closed)
 - Cycle guard: an item can't be dropped into itself or its own descendants
 - Keyboard-accessible "grab & place" (WCAG 2.2 AA) with screen-reader announcements
 - Pickers (such as "Move to…") and the recycle bin are left alone
