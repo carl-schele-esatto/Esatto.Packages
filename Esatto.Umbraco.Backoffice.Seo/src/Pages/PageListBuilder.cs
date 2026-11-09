@@ -62,3 +62,16 @@ public static class BaseUrlResolver
     private static Uri? Parse(string? value)
         => !string.IsNullOrWhiteSpace(value) && Uri.TryCreate(value.Trim(), UriKind.Absolute, out var u) && u.Scheme is "http" or "https" ? u : null;
 }
+
+/// <summary>Culture and Hostnames entries, as Umbraco stores them in <c>IDomain.DomainName</c>.</summary>
+public static class BoundDomains
+{
+    /// <summary>
+    /// Whether a bound domain names a host ("esatto.se", "https://esatto.se/en", "localhost:44324"). "/" and "/en" bind
+    /// a path only: Umbraco takes their host from the current request, and a background scan has none, so absolute
+    /// URLs for them come out as http://localhost/… — a site bound that way is scanned like one without a domain.
+    /// Wildcards ("*1071") are <c>IDomain.IsWildcard</c> and are the caller's concern.
+    /// </summary>
+    public static bool NamesHost(string? domainName)
+        => !string.IsNullOrWhiteSpace(domainName) && !domainName.TrimStart().StartsWith('/');
+}

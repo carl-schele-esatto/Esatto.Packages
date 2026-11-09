@@ -10,7 +10,7 @@
       "alias": "Esatto.Umbraco.Backoffice.Seo.Dashboard",
       "name": "SEO Health",
       "element": "/App_Plugins/Esatto.Umbraco.Backoffice.Seo/seo-dashboard.js",
-      "elementName": "esatto-seo-dashboard",
+      "elementName": "esatto-seo-health-dashboard",
       "weight": -110,
       "meta": { "label": "SEO Health", "pathname": "seo-health" },
       "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]

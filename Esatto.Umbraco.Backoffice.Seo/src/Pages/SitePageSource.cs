@@ -40,11 +40,11 @@ public sealed class SitePageSource(
 
     public async Task<IReadOnlyList<PageCandidate>> GetCandidatesAsync(Guid siteKey)
     {
-        // With a domain bound, absolute URLs carry it. Without one, Umbraco would make them absolute against the
-        // current request — outside a request that's a placeholder host — so ask for paths and let the scan
-        // resolve them against its base URL.
+        // With a hostname bound, absolute URLs carry it. Without one - nothing bound, or only paths such as "/en" -
+        // Umbraco would make them absolute against the current request, and outside a request that's a placeholder
+        // host (http://localhost), so ask for paths and let the scan resolve them against its base URL.
         var rootId = contentCache.GetById(siteKey)?.Id;
-        var hasDomain = (await domains.GetAllAsync(false)).Any(d => d.RootContentId == rootId && !d.IsWildcard);
+        var hasDomain = (await domains.GetAllAsync(false)).Any(d => d.RootContentId == rootId && !d.IsWildcard && BoundDomains.NamesHost(d.DomainName));
         var mode = hasDomain ? UrlMode.Absolute : UrlMode.Relative;
 
         using var context = umbracoContextFactory.EnsureUmbracoContext();

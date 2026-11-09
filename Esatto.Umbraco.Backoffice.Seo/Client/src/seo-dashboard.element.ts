@@ -20,7 +20,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'settings', label: 'Settings' },
 ];
 
-@customElement('esatto-seo-dashboard')
+@customElement('esatto-seo-health-dashboard')
 export class EsattoSeoDashboardElement extends UmbLitElement {
   @state() private _knowledge: Knowledge | null = null;
   @state() private _sites: SiteInfo[] = [];
@@ -65,7 +65,13 @@ export class EsattoSeoDashboardElement extends UmbLitElement {
     const tabs = TABS.filter((t) => t.id !== 'settings' || this._settings!.canEdit);
     return html`
       <div class="header">
-        <h2>SEO Health</h2>
+        <div class="brand">
+          <span class="logo" aria-hidden="true"><uui-icon name="icon-pulse"></uui-icon></span>
+          <div>
+            <h2>SEO Health</h2>
+            <p class="muted small">Search engine checks on every published page, in every language.</p>
+          </div>
+        </div>
         ${this._sites.length > 1 ? html`
           <uui-select label="Site" .options=${this._sites.map((s) => ({ name: s.name, value: s.key, selected: s.key === this._siteKey }))}
             @change=${(e: Event) => (this._siteKey = (e.target as HTMLSelectElement).value)}></uui-select>` : nothing}
@@ -80,19 +86,25 @@ export class EsattoSeoDashboardElement extends UmbLitElement {
   #panel() {
     switch (this._tab) {
       case 'issues':
-        return html`<esatto-seo-issues .siteKey=${this._siteKey} .filter=${this._filter} .knowledge=${this._knowledge}></esatto-seo-issues>`;
+        return html`<esatto-seo-health-issues .siteKey=${this._siteKey} .filter=${this._filter} .knowledge=${this._knowledge}></esatto-seo-health-issues>`;
       case 'settings':
-        return html`<esatto-seo-settings .settings=${this._settings} @saved=${(e: CustomEvent<SettingsResponse>) => (this._settings = e.detail)}></esatto-seo-settings>`;
+        return html`<esatto-seo-health-settings .settings=${this._settings} @saved=${(e: CustomEvent<SettingsResponse>) => (this._settings = e.detail)}></esatto-seo-health-settings>`;
       default:
-        return html`<esatto-seo-overview .siteKey=${this._siteKey} .knowledge=${this._knowledge}></esatto-seo-overview>`;
+        return html`<esatto-seo-health-overview .siteKey=${this._siteKey} .knowledge=${this._knowledge}></esatto-seo-health-overview>`;
     }
   }
 
   static override styles = [shared, css`
-    :host { padding: var(--uui-size-layout-1); }
-    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-4); }
-    uui-tab-group { border-bottom: 1px solid var(--uui-color-divider); }
-    .panel { padding-top: var(--uui-size-space-5); }
+    :host { padding: var(--uui-size-layout-1); max-width: 1440px; }
+    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-5); }
+    .brand { display: flex; gap: var(--uui-size-space-4); align-items: center; }
+    .brand h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+    .logo {
+      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; color: #fff;
+      background: linear-gradient(135deg, #2f6fde 0%, #6d4ce0 100%); box-shadow: 0 6px 16px -6px rgb(77 79 224 / 0.6);
+    }
+    uui-tab-group { border-bottom: 1px solid var(--seo-line); }
+    .panel { padding-top: var(--uui-size-space-6); }
   `];
 }
 
@@ -100,6 +112,6 @@ export default EsattoSeoDashboardElement;
 
 declare global {
   interface HTMLElementTagNameMap {
-    'esatto-seo-dashboard': EsattoSeoDashboardElement;
+    'esatto-seo-health-dashboard': EsattoSeoDashboardElement;
   }
 }

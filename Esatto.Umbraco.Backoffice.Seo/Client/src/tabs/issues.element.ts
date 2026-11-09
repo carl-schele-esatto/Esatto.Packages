@@ -12,7 +12,7 @@ import type { IssueFilter, IssueGroup, IssueOccurrence, Knowledge, Owner, Severi
 
 interface IgnoreTarget { checkId: string; contentKey: string | null; culture: string | null; label: string }
 
-@customElement('esatto-seo-issues')
+@customElement('esatto-seo-health-issues')
 export class EsattoSeoIssuesElement extends UmbLitElement {
   @property({ attribute: false }) siteKey = '';
   @property({ attribute: false }) filter: IssueFilter = {};
@@ -102,7 +102,7 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
 
   override render() {
     return html`
-      <div class="stack">
+      <div class="page">
         ${this.#filters()}
         <p class="visually-hidden" role="status" aria-live="polite">${this._status}</p>
         ${this._error ? html`<p class="error">${this._error}</p>` : nothing}
@@ -120,7 +120,7 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
         </select>
       </div>`;
     return html`
-      <form class="filters" role="search" @submit=${(e: Event) => { e.preventDefault(); this.#load(); }}>
+      <form class="filters card" role="search" @submit=${(e: Event) => { e.preventDefault(); this.#load(); }}>
         ${select('f-sev', 'Severity', f.severity ?? '', [['', 'All'], ['critical', 'Critical'], ['warning', 'Warning'], ['notice', 'Notice']],
           (v) => this.#set({ severity: (v || undefined) as Severity | undefined }))}
         ${select('f-owner', 'Who fixes it', f.owner ?? '', [['', 'Everyone'], ['editor', 'Editors'], ['developer', 'Developers']],
@@ -132,14 +132,20 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
           <label for="f-search">Page or address contains</label>
           <input id="f-search" type="search" .value=${f.search ?? ''} @change=${(e: Event) => this.#set({ search: (e.target as HTMLInputElement).value })}>
         </div>
-        ${f.checkId ? html`<uui-button look="secondary" label="Show all checks" @click=${() => this.#set({ checkId: undefined })}></uui-button>` : nothing}
-        <uui-button look="secondary" label="Export CSV" @click=${this.#csv}></uui-button>
+        <div class="filter-actions">
+          ${f.checkId ? html`<uui-button look="secondary" label="Show all checks" @click=${() => this.#set({ checkId: undefined })}><uui-icon name="icon-filter" aria-hidden="true"></uui-icon>&nbsp;Show all checks</uui-button>` : nothing}
+          <uui-button look="outline" label="Export CSV" @click=${this.#csv}><uui-icon name="icon-download-alt" aria-hidden="true"></uui-icon>&nbsp;Export CSV</uui-button>
+        </div>
       </form>`;
   }
 
   #list(groups: IssueGroup[]) {
     if (!groups.length) {
-      return html`<uui-box><p>${this._filter.ignored ? 'Nothing is ignored.' : 'No open issues match these filters.'}</p></uui-box>`;
+      return html`
+        <div class="card empty">
+          <span class="icon-badge solid round tone-good" aria-hidden="true"><uui-icon name="icon-check"></uui-icon></span>
+          <p>${this._filter.ignored ? 'Nothing is ignored.' : 'No open issues match these filters.'}</p>
+        </div>`;
     }
     return html`<ul class="groups">${groups.map((g) => html`<li>${this.#group(g)}</li>`)}</ul>`;
   }
@@ -150,20 +156,24 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
     const title = text?.title ?? s.checkId;
     const site = s.pages === 0;
     return html`
-      <details class="group" ?open=${this._filter.checkId === s.checkId}>
+      <details class="group tone-${s.severity}" ?open=${this._filter.checkId === s.checkId}>
         <summary>
-          <span class="tag sev-${s.severity}"><uui-icon name=${severityIcon[s.severity]}></uui-icon>${severityLabel[s.severity]}</span>
+          <span class="tag tone-${s.severity}"><uui-icon name=${severityIcon[s.severity]}></uui-icon>${severityLabel[s.severity]}</span>
           <span class="group-title">${title}</span>
-          <span class="muted">${site ? 'whole site' : plural(s.pages, 'page', 'pages')} · ${ownerLabel[s.owner]}</span>
+          <span class="group-meta">
+            <span class="chip"><uui-icon name=${site ? 'icon-globe' : 'icon-documents'} aria-hidden="true"></uui-icon>${site ? 'Whole site' : plural(s.pages, 'page', 'pages')}</span>
+            <span class="chip"><uui-icon name=${s.owner === 'developer' ? 'icon-code' : 'icon-edit'} aria-hidden="true"></uui-icon>${ownerLabel[s.owner]}</span>
+          </span>
+          <uui-icon class="chevron" name="icon-navigation-right" aria-hidden="true"></uui-icon>
         </summary>
         <div class="group-body stack">
           ${text ? html`
             <div class="explain">
-              <h4>Why it matters</h4><p>${text.why}</p>
-              <h4>How to fix it</h4><p>${text.fix}</p>
-              ${text.caveats ? html`<h4>Good to know</h4><p>${text.caveats}</p>` : nothing}
-              ${safeHref(text.learnMore) ? html`<p><a href=${safeHref(text.learnMore)!} target="_blank" rel="noopener">Learn more<span class="visually-hidden"> about ${title} (opens in a new tab)</span></a></p>` : nothing}
-            </div>` : nothing}
+              <section class="note"><h4><uui-icon name="icon-info" aria-hidden="true"></uui-icon>Why it matters</h4><p>${text.why}</p></section>
+              <section class="note fix"><h4><uui-icon name="icon-wand" aria-hidden="true"></uui-icon>How to fix it</h4><p>${text.fix}</p></section>
+              ${text.caveats ? html`<section class="note"><h4><uui-icon name="icon-lightbulb-active" aria-hidden="true"></uui-icon>Good to know</h4><p>${text.caveats}</p></section>` : nothing}
+            </div>
+            ${safeHref(text.learnMore) ? html`<p><a class="learn" href=${safeHref(text.learnMore)!} target="_blank" rel="noopener">Learn more<span class="visually-hidden"> about ${title} (opens in a new tab)</span><uui-icon name="icon-arrow-right" aria-hidden="true"></uui-icon></a></p>` : nothing}` : nothing}
           ${this.#occurrences(g, title)}
           ${!this._filter.ignored ? html`<div class="row">
             <uui-button look="secondary" compact label="Ignore this check on the whole site"
@@ -176,7 +186,7 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
 
   #occurrences(g: IssueGroup, title: string) {
     return html`
-      <table>
+      <div class="table-wrap"><table>
         <caption class="visually-hidden">Pages with: ${title}</caption>
         <thead><tr><th scope="col">Page</th><th scope="col">Language</th><th scope="col">Found</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
         <tbody>
@@ -202,7 +212,7 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
             </tr>`;
           })}
         </tbody>
-      </table>`;
+      </table></div>`;
   }
 
   #ignoreForm(t: IgnoreTarget) {
@@ -221,29 +231,49 @@ export class EsattoSeoIssuesElement extends UmbLitElement {
   }
 
   static override styles = [shared, css`
-    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: flex-end; }
-    .field { display: grid; gap: 4px; }
-    select, input, textarea {
-      font: inherit; min-height: 36px; padding: 0 var(--uui-size-space-3);
-      border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text);
-    }
-    textarea { padding: var(--uui-size-space-2); width: min(40rem, 100%); }
+    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: flex-end; padding: var(--uui-size-space-4) var(--uui-size-space-5); }
+    .filters input[type='search'] { min-width: 16rem; }
+    .filter-actions { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); margin-left: auto; }
+    textarea { width: min(40rem, 100%); }
+    .empty { display: flex; gap: var(--uui-size-space-3); align-items: center; }
+
     .groups { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--uui-size-space-3); }
-    .group { background: var(--uui-color-surface); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); }
-    .group > summary { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); align-items: center; padding: var(--uui-size-space-3) var(--uui-size-space-4); min-height: 44px; }
-    .group-title { font-weight: 600; flex: 1; min-width: 12rem; }
-    .group-body { padding: 0 var(--uui-size-space-4) var(--uui-size-space-4); }
-    .explain { display: grid; gap: var(--uui-size-space-2); max-width: 48rem; }
-    .explain h4 { margin-top: var(--uui-size-space-2); }
-    .url { word-break: break-all; font-size: 0.9em; }
+    .group {
+      position: relative; background: var(--uui-color-surface); border: 1px solid var(--seo-line); border-radius: var(--seo-radius);
+      box-shadow: var(--seo-shadow); overflow: hidden; transition: box-shadow var(--seo-ease), border-color var(--seo-ease);
+    }
+    /* The severity bar sits above the header's tinted background, so it runs the full height of the card. */
+    .group::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--tone); z-index: 1; pointer-events: none; }
+    .group:hover, .group[open] { border-color: color-mix(in srgb, var(--tone) 45%, var(--seo-line)); }
+    .group[open] { box-shadow: var(--seo-shadow-raised); }
+    .group > summary {
+      display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); align-items: center; min-height: 44px;
+      padding: var(--uui-size-space-4) var(--uui-size-space-5) var(--uui-size-space-4) var(--uui-size-space-6);
+      transition: background-color var(--seo-ease);
+    }
+    .group > summary:hover { background: color-mix(in srgb, var(--tone) 6%, var(--uui-color-surface)); }
+    .group[open] > summary { background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 10%, var(--uui-color-surface)), var(--uui-color-surface) 70%); border-bottom: 1px solid var(--seo-line); }
+    .group-title { font-weight: 700; flex: 1; min-width: 12rem; }
+    .group-meta { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); }
+    .group-body { padding: var(--uui-size-space-5) var(--uui-size-space-5) var(--uui-size-space-5) var(--uui-size-space-6); }
+
+    .explain { display: grid; gap: var(--uui-size-space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+    .note { display: grid; gap: var(--uui-size-space-2); align-content: start; padding: var(--uui-size-space-4); border-radius: var(--seo-radius-sm); background: var(--seo-wash); border: 1px solid var(--seo-line); }
+    .note.fix { background: color-mix(in srgb, var(--seo-good) 7%, var(--uui-color-surface)); border-color: color-mix(in srgb, var(--seo-good) 30%, var(--seo-line)); }
+    .note h4 { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    .note h4 uui-icon { color: var(--seo-muted); }
+    .learn { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
+
     .actions { white-space: nowrap; text-align: right; }
-    .ignore { padding: var(--uui-size-space-4); background: var(--uui-color-surface-alt); border-radius: var(--uui-border-radius); }
+    .ignore {
+      padding: var(--uui-size-space-5); border-radius: var(--seo-radius-sm);
+      background: color-mix(in srgb, var(--seo-warning) 8%, var(--uui-color-surface)); border: 1px solid color-mix(in srgb, var(--seo-warning) 40%, var(--seo-line));
+    }
   `];
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'esatto-seo-issues': EsattoSeoIssuesElement;
+    'esatto-seo-health-issues': EsattoSeoIssuesElement;
   }
 }

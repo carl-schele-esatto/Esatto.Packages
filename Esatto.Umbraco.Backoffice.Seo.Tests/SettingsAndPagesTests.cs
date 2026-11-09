@@ -152,3 +152,21 @@ public class BaseUrlResolverTests
     [Fact]
     public void Scheduled_with_no_base_returns_null() => Assert.Null(BaseUrlResolver.Resolve(null, null, null));
 }
+
+public class BoundDomainsTests
+{
+    // "/" and "/en" are Culture and Hostnames entries that bind a path only. Umbraco takes their host from the current
+    // request, and a background scan has none, so absolute URLs for them come out as http://localhost/... (seen on Nova
+    // local: 180 pages, every one at http://localhost). Such a site must be scanned like one without a domain.
+    [Theory]
+    [InlineData("/", false)]
+    [InlineData("/en", false)]
+    [InlineData(" /en", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    [InlineData("esatto.se", true)]
+    [InlineData("esatto.se/en", true)]
+    [InlineData("https://esatto.se/en", true)]
+    [InlineData("localhost:44324", true)]
+    public void Path_only_bindings_name_no_host(string? domainName, bool expected) => Assert.Equal(expected, BoundDomains.NamesHost(domainName));
+}

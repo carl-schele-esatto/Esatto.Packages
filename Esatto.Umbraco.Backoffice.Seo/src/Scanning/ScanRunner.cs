@@ -90,7 +90,7 @@ public sealed class ScanRunner(
         {
             var noUrl = list.Any(p => p.SkipReason == SkipReasons.NoUrl);
             return await FinishAsync(scan, ScanStatus.Failed, noUrl && baseUri is null
-                ? "Pages have relative URLs (no domain is bound in Culture and Hostnames) and no base URL is known. Set a base URL in Settings, or Umbraco:CMS:WebRouting:UmbracoApplicationUrl."
+                ? "Pages have relative URLs (no hostname is bound in Culture and Hostnames) and no base URL is known. Set a base URL in Settings, or Umbraco:CMS:WebRouting:UmbracoApplicationUrl."
                 : "There are no published pages with a template to scan.");
         }
 

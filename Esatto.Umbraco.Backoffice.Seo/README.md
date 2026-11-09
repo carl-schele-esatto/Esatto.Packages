@@ -43,7 +43,7 @@ Because the site requests its own public address, check the following:
 
 - **Firewalls and bot protection** (for example Cloudflare rules) must let the server reach its own hostname. If every page fails, the scan stops after 10 and explains what to check.
 - **Domains bound without a scheme** (`esatto.se` rather than `https://esatto.se`): outside a web request, Umbraco builds their addresses with `http://` unless `Umbraco:CMS:WebRouting:UmbracoApplicationUrl` starts with `https://`. The scan follows the redirect to https and records the https address, at the cost of one extra request per page. Setting the application URL avoids that.
-- **Pages without a domain** (nothing bound in Culture and Hostnames) are fetched from the **Base URL** in Settings, or from `Umbraco:CMS:WebRouting:UmbracoApplicationUrl`. Manual scans otherwise use the address the backoffice is open on.
+- **Pages without a hostname** (nothing bound in Culture and Hostnames, or only paths such as `/en`) are fetched from the **Base URL** in Settings, or from `Umbraco:CMS:WebRouting:UmbracoApplicationUrl`. Manual scans otherwise use the address the backoffice is open on.
 - **Protected environments.** If the site uses Umbraco's basic authentication (`Umbraco:CMS:BasicAuth`) with a shared secret, the scanner sends `Umbraco:CMS:BasicAuth:SharedSecret` automatically. For anything else, add headers under `Esatto:Seo:RequestHeaders`. These headers are sent only to the site's own hosts: the domains bound in Culture and Hostnames and a configured base URL. They are never sent to another host a page redirects or links to, nor to a host taken from the backoffice request.
 
 ### Test and Dev environments

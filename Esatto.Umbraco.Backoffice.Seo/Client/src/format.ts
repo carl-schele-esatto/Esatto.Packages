@@ -22,6 +22,7 @@ export function band(score: number | null): Band | null {
 }
 
 export const bandLabel: Record<Band, string> = { good: 'Good', warning: 'Needs work', critical: 'Serious problems' };
+export const bandIcon: Record<Band, string> = { good: 'icon-check', warning: 'icon-alert', critical: 'icon-wrong' };
 
 export const severityLabel: Record<Severity, string> = { critical: 'Critical', warning: 'Warning', notice: 'Notice' };
 export const severityIcon: Record<Severity, string> = { critical: 'icon-wrong', warning: 'icon-alert', notice: 'icon-info' };

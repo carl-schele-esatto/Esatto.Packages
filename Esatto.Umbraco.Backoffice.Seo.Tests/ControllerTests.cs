@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Esatto.Umbraco.Backoffice.Seo.Checks;
 using Esatto.Umbraco.Backoffice.Seo.Knowledge;
 using Esatto.Umbraco.Backoffice.Seo.Reporting;
 using Esatto.Umbraco.Backoffice.Seo.Scanning;
@@ -93,4 +96,35 @@ public class ControllerTests
     [Fact]
     public async Task Recheck_without_scan_is_409()
         => Assert.IsType<ConflictObjectResult>(await Create().Controller.Recheck(Rig.Site, new RecheckRequest(Guid.NewGuid(), "en"), CancellationToken.None));
+}
+
+public class ApiJsonContractTests
+{
+    // The dashboard expects camelCase enum names ("warning", "editor"). Umbraco's management API writes enums with a
+    // plain JsonStringEnumConverter, i.e. as declared ("Warning"), which left every severity badge and owner label
+    // empty. The names must not depend on the host's JSON settings at all.
+    public static TheoryData<string, JsonSerializerOptions> Hosts => new()
+    {
+        { "Umbraco management API", new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } } },
+        { "no enum converter", new JsonSerializerOptions(JsonSerializerDefaults.Web) },
+    };
+
+    [Theory]
+    [MemberData(nameof(Hosts))]
+    public void Enums_are_written_in_camel_case_whatever_the_host_configures(string host, JsonSerializerOptions options)
+    {
+        var json = JsonSerializer.Serialize(new CheckInfo("x", Severity.Warning, Owner.Developer, CheckScope.CrossPage), options);
+
+        Assert.True(json.Contains("\"severity\":\"warning\"") && json.Contains("\"owner\":\"developer\"") && json.Contains("\"scope\":\"crossPage\""), $"{host}: {json}");
+    }
+
+    [Fact]
+    public void Enums_read_back_from_their_json_names()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
+
+        var info = JsonSerializer.Deserialize<CheckInfo>("{\"id\":\"x\",\"severity\":\"critical\",\"owner\":\"editor\",\"scope\":\"site\"}", options)!;
+
+        Assert.Equal((Severity.Critical, Owner.Editor, CheckScope.Site), (info.Severity, info.Owner, info.Scope));
+    }
 }

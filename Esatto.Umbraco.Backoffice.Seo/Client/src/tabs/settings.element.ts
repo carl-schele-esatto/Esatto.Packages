@@ -12,7 +12,7 @@ import type { SeoSettings, SettingsResponse } from '../types';
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 
-@customElement('esatto-seo-settings')
+@customElement('esatto-seo-health-settings')
 export class EsattoSeoSettingsElement extends UmbLitElement {
   @property({ attribute: false }) settings: SettingsResponse | null = null;
 
@@ -55,10 +55,12 @@ export class EsattoSeoSettingsElement extends UmbLitElement {
     const d = this._draft;
     if (!d) return html`<uui-loader></uui-loader>`;
     return html`
-      <form class="stack" @submit=${this.#save}>
+      <form class="page" @submit=${this.#save}>
         ${this.settings?.locked.length ? html`<p class="muted">Fields marked “Set in configuration” come from appsettings (<code>Esatto:Seo</code>) and can't be changed here.</p>` : nothing}
 
-        <uui-box headline="Nightly scan">
+        <div class="cards">
+        <section class="card" aria-labelledby="h-nightly">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-time"></uui-icon></span><h3 id="h-nightly">Nightly scan</h3></div>
           <div class="stack">
             ${this.#check('schedule.enabled', 'Scan every night', d.schedule.enabled, (v) => this.#update((x) => (x.schedule.enabled = v)),
               'Keeps the score and trend up to date without anyone pressing Scan now.')}
@@ -71,9 +73,10 @@ export class EsattoSeoSettingsElement extends UmbLitElement {
               ${this.#lockNote('schedule.hour')}
             </div>
           </div>
-        </uui-box>
+        </section>
 
-        <uui-box headline="What to scan">
+        <section class="card" aria-labelledby="h-what">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-sitemap"></uui-icon></span><h3 id="h-what">What to scan</h3></div>
           <div class="stack">
             <div class="field">
               <label for="exclude">Never scan these paths (one per line, e.g. /search)</label>
@@ -89,20 +92,23 @@ export class EsattoSeoSettingsElement extends UmbLitElement {
               ${this.#lockNote('baseUrl')}
             </div>
           </div>
-        </uui-box>
+        </section>
 
-        <uui-box headline="Load on the site">
+        <section class="card" aria-labelledby="h-load">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-speed-gauge"></uui-icon></span><h3 id="h-load">Load on the site</h3></div>
           <div class="row">
             ${this.#number('parallelism', 'Pages fetched at the same time', d.parallelism, 1, 8, (v) => this.#update((x) => (x.parallelism = v)))}
             ${this.#number('delayMs', 'Pause between requests (ms)', d.delayMs, 0, 5000, (v) => this.#update((x) => (x.delayMs = v)))}
           </div>
-        </uui-box>
+        </section>
 
-        <uui-box headline="This environment">
+        <section class="card" aria-labelledby="h-env">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-server"></uui-icon></span><h3 id="h-env">This environment</h3></div>
           <p>${this.settings?.intentionallyHidden
             ? html`<uui-icon name="icon-lock"></uui-icon> Marked as hidden from search engines on purpose (<code>Esatto:Seo:IntentionallyHidden</code>).`
             : html`Not marked as hidden on purpose. On a Test or Dev environment that blocks search engines, set <code>Esatto:Seo:IntentionallyHidden</code> to <code>true</code> in its configuration.`}</p>
-        </uui-box>
+        </section>
+        </div>
 
         <div class="row">
           <uui-button type="submit" look="primary" color="positive" label="Save settings" .state=${this._saving ? 'waiting' : undefined}></uui-button>
@@ -137,23 +143,19 @@ export class EsattoSeoSettingsElement extends UmbLitElement {
   }
 
   static override styles = [shared, css`
-    .field { display: grid; gap: 4px; }
+    .cards { display: grid; gap: var(--seo-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); align-items: stretch; }
     .check { display: grid; grid-template-columns: auto 1fr; column-gap: var(--uui-size-space-3); align-items: center; min-height: 44px; }
-    .check input { width: 20px; height: 20px; margin: 0; }
+    .check input { width: 20px; height: 20px; margin: 0; accent-color: var(--uui-color-selected); }
+    .check > label { font-weight: 600; }
     .check .hint, .check .lock { grid-column: 2; margin: 0; }
-    select, input:not([type='checkbox']), textarea {
-      font: inherit; min-height: 36px; padding: 0 var(--uui-size-space-3); max-width: 32rem;
-      border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text);
-    }
-    textarea { padding: var(--uui-size-space-2); }
-    input:disabled, select:disabled, textarea:disabled { opacity: 0.7; }
-    .lock { color: var(--uui-color-text-alt); font-size: 0.85rem; display: inline-flex; gap: 4px; align-items: center; }
+    select, input:not([type='checkbox']), textarea { width: 100%; max-width: 32rem; }
+    .hint { font-size: 13px; }
+    .lock { color: var(--seo-muted); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
   `];
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'esatto-seo-settings': EsattoSeoSettingsElement;
+    'esatto-seo-health-settings': EsattoSeoSettingsElement;
   }
 }
