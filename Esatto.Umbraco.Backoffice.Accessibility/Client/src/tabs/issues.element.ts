@@ -6,7 +6,7 @@ import { UmbLitElement } from '@umbraco-cms/backoffice/lit-element';
 import { tryExecute } from '@umbraco-cms/backoffice/resources';
 import { getIssues, getIssuesCsv } from '../api';
 import { shared } from '../dashboard.styles';
-import { levelLabel } from '../format';
+import { impactTone, levelLabel, ownerIcon } from '../format';
 import type { IssueFilter, IssueGroup, Owner, SettingsResponse, WcagLevel } from '../types';
 import './issue-detail.element';
 
@@ -100,7 +100,7 @@ export class EsattoA11yIssuesElement extends UmbLitElement {
         @back=${this.#back} @changed=${() => this.#load()}></esatto-a11y-issue-detail>`;
     }
     return html`
-      <div class="stack">
+      <div class="page">
         ${this.#filters()}
         ${this._groups === null ? html`<uui-loader></uui-loader>` : this.#list(this._groups)}
       </div>`;
@@ -117,7 +117,7 @@ export class EsattoA11yIssuesElement extends UmbLitElement {
         </select>
       </div>`;
     return html`
-      <form class="filters" @submit=${(e: Event) => e.preventDefault()} aria-label="Filter issues">
+      <form class="filters card" @submit=${(e: Event) => e.preventDefault()} aria-label="Filter issues">
         ${select('f-principle', 'Principle', f.principle ? String(f.principle) : undefined,
           PRINCIPLES.map((p, i) => [String(i + 1), `${i + 1}. ${p}`]), (v) => this.#setFilter({ principle: v ? Number(v) : undefined }))}
         ${select('f-level', 'Level', f.level, [['A', 'A'], ['AA', 'AA'], ['AAA', 'AAA']], (v) => this.#setFilter({ level: (v || undefined) as WcagLevel | undefined }))}
@@ -127,54 +127,73 @@ export class EsattoA11yIssuesElement extends UmbLitElement {
           <input id="f-fp" type="checkbox" ?checked=${!!f.falsePositives} @change=${(e: Event) => this.#setFilter({ falsePositives: (e.target as HTMLInputElement).checked })}>
           <label for="f-fp">Show false positives only</label>
         </div>
-        ${f.criterion ? html`<div class="field"><span class="tag">Criterion ${f.criterion}</span>
+        ${f.criterion ? html`<div class="criterion"><span class="tag tone-notice">Criterion ${f.criterion}</span>
           <uui-button compact look="secondary" label="Clear criterion filter" @click=${() => this.#setFilter({ criterion: undefined })}></uui-button></div>` : nothing}
-        <uui-button look="secondary" label="Export CSV" @click=${this.#exportCsv}></uui-button>
+        <div class="filter-actions">
+          <uui-button look="outline" label="Export CSV" @click=${this.#exportCsv}><uui-icon name="icon-download-alt" aria-hidden="true"></uui-icon>&nbsp;Export CSV</uui-button>
+        </div>
       </form>`;
   }
 
   #list(groups: IssueGroup[]) {
     if (!groups.length) {
-      return html`<uui-box><p>${this._filter.falsePositives ? 'No false positives marked.' : 'No issues match. Either the site passes the automated checks for these filters, or it hasn\'t been scanned yet.'}</p></uui-box>`;
+      return html`
+        <div class="card empty">
+          <span class="icon-badge solid round tone-good" aria-hidden="true"><uui-icon name="icon-check"></uui-icon></span>
+          <p>${this._filter.falsePositives ? 'No false positives marked.' : 'No issues match. Either the site passes the automated checks for these filters, or it hasn\'t been scanned yet.'}</p>
+        </div>`;
     }
     return html`
-      <p class="muted" role="status">${groups.length} ${groups.length === 1 ? 'issue' : 'issues'}</p>
-      <table>
-        <caption class="visually-hidden">Issues, most severe first</caption>
-        <thead><tr>
-          <th scope="col">Issue</th><th scope="col">Criteria</th><th scope="col">Level</th>
-          <th scope="col" class="num">Pages</th><th scope="col" class="num">Elements</th><th scope="col">Who fixes</th><th scope="col">Impact</th>
-        </tr></thead>
-        <tbody>
-          ${groups.map((g) => html`<tr>
-            <td>
-              <button class="link" data-group=${groupId(g)} @click=${() => this.#open(g)}>${g.title}</button>
-              ${g.kind === 'incomplete' ? html` <span class="tag">Needs review</span>` : nothing}
-              ${g.bestPractice ? html` <span class="tag">Best practice</span>` : nothing}
-            </td>
-            <td>${g.criteria.join(', ') || '–'}</td>
-            <td>${levelLabel(g.level)}</td>
-            <td class="num">${g.pageCount}</td>
-            <td class="num">${g.elementCount}</td>
-            <td>${g.owner}</td>
-            <td>${g.impact ?? '–'}</td>
-          </tr>`)}
-        </tbody>
-      </table>`;
+      <section class="card" aria-labelledby="issues-heading">
+        <div class="card-head">
+          <span class="icon-badge tone-critical" aria-hidden="true"><uui-icon name="icon-alert"></uui-icon></span>
+          <h3 id="issues-heading">Issues</h3>
+          <span class="chip end" role="status">${groups.length} ${groups.length === 1 ? 'issue' : 'issues'}</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Issues, most severe first</caption>
+            <thead><tr>
+              <th scope="col">Issue</th><th scope="col">Criteria</th><th scope="col">Level</th>
+              <th scope="col" class="num">Pages</th><th scope="col" class="num">Elements</th><th scope="col">Who fixes</th><th scope="col">Impact</th>
+            </tr></thead>
+            <tbody>
+              ${groups.map((g) => html`<tr class=${(g.impact && impactTone[g.impact]) || ''}>
+                <td class="issue">
+                  <button class="link" data-group=${groupId(g)} @click=${() => this.#open(g)}>${g.title}</button>
+                  ${g.kind === 'incomplete' ? html`<span class="tag tone-warning">Needs review</span>` : nothing}
+                  ${g.bestPractice ? html`<span class="tag">Best practice</span>` : nothing}
+                </td>
+                <td>${g.criteria.join(', ') || '–'}</td>
+                <td><span class="tag">${levelLabel(g.level)}</span></td>
+                <td class="num">${g.pageCount}</td>
+                <td class="num">${g.elementCount}</td>
+                <td><span class="chip"><uui-icon name=${ownerIcon[g.owner]} aria-hidden="true"></uui-icon>${g.owner}</span></td>
+                <td>${g.impact ? html`<span class="tag ${impactTone[g.impact] ?? ''}">${g.impact}</span>` : html`<span class="muted">–</span>`}</td>
+              </tr>`)}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
   }
 
   static override styles = [shared, css`
-    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: end; }
-    .field { display: grid; gap: 4px; }
-    .field.checkbox { display: flex; align-items: center; gap: var(--uui-size-space-2); min-height: 36px; } /* = the selects, so they share a centre line */
-    .field.checkbox input { width: 20px; height: 20px; }
-    .filters > uui-button { height: 36px; }
-    select { min-height: 36px; padding: 0 var(--uui-size-space-3); border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius); background: var(--uui-color-surface); color: var(--uui-color-text); font: inherit; }
-    button.link { background: none; border: 0; padding: 4px 0; font: inherit; color: var(--uui-color-interactive); text-decoration: underline; cursor: pointer; text-align: left; min-height: 24px; }
+    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: flex-end; padding: var(--uui-size-space-4) var(--uui-size-space-5); }
+    .field.checkbox { display: flex; align-items: center; gap: var(--uui-size-space-2); min-height: 40px; } /* = the selects, so they share a centre line */
+    .field.checkbox input { width: 20px; height: 20px; margin: 0; }
+    .criterion { display: flex; gap: var(--uui-size-space-2); align-items: center; min-height: 40px; }
+    .filter-actions { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); margin-left: auto; }
+    .empty { display: flex; gap: var(--uui-size-space-3); align-items: center; }
+    /* The row's impact as a coloured edge on its first cell. */
+    tbody td:first-child { box-shadow: inset 3px 0 0 var(--tone, transparent); }
+    .issue .tag { margin-left: 6px; vertical-align: middle; }
+    button.link {
+      background: none; border: 0; padding: 4px 0; font: inherit; font-weight: 600; color: var(--uui-color-interactive);
+      text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; min-height: 24px;
+    }
     button.link:hover { color: var(--uui-color-interactive-emphasis); }
   `];
 }
-
 declare global {
   interface HTMLElementTagNameMap {
     'esatto-a11y-issues': EsattoA11yIssuesElement;

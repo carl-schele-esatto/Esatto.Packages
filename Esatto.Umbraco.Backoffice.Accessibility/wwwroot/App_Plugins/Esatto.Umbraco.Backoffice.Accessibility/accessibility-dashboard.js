@@ -1,47 +1,171 @@
-import { css as X, property as M, state as d, customElement as ee, html as r, nothing as l, repeat as Vt } from "@umbraco-cms/backoffice/external/lit";
+import { css as X, property as L, state as p, customElement as ee, html as n, nothing as l, styleMap as pe, repeat as Xt } from "@umbraco-cms/backoffice/external/lit";
 import { UmbLitElement as te } from "@umbraco-cms/backoffice/lit-element";
-import { tryExecute as x } from "@umbraco-cms/backoffice/resources";
-import { umbHttpClient as g } from "@umbraco-cms/backoffice/http-client";
-import { UMB_NOTIFICATION_CONTEXT as Bt } from "@umbraco-cms/backoffice/notification";
+import { tryExecute as C } from "@umbraco-cms/backoffice/resources";
+import { umbHttpClient as f } from "@umbraco-cms/backoffice/http-client";
+import { UMB_NOTIFICATION_CONTEXT as Jt } from "@umbraco-cms/backoffice/notification";
 const v = "/umbraco/management/api/v1/esatto/accessibility", m = () => [{ scheme: "bearer", type: "http" }], J = (e) => `site=${encodeURIComponent(e)}`;
-function Qe(e, t) {
-  const s = new URLSearchParams({ site: e });
-  return t.principle && s.set("principle", String(t.principle)), t.level && s.set("level", t.level), t.owner && s.set("owner", t.owner), t.impact && s.set("impact", t.impact), t.criterion && s.set("criterion", t.criterion), t.falsePositives && s.set("falsePositives", "true"), t.ruleId && s.set("ruleId", t.ruleId), t.kind && s.set("kind", t.kind), s.toString();
+function it(e, t) {
+  const i = new URLSearchParams({ site: e });
+  return t.principle && i.set("principle", String(t.principle)), t.level && i.set("level", t.level), t.owner && i.set("owner", t.owner), t.impact && i.set("impact", t.impact), t.criterion && i.set("criterion", t.criterion), t.falsePositives && i.set("falsePositives", "true"), t.ruleId && i.set("ruleId", t.ruleId), t.kind && i.set("kind", t.kind), i.toString();
 }
-const qt = () => g.get({ url: `${v}/knowledge`, security: m() }), Gt = () => g.get({ url: `${v}/sites`, security: m() }), Ht = (e) => g.get({ url: `${v}/pages?${J(e)}`, security: m() }), jt = () => g.get({ url: `${v}/settings`, security: m() }), Xt = (e) => g.put({ url: `${v}/settings`, body: e, security: m(), headers: { "Content-Type": "application/json" } }), Jt = (e, t, s) => g.post({ url: `${v}/scans`, body: { siteKey: e, mobile: t, pagesTotal: s }, security: m(), headers: { "Content-Type": "application/json" } }), Yt = (e) => g.get({ url: `${v}/scans/${e}/done`, security: m() }), Qt = (e, t) => g.post({ url: `${v}/scans/${e}/pages`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), Zt = (e, t) => g.post({ url: `${v}/scans/${e}/finish`, body: { complete: t }, security: m(), headers: { "Content-Type": "application/json" } }), es = (e, t) => g.post({ url: `${v}/recheck?${J(e)}`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), ts = (e) => g.get({ url: `${v}/overview?${J(e)}`, security: m() }), Ze = (e, t) => g.get({ url: `${v}/issues?${Qe(e, t)}`, security: m() }), ss = (e, t) => g.get({ url: `${v}/issues/csv?${Qe(e, t)}`, security: m(), parseAs: "blob" }), is = (e) => g.get({ url: `${v}/checklist?${J(e)}`, security: m() }), as = (e, t, s, a) => g.put({ url: `${v}/checklist/${encodeURIComponent(t)}?${J(e)}`, body: { status: s, note: a }, security: m(), headers: { "Content-Type": "application/json" } }), rs = (e, t) => g.delete({ url: `${v}/checklist/${encodeURIComponent(t)}?${J(e)}`, security: m() }), ns = (e, t) => g.post({ url: `${v}/false-positives?${J(e)}`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), os = (e) => g.delete({ url: `${v}/false-positives/${e}`, security: m() }), se = X`
+const Yt = () => f.get({ url: `${v}/knowledge`, security: m() }), Qt = () => f.get({ url: `${v}/sites`, security: m() }), Zt = (e) => f.get({ url: `${v}/pages?${J(e)}`, security: m() }), ei = () => f.get({ url: `${v}/settings`, security: m() }), ti = (e) => f.put({ url: `${v}/settings`, body: e, security: m(), headers: { "Content-Type": "application/json" } }), ii = (e, t, i) => f.post({ url: `${v}/scans`, body: { siteKey: e, mobile: t, pagesTotal: i }, security: m(), headers: { "Content-Type": "application/json" } }), si = (e) => f.get({ url: `${v}/scans/${e}/done`, security: m() }), ai = (e, t) => f.post({ url: `${v}/scans/${e}/pages`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), ni = (e, t) => f.post({ url: `${v}/scans/${e}/finish`, body: { complete: t }, security: m(), headers: { "Content-Type": "application/json" } }), ri = (e, t) => f.post({ url: `${v}/recheck?${J(e)}`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), oi = (e) => f.get({ url: `${v}/overview?${J(e)}`, security: m() }), st = (e, t) => f.get({ url: `${v}/issues?${it(e, t)}`, security: m() }), li = (e, t) => f.get({ url: `${v}/issues/csv?${it(e, t)}`, security: m(), parseAs: "blob" }), ci = (e) => f.get({ url: `${v}/checklist?${J(e)}`, security: m() }), di = (e, t, i, s) => f.put({ url: `${v}/checklist/${encodeURIComponent(t)}?${J(e)}`, body: { status: i, note: s }, security: m(), headers: { "Content-Type": "application/json" } }), ui = (e, t) => f.delete({ url: `${v}/checklist/${encodeURIComponent(t)}?${J(e)}`, security: m() }), pi = (e, t) => f.post({ url: `${v}/false-positives?${J(e)}`, body: t, security: m(), headers: { "Content-Type": "application/json" } }), hi = (e) => f.delete({ url: `${v}/false-positives/${e}`, security: m() }), ie = X`
   :host {
     display: block;
-    --a11y-good: #0ca30c;
-    --a11y-warning: #fab219;
-    --a11y-critical: #d03b3b;
+    --a11y-critical: #c9374c;
+    --a11y-critical-on: #fff;
+    --a11y-warning: #f59e0b;
+    --a11y-warning-on: #1d1d1f;
+    --a11y-notice: #2f6fde;
+    --a11y-notice-on: #fff;
+    --a11y-good: #0e7f41;
+    --a11y-good-on: #fff;
+    --a11y-neutral: color-mix(in srgb, var(--uui-color-text) 70%, var(--uui-color-surface));
+    --a11y-neutral-on: var(--uui-color-surface);
+
+    --a11y-muted: color-mix(in srgb, var(--uui-color-text) 68%, var(--uui-color-surface));
+    --a11y-line: var(--uui-color-border);
+    --a11y-wash: color-mix(in srgb, var(--uui-color-text) 4%, var(--uui-color-surface));
+    --a11y-radius: 12px;
+    --a11y-radius-sm: 8px;
+    --a11y-shadow: var(--uui-shadow-depth-1);
+    --a11y-shadow-raised: var(--uui-shadow-depth-3);
+    --a11y-ease: 160ms ease;
+    /* One gap between all blocks on a tab (cards, rows of cards, the save button), so spacing reads as one rhythm. */
+    --a11y-gap: var(--uui-size-space-5);
   }
-  .muted { color: var(--uui-color-text-alt); }
+
+  /* Tones: set --tone/--tone-on once, every component below reads them. */
+  .tone-critical { --tone: var(--a11y-critical); --tone-on: var(--a11y-critical-on); }
+  .tone-warning { --tone: var(--a11y-warning); --tone-on: var(--a11y-warning-on); }
+  .tone-notice { --tone: var(--a11y-notice); --tone-on: var(--a11y-notice-on); }
+  .tone-good { --tone: var(--a11y-good); --tone-on: var(--a11y-good-on); }
+  .tone-none { --tone: var(--a11y-neutral); --tone-on: var(--a11y-neutral-on); }
+
+  .muted { color: var(--a11y-muted); }
+  .small { font-size: 13px; }
   .row { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; }
   .stack > * + * { margin-top: var(--uui-size-space-4); }
+  .page { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--a11y-gap); }
   .error { color: var(--uui-color-danger-standalone); }
   .visually-hidden {
     position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
     clip: rect(0 0 0 0); white-space: nowrap; border: 0;
   }
   h2, h3, h4 { margin: 0; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { text-align: left; padding: var(--uui-size-space-2) var(--uui-size-space-3); border-bottom: 1px solid var(--uui-color-divider); }
-  th { font-weight: 600; color: var(--uui-color-text-alt); }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  p { margin: 0; }
   code, pre { font-family: var(--uui-font-monospace, monospace); font-size: 0.9em; }
-  pre { white-space: pre-wrap; word-break: break-all; background: var(--uui-color-surface-alt); padding: var(--uui-size-space-3); border-radius: var(--uui-border-radius); margin: 0; }
-  a { color: var(--uui-color-interactive); }
+  code { padding: 1px 6px; border-radius: 6px; background: var(--a11y-wash); border: 1px solid var(--a11y-line); word-break: break-word; }
+  pre {
+    white-space: pre-wrap; word-break: break-all; margin: 0; padding: var(--uui-size-space-3) var(--uui-size-space-4);
+    background: var(--a11y-wash); border: 1px solid var(--a11y-line); border-radius: var(--a11y-radius-sm);
+  }
+  a { color: var(--uui-color-interactive); text-underline-offset: 2px; }
   a:hover { color: var(--uui-color-interactive-emphasis); }
   :focus-visible { outline: 2px solid var(--uui-color-focus); outline-offset: 2px; }
-  .tag {
-    display: inline-block; padding: 0 var(--uui-size-space-2); border-radius: var(--uui-border-radius);
-    border: 1px solid var(--uui-color-border); font-size: 0.85em; line-height: 1.6;
+  .url { word-break: break-all; font-size: 13px; }
+
+  /* Surfaces */
+  .card {
+    background: var(--uui-color-surface); color: var(--uui-color-text);
+    border: 1px solid var(--a11y-line); border-radius: var(--a11y-radius); box-shadow: var(--a11y-shadow);
+    padding: var(--uui-size-space-5) var(--uui-size-space-6);
   }
-`, et = "esatto-a11y-navigate";
-function me(e, t, s) {
-  e.dispatchEvent(new CustomEvent(et, { detail: { tab: t, filter: s }, bubbles: !0, composed: !0 }));
+  .card-head { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); align-items: center; margin-bottom: var(--uui-size-space-4); }
+  .card-head h3 { font-size: 16px; font-weight: 700; }
+  .card-head .end { margin-left: auto; }
+  .icon-badge {
+    flex: none; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-size: 18px;
+    background: color-mix(in srgb, var(--tone, var(--a11y-notice)) 14%, var(--uui-color-surface));
+    color: color-mix(in srgb, var(--tone, var(--a11y-notice)) 80%, var(--uui-color-text));
+  }
+  .icon-badge.solid { background: var(--tone); color: var(--tone-on); }
+  .icon-badge.round { border-radius: 50%; }
+  .section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--a11y-muted); margin-bottom: var(--uui-size-space-3); }
+
+  /* Badges: .tag is solid in its tone (neutral wash without one); .chip is a quiet fact. */
+  .tag {
+    display: inline-flex; gap: 5px; align-items: center; padding: 2px 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; line-height: 18px; letter-spacing: 0.01em; white-space: nowrap;
+    background: var(--a11y-wash); color: var(--uui-color-text); border: 1px solid var(--a11y-line);
+  }
+  .tag[class*='tone-'] { background: var(--tone); color: var(--tone-on); border-color: transparent; }
+  .tag uui-icon { font-size: 13px; }
+  .chip {
+    display: inline-flex; gap: 6px; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 13px; line-height: 20px;
+    white-space: nowrap; background: var(--a11y-wash); border: 1px solid var(--a11y-line); color: var(--uui-color-text);
+  }
+  .chip uui-icon { font-size: 14px; color: var(--a11y-muted); }
+
+  /* Alerts */
+  .banner {
+    display: flex; gap: var(--uui-size-space-4); align-items: flex-start; padding: var(--uui-size-space-4) var(--uui-size-space-5);
+    border-radius: var(--a11y-radius); color: var(--uui-color-text);
+    background: color-mix(in srgb, var(--tone) 9%, var(--uui-color-surface));
+    border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--a11y-line));
+    box-shadow: inset 4px 0 0 var(--tone);
+  }
+  .banner > div { display: grid; gap: 4px; padding-top: 6px; }
+  .banner.compact { padding: var(--uui-size-space-3) var(--uui-size-space-4); gap: var(--uui-size-space-3); align-items: center; }
+  .banner.compact .icon-badge { width: 26px; height: 26px; font-size: 14px; }
+  .banner.compact > div { padding-top: 0; }
+
+  /* Form controls */
+  .field { display: grid; gap: 6px; align-content: start; }
+  .field > label { font-size: 13px; font-weight: 600; }
+  select, input:not([type='checkbox']):not([type='radio']), textarea {
+    font: inherit; min-height: 40px; padding: 0 var(--uui-size-space-3); box-sizing: border-box;
+    border: 1px solid var(--uui-color-border-standalone); border-radius: var(--a11y-radius-sm);
+    background: var(--uui-color-surface); color: var(--uui-color-text);
+    transition: border-color var(--a11y-ease), box-shadow var(--a11y-ease);
+  }
+  textarea { padding: var(--uui-size-space-2) var(--uui-size-space-3); }
+  select:hover, input:not([type='checkbox']):not([type='radio']):hover, textarea:hover { border-color: var(--uui-color-border-emphasis); }
+  select:focus-visible, input:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--uui-color-focus); outline-offset: 0; border-color: var(--uui-color-focus);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--uui-color-focus) 22%, transparent);
+  }
+  input[type='checkbox'], input[type='radio'] { accent-color: var(--uui-color-selected); }
+  input:disabled, select:disabled, textarea:disabled { opacity: 0.65; cursor: not-allowed; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--a11y-line); border-radius: var(--a11y-radius-sm); }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; vertical-align: top; padding: var(--uui-size-space-3) var(--uui-size-space-4); border-bottom: 1px solid var(--a11y-line); }
+  tbody tr:last-child > * { border-bottom: 0; }
+  thead th {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--a11y-muted);
+    background: var(--a11y-wash); white-space: nowrap;
+  }
+  tbody tr { transition: background-color var(--a11y-ease); }
+  tbody tr:hover { background: var(--a11y-wash); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* Disclosures: a chevron instead of the browser's triangle, and the hand pointer. */
+  summary { cursor: pointer; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .chevron { flex: none; color: var(--a11y-muted); transition: transform var(--a11y-ease); }
+  details[open] > summary .chevron { transform: rotate(90deg); }
+  .disclosure > summary { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--uui-color-interactive); }
+  .disclosure > summary .chevron { color: inherit; }
+  .disclosure > summary:hover { color: var(--uui-color-interactive-emphasis); }
+
+  /* Clickable cards lift on hover. */
+  .lift { transition: transform var(--a11y-ease), box-shadow var(--a11y-ease), border-color var(--a11y-ease); }
+  .lift:hover { transform: translateY(-2px); box-shadow: var(--a11y-shadow-raised); }
+
+  /* Progress */
+  .progress-bar { height: 8px; border-radius: 999px; background: var(--a11y-wash); border: 1px solid var(--a11y-line); overflow: hidden; }
+  .progress-bar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2f6fde, #6d4ce0); transition: width 400ms ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, .lift, .chevron, .progress-bar > span { transition: none !important; }
+    .lift:hover { transform: none; }
+  }
+`, at = "esatto-a11y-navigate";
+function ye(e, t, i) {
+  e.dispatchEvent(new CustomEvent(at, { detail: { tab: t, filter: i }, bubbles: !0, composed: !0 }));
 }
-const De = ["V20", "V21", "V22"], Fe = ["A", "AA", "AAA"], ls = [
+const Ve = ["V20", "V21", "V22"], qe = ["A", "AA", "AAA"], gi = [
   { tag: "wcag2a", version: "V20", level: "A" },
   { tag: "wcag2aa", version: "V20", level: "AA" },
   { tag: "wcag2aaa", version: "V20", level: "AAA" },
@@ -49,33 +173,34 @@ const De = ["V20", "V21", "V22"], Fe = ["A", "AA", "AAA"], ls = [
   { tag: "wcag21aa", version: "V21", level: "AA" },
   { tag: "wcag22aa", version: "V22", level: "AA" }
 ];
-function tt(e, t, s) {
-  const a = ls.filter((i) => De.indexOf(i.version) <= De.indexOf(e) && Fe.indexOf(i.level) <= Fe.indexOf(t)).map((i) => i.tag);
-  return s ? [...a, "best-practice"] : a;
+function nt(e, t, i) {
+  const s = gi.filter((a) => Ve.indexOf(a.version) <= Ve.indexOf(e) && qe.indexOf(a.level) <= qe.indexOf(t)).map((a) => a.tag);
+  return i ? [...s, "best-practice"] : s;
 }
-const st = (e) => ({ V20: "2.0", V21: "2.1", V22: "2.2" })[e], be = (e) => `WCAG ${st(e.version)} ${e.level}`, it = (e) => e ?? "Best practice", at = (e) => e === "running" ? "not finished" : e;
-function cs(e) {
+const rt = (e) => ({ V20: "2.0", V21: "2.1", V22: "2.2" })[e], we = (e) => `WCAG ${rt(e.version)} ${e.level}`, ot = (e) => e ?? "Best practice", lt = (e) => e === "running" ? "not finished" : e;
+function fi(e) {
   return e ? new Date(/[zZ]|[+-]\d\d:\d\d$/.test(e) ? e : `${e}Z`) : null;
 }
-function xe(e, t = !0) {
-  const s = cs(e);
-  return s ? new Intl.DateTimeFormat(void 0, t ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(s) : "";
+function ze(e, t = !0) {
+  const i = fi(e);
+  return i ? new Intl.DateTimeFormat(void 0, t ? { dateStyle: "medium", timeStyle: "short" } : { dateStyle: "medium" }).format(i) : "";
 }
-function us(e) {
+function Ge(e) {
   return e === null ? null : e < 50 ? "critical" : e < 90 ? "warning" : "good";
 }
-const We = { good: "Good", warning: "Needs work", critical: "Major gaps" };
-function ds(e) {
+const $e = { good: "Good", warning: "Needs work", critical: "Major gaps" }, vi = { good: "icon-check", warning: "icon-alert", critical: "icon-wrong" };
+function mi(e) {
   return { toConfirm: e.scannerChecked, personOnly: e.notVerified - e.scannerChecked };
 }
-function hs(e, t) {
-  const s = `/umbraco/section/content/workspace/document/edit/${e}`;
-  return t ? `${s}/${t}` : s;
+const xe = { critical: "tone-critical", serious: "tone-warning", moderate: "tone-notice", minor: "tone-none" }, ct = { Editor: "icon-edit", Developer: "icon-code", Both: "icon-users" };
+function bi(e, t) {
+  const i = `/umbraco/section/content/workspace/document/edit/${e}`;
+  return t ? `${i}/${t}` : i;
 }
-function ps(e) {
+function yi(e) {
   return `/umbraco/section/media/workspace/media/edit/${e}`;
 }
-function re(e) {
+function ne(e) {
   try {
     const t = new URL(e ?? "");
     return t.protocol === "http:" || t.protocol === "https:" ? t.toString() : void 0;
@@ -83,27 +208,27 @@ function re(e) {
     return;
   }
 }
-const fs = /\.(pdf|docx?|xlsx|pptx)$/i;
-function gs(e) {
+const wi = /\.(pdf|docx?|xlsx|pptx)$/i;
+function $i(e) {
   const t = /* @__PURE__ */ new Set();
-  for (const s of e)
+  for (const i of e)
     try {
-      fs.test(new URL(s).pathname) && t.add(s);
+      wi.test(new URL(i).pathname) && t.add(i);
     } catch {
     }
   return [...t];
 }
-function vs(e, t) {
+function xi(e, t) {
   if (e.status >= 400) return { kind: "failed", reason: `HTTP ${e.status}` };
-  const s = new URL(e.url).origin;
-  if (s !== t) return { kind: "failed", reason: `redirects to ${s}` };
-  const a = (e.contentType ?? "").split(";")[0].trim().toLowerCase();
-  if (a && a !== "text/html" && a !== "application/xhtml+xml") return { kind: "failed", reason: `not an HTML page (${a})` };
+  const i = new URL(e.url).origin;
+  if (i !== t) return { kind: "failed", reason: `redirects to ${i}` };
+  const s = (e.contentType ?? "").split(";")[0].trim().toLowerCase();
+  if (s && s !== "text/html" && s !== "application/xhtml+xml") return { kind: "failed", reason: `not an HTML page (${s})` };
   if ((e.xFrameOptions ?? "").trim().toUpperCase() === "DENY") return { kind: "blocked", reason: "The site sends X-Frame-Options: DENY." };
-  const n = /frame-ancestors\s+([^;]*)/i.exec(e.csp ?? "")?.[1].trim().toLowerCase();
-  return n !== void 0 && (n === "'none'" || !/('self'|\*)/.test(n) && !n.includes(t.toLowerCase())) ? { kind: "blocked", reason: `The site sends Content-Security-Policy frame-ancestors ${n}.` } : null;
+  const r = /frame-ancestors\s+([^;]*)/i.exec(e.csp ?? "")?.[1].trim().toLowerCase();
+  return r !== void 0 && (r === "'none'" || !/('self'|\*)/.test(r) && !r.includes(t.toLowerCase())) ? { kind: "blocked", reason: `The site sends Content-Security-Policy frame-ancestors ${r}.` } : null;
 }
-async function ms(e) {
+async function _i(e) {
   const t = await fetch(e, { credentials: "same-origin", redirect: "follow", headers: { Accept: "text/html" } });
   return t.body?.cancel().catch(() => {
   }), {
@@ -114,16 +239,16 @@ async function ms(e) {
     csp: t.headers.get("content-security-policy")
   };
 }
-const bs = (e) => e.map((t) => Array.isArray(t) ? t.join(" >>> ") : t).join(" "), Ve = (e, t) => ({
+const ki = (e) => e.map((t) => Array.isArray(t) ? t.join(" >>> ") : t).join(" "), je = (e, t) => ({
   ruleId: e.id,
   kind: t,
   impact: e.impact ?? null,
   help: e.help,
   helpUrl: e.helpUrl,
   tags: e.tags,
-  nodes: e.nodes.map((s) => ({ selector: bs(s.target), html: s.html }))
+  nodes: e.nodes.map((i) => ({ selector: ki(i.target), html: i.html }))
 });
-function $s(e, t, s) {
+function Ci(e, t, i) {
   return {
     contentKey: t.contentKey,
     name: t.name,
@@ -132,45 +257,45 @@ function $s(e, t, s) {
     viewport: t.viewport,
     status: "ok",
     reason: null,
-    passes: e.passes.map((a) => ({ ruleId: a.id, tags: a.tags })),
+    passes: e.passes.map((s) => ({ ruleId: s.id, tags: s.tags })),
     rules: [
-      ...e.violations.map((a) => Ve(a, "violation")),
-      ...e.incomplete.map((a) => Ve(a, "incomplete"))
+      ...e.violations.map((s) => je(s, "violation")),
+      ...e.incomplete.map((s) => je(s, "incomplete"))
     ],
-    documentLinks: s
+    documentLinks: i
   };
 }
-function oe(e, t, s) {
-  return { ...e, status: t, reason: s, passes: [], rules: [], documentLinks: [] };
+function oe(e, t, i) {
+  return { ...e, status: t, reason: i, passes: [], rules: [], documentLinks: [] };
 }
-const Be = 900;
-function qe(e) {
+const He = 900;
+function Xe(e) {
   const t = new URL(e);
   return t.searchParams.set("esatto-a11y-scan", "1"), t.toString();
 }
-async function rt(e, t, s) {
-  const a = document.createElement("iframe");
-  a.setAttribute("aria-hidden", "true"), a.tabIndex = -1, a.title = "Accessibility scan", a.width = String(e.viewport), a.height = String(Be), a.style.cssText = `position:absolute;left:-10000px;top:0;width:${e.viewport}px;height:${Be}px;border:0;`;
-  let i;
+async function dt(e, t, i) {
+  const s = document.createElement("iframe");
+  s.setAttribute("aria-hidden", "true"), s.tabIndex = -1, s.title = "Accessibility scan", s.width = String(e.viewport), s.height = String(He), s.style.cssText = `position:absolute;left:-10000px;top:0;width:${e.viewport}px;height:${He}px;border:0;`;
+  let a;
   try {
-    const n = new Promise((o) => {
-      i = setTimeout(() => o({ kind: "failed", reason: "timeout", result: oe(e, "failed", "timeout") }), s.timeoutMs);
+    const r = new Promise((o) => {
+      a = setTimeout(() => o({ kind: "failed", reason: "timeout", result: oe(e, "failed", "timeout") }), i.timeoutMs);
     });
-    return await Promise.race([ys(e, a, t, s), n]);
+    return await Promise.race([Si(e, s, t, i), r]);
   } finally {
-    clearTimeout(i), a.remove();
+    clearTimeout(a), s.remove();
   }
 }
-async function ys(e, t, s, a) {
-  let i;
+async function Si(e, t, i, s) {
+  let a;
   try {
-    i = vs(await ms(qe(e.url)), location.origin);
+    a = xi(await _i(Xe(e.url)), location.origin);
   } catch (b) {
-    i = { kind: "failed", reason: b instanceof Error ? b.message : "request failed" };
+    a = { kind: "failed", reason: b instanceof Error ? b.message : "request failed" };
   }
-  if (i) return i.kind === "failed" ? { ...i, result: oe(e, "failed", i.reason ?? "failed") } : i;
-  const n = new Promise((b) => t.addEventListener("load", () => b(), { once: !0 }));
-  t.src = qe(e.url), s.appendChild(t), await n, await _s(a.settleMs);
+  if (a) return a.kind === "failed" ? { ...a, result: oe(e, "failed", a.reason ?? "failed") } : a;
+  const r = new Promise((b) => t.addEventListener("load", () => b(), { once: !0 }));
+  t.src = Xe(e.url), i.appendChild(t), await r, await Ei(s.settleMs);
   let o = null;
   try {
     o = t.contentDocument;
@@ -179,79 +304,79 @@ async function ys(e, t, s, a) {
   }
   if (!o || o.location.href === "about:blank" || !o.documentElement)
     return { kind: "failed", reason: "the page left the frame", result: oe(e, "failed", "the page left the frame") };
-  const h = t.contentWindow;
-  if (!h) return { kind: "failed", reason: "the frame has no window" };
-  if (!h.axe) {
+  const c = t.contentWindow;
+  if (!c) return { kind: "failed", reason: "the frame has no window" };
+  if (!c.axe) {
     const b = o.createElement("script");
-    b.src = a.axeUrl;
-    const Y = new Promise((C, ge) => {
-      b.onload = () => C(), b.onerror = () => ge(new Error("axe-core could not be loaded into the page (Content-Security-Policy script-src?)"));
+    b.src = s.axeUrl;
+    const Y = new Promise((S, me) => {
+      b.onload = () => S(), b.onerror = () => me(new Error("axe-core could not be loaded into the page (Content-Security-Policy script-src?)"));
     });
     o.head.appendChild(b);
     try {
       await Y;
-    } catch (C) {
-      return { kind: "blocked", reason: C instanceof Error ? C.message : "axe-core could not be loaded into the page." };
+    } catch (S) {
+      return { kind: "blocked", reason: S instanceof Error ? S.message : "axe-core could not be loaded into the page." };
     }
   }
-  const P = await h.axe.run(o, {
-    runOnly: { type: "tag", values: a.tags },
+  const A = await c.axe.run(o, {
+    runOnly: { type: "tag", values: s.tags },
     // Node lists only for what we store; `passes` still lists every passing rule id and its tags.
     resultTypes: ["violations", "incomplete"]
-  }), T = gs([...o.querySelectorAll("a[href]")].map((b) => b.href));
-  return { kind: "ok", result: $s(P, e, T) };
+  }), P = $i([...o.querySelectorAll("a[href]")].map((b) => b.href));
+  return { kind: "ok", result: Ci(A, e, P) };
 }
-const _s = (e) => new Promise((t) => setTimeout(t, e)), $e = "other-origin:";
-function ws(e, t) {
-  const s = [], a = [];
-  for (const i of e) {
-    if (i.skipReason) {
-      a.push({ ...i, skipReason: i.skipReason });
+const Ei = (e) => new Promise((t) => setTimeout(t, e)), _e = "other-origin:";
+function zi(e, t) {
+  const i = [], s = [];
+  for (const a of e) {
+    if (a.skipReason) {
+      s.push({ ...a, skipReason: a.skipReason });
       continue;
     }
-    const n = new URL(i.url);
-    n.origin !== t ? a.push({ ...i, skipReason: `${$e}${n.origin}` }) : s.push(i);
+    const r = new URL(a.url);
+    r.origin !== t ? s.push({ ...a, skipReason: `${_e}${r.origin}` }) : i.push(a);
   }
-  return { scannable: s, skipped: a };
+  return { scannable: i, skipped: s };
 }
-function ks(e, t) {
-  const s = new URL(t), a = e.join(", "), i = e.filter((o) => new URL(o).host === s.host), n = `Pages on ${a} were skipped: a browser can only scan pages on the same address as the backoffice (${t}), meaning the same scheme, host and port.`;
-  if (i.length) {
-    const o = (h) => new URL(h).protocol.replace(":", "");
-    return `${n} These pages use ${o(i[0])} instead of ${o(s)}. Set the site's domain to ${t} in Culture and Hostnames, or open the backoffice on ${i[0]}.`;
+function Ai(e, t) {
+  const i = new URL(t), s = e.join(", "), a = e.filter((o) => new URL(o).host === i.host), r = `Pages on ${s} were skipped: a browser can only scan pages on the same address as the backoffice (${t}), meaning the same scheme, host and port.`;
+  if (a.length) {
+    const o = (c) => new URL(c).protocol.replace(":", "");
+    return `${r} These pages use ${o(a[0])} instead of ${o(i)}. Set the site's domain to ${t} in Culture and Hostnames, or open the backoffice on ${a[0]}.`;
   }
-  return `${n} Open the backoffice on ${e[0]}${e.length > 1 ? " (and so on)" : ""} to scan them.`;
+  return `${r} Open the backoffice on ${e[0]}${e.length > 1 ? " (and so on)" : ""} to scan them.`;
 }
-function ye(e, t) {
-  return e.flatMap((s) => t.map((a) => ({
-    contentKey: s.contentKey,
-    name: s.name,
-    culture: s.culture,
-    url: s.url,
-    viewport: a
+function ke(e, t) {
+  return e.flatMap((i) => t.map((s) => ({
+    contentKey: i.contentKey,
+    name: i.name,
+    culture: i.culture,
+    url: i.url,
+    viewport: s
   })));
 }
-class nt extends Error {
-  constructor(t, s) {
-    super(`The page ${t} can't be loaded in a frame${s ? ` (${s})` : ""}.`), this.url = t, this.reason = s, this.name = "BlockedFrameError";
+class ut extends Error {
+  constructor(t, i) {
+    super(`The page ${t} can't be loaded in a frame${i ? ` (${i})` : ""}.`), this.url = t, this.reason = i, this.name = "BlockedFrameError";
   }
 }
-class xs {
-  constructor(t, s, a, i) {
-    this.opts = s, this.run = a, this.settle = i, this.#e = [...t], this.#r = t.length;
+class Pi {
+  constructor(t, i, s, a) {
+    this.opts = i, this.run = s, this.settle = a, this.#e = [...t], this.#n = t.length;
   }
   #e;
   #t = /* @__PURE__ */ new Set();
-  #s = 0;
-  #r;
-  #i = null;
+  #i = 0;
+  #n;
+  #s = null;
   #a = !1;
-  #n = [];
+  #r = [];
   get cancelled() {
     return this.#a;
   }
   onProgress(t) {
-    this.#n.push(t);
+    this.#r.push(t);
   }
   /**
    * No new jobs start. Jobs already running finish; a successful one is settled, a failed one is dropped
@@ -262,23 +387,23 @@ class xs {
   }
   async start() {
     const t = Array.from({ length: Math.max(1, this.opts.concurrency) }, () => this.#l());
-    if (await Promise.all(t), this.#o(), this.#i) throw this.#i;
+    if (await Promise.all(t), this.#o(), this.#s) throw this.#s;
   }
   async #l() {
-    for (; !this.#a && !this.#i; ) {
+    for (; !this.#a && !this.#s; ) {
       const t = this.#e.shift();
       if (!t) return;
       this.#t.add(t), this.#o();
       try {
-        const s = await this.#c(t);
-        if (s.kind === "blocked") {
-          this.#i ??= new nt(t.url, s.reason);
+        const i = await this.#c(t);
+        if (i.kind === "blocked") {
+          this.#s ??= new ut(t.url, i.reason);
           return;
         }
-        if (this.#a && s.kind === "failed") return;
-        await this.settle(t, s), this.#s++;
-      } catch (s) {
-        this.#i ??= s instanceof Error ? s : new Error(String(s));
+        if (this.#a && i.kind === "failed") return;
+        await this.settle(t, i), this.#i++;
+      } catch (i) {
+        this.#s ??= i instanceof Error ? i : new Error(String(i));
         return;
       } finally {
         this.#t.delete(t);
@@ -286,30 +411,30 @@ class xs {
     }
   }
   async #c(t) {
-    let s = { kind: "failed", reason: "not run" };
-    for (let a = 0; a <= this.opts.retries; a++) {
+    let i = { kind: "failed", reason: "not run" };
+    for (let s = 0; s <= this.opts.retries; s++) {
       try {
-        s = await this.run(t);
-      } catch (i) {
-        s = { kind: "failed", reason: i instanceof Error ? i.message : String(i) };
+        i = await this.run(t);
+      } catch (a) {
+        i = { kind: "failed", reason: a instanceof Error ? a.message : String(a) };
       }
-      if (s.kind !== "failed" || this.#a) return s;
+      if (i.kind !== "failed" || this.#a) return i;
     }
-    return s;
+    return i;
   }
   #o() {
-    const t = { done: this.#s, total: this.#r, current: [...this.#t].map((s) => s.url) };
-    for (const s of this.#n) s(t);
+    const t = { done: this.#i, total: this.#n, current: [...this.#t].map((i) => i.url) };
+    for (const i of this.#r) i(t);
   }
 }
-const ce = 1280, Cs = 320, Es = 3, Ss = 1, Ge = [1e3, 2e3, 4e3];
-function As(e, t) {
+const ce = 1280, Ti = 320, Oi = 3, Ri = 1, Je = [1e3, 2e3, 4e3];
+function Ii(e, t) {
   return t ? { mobile: t.mobile, resumeScanId: t.id } : { mobile: e };
 }
-function Ps(e) {
-  return ye([e], e.viewports.length ? e.viewports : [ce]);
+function Ni(e) {
+  return ke([e], e.viewports.length ? e.viewports : [ce]);
 }
-class Ts {
+class Mi {
   constructor(t) {
     this.deps = t;
   }
@@ -318,841 +443,992 @@ class Ts {
   cancel() {
     this.#t = !0, this.#e?.cancel();
   }
-  async start(t, s, a) {
-    const i = await this.deps.getPages(t), { scannable: n, skipped: o } = ws(i, this.deps.origin), h = [...new Set(o.filter((p) => p.skipReason.startsWith($e)).map((p) => p.skipReason.slice($e.length)))], P = s.mobile ? [ce, Cs] : [ce];
-    let T = ye(n, P), b = o.map((p) => ({ job: ye([p], [ce])[0], reason: p.skipReason }));
-    const Y = T.length + b.length, C = s.resumeScanId ?? await this.deps.startScan(t, s.mobile, Y);
-    if (s.resumeScanId !== void 0) {
-      const p = new Set((await this.deps.getDone(C)).map(ve));
-      T = T.filter((U) => !p.has(ve(U))), b = b.filter((U) => !p.has(ve(U.job)));
+  async start(t, i, s) {
+    const a = await this.deps.getPages(t), { scannable: r, skipped: o } = zi(a, this.deps.origin), c = [...new Set(o.filter((h) => h.skipReason.startsWith(_e)).map((h) => h.skipReason.slice(_e.length)))], A = i.mobile ? [ce, Ti] : [ce];
+    let P = ke(r, A), b = o.map((h) => ({ job: ke([h], [ce])[0], reason: h.skipReason }));
+    const Y = P.length + b.length, S = i.resumeScanId ?? await this.deps.startScan(t, i.mobile, Y);
+    if (i.resumeScanId !== void 0) {
+      const h = new Set((await this.deps.getDone(S)).map(be));
+      P = P.filter((U) => !h.has(be(U))), b = b.filter((U) => !h.has(be(U.job)));
     }
-    const ge = Y - T.length - b.length;
-    let Ne = 0, Me = 0;
-    const Ue = (p) => a?.({ ...p, done: p.done + Ne + ge, total: Y });
+    const me = Y - P.length - b.length;
+    let De = 0, Fe = 0;
+    const We = (h) => s?.({ ...h, done: h.done + De + me, total: Y });
     try {
-      for (const p of b)
-        await this.#s(C, oe(p.job, "skipped", p.reason)), Ne++;
-      Ue({ done: 0, total: Y, current: [] }), this.#e = new xs(
-        T,
-        { concurrency: Es, retries: Ss },
-        (p) => this.deps.runJob(p),
-        (p, U) => (U.kind !== "ok" && Me++, this.#s(C, U.kind === "ok" && U.result ? U.result : oe(p, "failed", U.reason ?? "failed")))
-      ), this.#e.onProgress(Ue), this.#t && this.#e.cancel(), await this.#e.start();
-    } catch (p) {
-      return p instanceof nt ? { scanId: C, blocked: p, summary: await this.deps.finishScan(C, !1), otherOrigins: h } : { scanId: C, paused: p instanceof Error ? p : new Error(String(p)), otherOrigins: h };
+      for (const h of b)
+        await this.#i(S, oe(h.job, "skipped", h.reason)), De++;
+      We({ done: 0, total: Y, current: [] }), this.#e = new Pi(
+        P,
+        { concurrency: Oi, retries: Ri },
+        (h) => this.deps.runJob(h),
+        (h, U) => (U.kind !== "ok" && Fe++, this.#i(S, U.kind === "ok" && U.result ? U.result : oe(h, "failed", U.reason ?? "failed")))
+      ), this.#e.onProgress(We), this.#t && this.#e.cancel(), await this.#e.start();
+    } catch (h) {
+      return h instanceof ut ? { scanId: S, blocked: h, summary: await this.deps.finishScan(S, !1), otherOrigins: c } : { scanId: S, paused: h instanceof Error ? h : new Error(String(h)), otherOrigins: c };
     }
-    const Ke = T.length > 0 && Me * 2 > T.length, Wt = !this.#t && !this.#e.cancelled && !Ke;
-    return { scanId: C, summary: await this.deps.finishScan(C, Wt), otherOrigins: h, mostlyFailed: Ke };
+    const Be = P.length > 0 && Fe * 2 > P.length, Ht = !this.#t && !this.#e.cancelled && !Be;
+    return { scanId: S, summary: await this.deps.finishScan(S, Ht), otherOrigins: c, mostlyFailed: Be };
   }
   /** Saves one page result, retrying with back-off; throws after the last retry. */
-  async #s(t, s) {
-    const a = this.deps.sleep ?? ((i) => new Promise((n) => setTimeout(n, i)));
-    for (let i = 0; ; i++)
+  async #i(t, i) {
+    const s = this.deps.sleep ?? ((a) => new Promise((r) => setTimeout(r, a)));
+    for (let a = 0; ; a++)
       try {
-        await this.deps.postPage(t, s);
+        await this.deps.postPage(t, i);
         return;
-      } catch (n) {
-        if (i >= Ge.length) throw n;
-        await a(Ge[i]);
+      } catch (r) {
+        if (a >= Je.length) throw r;
+        await s(Je[a]);
       }
   }
 }
-const ve = (e) => `${e.contentKey}|${e.culture}|${e.viewport}`;
-var Os = Object.defineProperty, zs = Object.getOwnPropertyDescriptor, ot = (e) => {
+const be = (e) => `${e.contentKey}|${e.culture}|${e.viewport}`;
+var Li = Object.defineProperty, Ui = Object.getOwnPropertyDescriptor, pt = (e) => {
   throw TypeError(e);
-}, W = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? zs(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && Os(t, s, i), i;
-}, Ce = (e, t, s) => t.has(e) || ot("Cannot " + s), Ee = (e, t, s) => (Ce(e, t, "read from private field"), t.get(e)), He = (e, t, s) => t.has(e) ? ot("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), je = (e, t, s, a) => (Ce(e, t, "write to private field"), t.set(e, s), s), O = (e, t, s) => (Ce(e, t, "access private method"), s), H, S, Se, _e, lt, ct, ut, dt, ht, pt, ft;
-const Rs = "/App_Plugins/Esatto.Umbraco.Backoffice.Accessibility/axe.min.js", $ = { size: 168, stroke: 14 };
+}, W = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? Ui(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && Li(t, i, a), a;
+}, Ae = (e, t, i) => t.has(e) || pt("Cannot " + i), Pe = (e, t, i) => (Ae(e, t, "read from private field"), t.get(e)), Ye = (e, t, i) => t.has(e) ? pt("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), Qe = (e, t, i, s) => (Ae(e, t, "write to private field"), t.set(e, i), i), _ = (e, t, i) => (Ae(e, t, "access private method"), i), j, y, Te, Ce, ht, gt, ft, vt, mt, bt, de, yt;
+const Ki = "/App_Plugins/Esatto.Umbraco.Backoffice.Accessibility/axe.min.js", T = { size: 168, stroke: 14 }, Di = { 1: "icon-eye", 2: "icon-keyboard", 3: "icon-lightbulb-active", 4: "icon-code" }, wt = { complete: "tone-good", incomplete: "tone-warning", running: "" };
 async function ae(e) {
-  const { data: t, error: s } = await e;
-  if (s) throw s instanceof Error ? s : new Error(typeof s == "string" ? s : "Request failed");
+  const { data: t, error: i } = await e;
+  if (i) throw i instanceof Error ? i : new Error(typeof i == "string" ? i : "Request failed");
   return t;
 }
-let L = class extends te {
+let N = class extends te {
   constructor() {
-    super(...arguments), He(this, S), this.siteKey = "", this.settings = null, this._overview = null, this._error = null, this._progress = null, this._run = null, this._scanError = null, He(this, H, null);
+    super(...arguments), Ye(this, y), this.siteKey = "", this.settings = null, this._overview = null, this._error = null, this._progress = null, this._run = null, this._scanError = null, Ye(this, j, null);
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), Ee(this, H)?.cancel();
+    super.disconnectedCallback(), Pe(this, j)?.cancel();
   }
   updated(e) {
-    e.has("siteKey") && this.siteKey && O(this, S, Se).call(this);
+    e.has("siteKey") && this.siteKey && _(this, y, Te).call(this);
   }
   render() {
-    if (this._error) return r`<uui-box><p class="error">${this._error}</p></uui-box>`;
-    if (!this._overview) return r`<uui-loader></uui-loader>`;
-    const e = this._overview;
-    return r`
-      <div class="stack">
-        <uui-box>
+    if (this._error) return n`<uui-box><p class="error">${this._error}</p></uui-box>`;
+    if (!this._overview) return n`<uui-loader></uui-loader>`;
+    const e = this._overview, t = Ge(e.score.percent);
+    return n`
+      <div class="page">
+        <section class="card hero-card tone-${t ?? "none"}" aria-labelledby="hero-heading">
           <div class="hero">
-            ${O(this, S, ct).call(this, e)}
-            <div class="stack">
-              ${O(this, S, ut).call(this, e)}
-              ${O(this, S, dt).call(this, e)}
-              ${O(this, S, ht).call(this, e)}
+            ${_(this, y, gt).call(this, e, t)}
+            ${_(this, y, ft).call(this, e)}
+            <div class="hero-body stack">
+              <div>
+                <p class="eyebrow">Accessibility score</p>
+                <h3 id="hero-heading" class="hero-title">${t ? $e[t] : "Not scanned yet"}</h3>
+              </div>
+              ${_(this, y, vt).call(this, e)}
+              ${_(this, y, mt).call(this, e)}
             </div>
           </div>
-          ${O(this, S, pt).call(this)}
-          ${O(this, S, ft).call(this)}
-        </uui-box>
+          ${_(this, y, bt).call(this)}
+        </section>
+        ${_(this, y, yt).call(this)}
 
         <section aria-labelledby="principles-heading">
-          <h3 id="principles-heading" class="section-title">By principle</h3>
+          <h3 id="principles-heading" class="section-label">By principle</h3>
           <ul class="tiles">
-            ${e.principles.map((t) => r`
-              <li>
-                <button class="tile" @click=${() => me(this, "issues", { principle: t.principle })}>
-                  <span class="tile-label">${t.principle}. ${t.name}</span>
-                  <span class="tile-value">${t.fail} failing</span>
-                  <span class="muted">${t.toCheck} to check</span>
+            ${e.principles.map((i) => {
+      const s = i.fail ? "critical" : i.toCheck ? "notice" : "good";
+      return n`<li>
+                <button class="tile lift tone-${s}" @click=${() => ye(this, "issues", { principle: i.principle })}>
+                  <span class="icon-badge solid round" aria-hidden="true"><uui-icon name=${Di[i.principle] ?? "icon-checkbox"}></uui-icon></span>
+                  <span class="tile-text">
+                    <span class="tile-label">${i.principle}. ${i.name}</span>
+                    <span class="tile-value">${i.fail} failing</span>
+                    <span class="muted small">${i.toCheck} to check</span>
+                  </span>
+                  <uui-icon class="tile-go" name="icon-arrow-right" aria-hidden="true"></uui-icon>
                 </button>
-              </li>`)}
+              </li>`;
+    })}
           </ul>
-          <p>
-            Automated: ${e.score.automatedPass} criteria pass, ${e.score.automatedFail} fail ·
-            Manual: ${e.manualChecked} of ${e.manualTotal} checked
-            <uui-button look="secondary" compact label="Open manual checklist" @click=${() => me(this, "checklist")}></uui-button>
-          </p>
         </section>
 
-        ${e.history.length ? r`
-          <uui-box headline="Recent scans">
-            <table>
-              <caption class="visually-hidden">The last ${e.history.length} scans</caption>
-              <thead><tr><th scope="col">Started</th><th scope="col">Target</th><th scope="col" class="num">Score</th><th scope="col" class="num">Pages</th><th scope="col">Status</th><th scope="col">By</th></tr></thead>
-              <tbody>
-                ${e.history.map((t) => r`<tr>
-                  <td>${xe(t.startedUtc)}</td>
-                  <td>${t.target}</td>
-                  <td class="num">${t.score === null ? "–" : `${t.score} %`}</td>
-                  <td class="num">${t.pagesDone}${t.pagesSkipped ? r` <span class="muted">(+${t.pagesSkipped} skipped)</span>` : l}</td>
-                  <td>${at(t.status)}</td>
-                  <td>${t.userName}</td>
-                </tr>`)}
-              </tbody>
-            </table>
-          </uui-box>` : l}
+        <section class="card results" aria-label="Automated and manual results">
+          <div class="result">
+            <span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-wand"></uui-icon></span>
+            <div>
+              <p class="result-label">Automated checks</p>
+              <p><strong>${e.score.automatedPass}</strong> criteria pass · <strong>${e.score.automatedFail}</strong> fail</p>
+            </div>
+          </div>
+          <div class="result">
+            <span class="icon-badge tone-good" aria-hidden="true"><uui-icon name="icon-checkbox"></uui-icon></span>
+            <div class="grow">
+              <p class="result-label">Manual checklist</p>
+              <p><strong>${e.manualChecked}</strong> of ${e.manualTotal} checked</p>
+              <div class="progress-bar" aria-hidden="true"><span style=${pe({ width: `${e.manualTotal ? Math.round(e.manualChecked / e.manualTotal * 100) : 0}%` })}></span></div>
+            </div>
+          </div>
+          <uui-button look="secondary" label="Open manual checklist" @click=${() => ye(this, "checklist")}>
+            Open manual checklist&nbsp;<uui-icon name="icon-arrow-right" aria-hidden="true"></uui-icon>
+          </uui-button>
+        </section>
+
+        ${e.history.length ? n`
+          <section class="card" aria-labelledby="history-heading">
+            <div class="card-head">
+              <span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-chart-curve"></uui-icon></span>
+              <h3 id="history-heading">Recent scans</h3>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <caption class="visually-hidden">The last ${e.history.length} scans</caption>
+                <thead><tr><th scope="col">Started</th><th scope="col">Target</th><th scope="col">Score</th><th scope="col" class="num">Pages</th><th scope="col">Status</th><th scope="col">By</th></tr></thead>
+                <tbody>
+                  ${e.history.map((i) => n`<tr>
+                    <td>${ze(i.startedUtc)}</td>
+                    <td>${i.target}</td>
+                    <td>${i.score === null ? n`<span class="muted">–</span>` : n`
+                      <span class="score-cell tone-${Ge(i.score)}">
+                        <span class="score-bar" aria-hidden="true"><span style=${pe({ width: `${i.score}%` })}></span></span>
+                        <span class="score-num">${i.score} %</span>
+                      </span>`}</td>
+                    <td class="num">${i.pagesDone}${i.pagesSkipped ? n` <span class="muted">(+${i.pagesSkipped} skipped)</span>` : l}</td>
+                    <td><span class="tag ${wt[i.status]}">${lt(i.status)}</span></td>
+                    <td>${i.userName}</td>
+                  </tr>`)}
+                </tbody>
+              </table>
+            </div>
+          </section>` : l}
         <div id="frames" aria-hidden="true"></div>
       </div>`;
   }
 };
-H = /* @__PURE__ */ new WeakMap();
-S = /* @__PURE__ */ new WeakSet();
-Se = async function() {
-  const { data: e, error: t } = await x(this, ts(this.siteKey), { disableNotifications: !0 });
+j = /* @__PURE__ */ new WeakMap();
+y = /* @__PURE__ */ new WeakSet();
+Te = async function() {
+  const { data: e, error: t } = await C(this, oi(this.siteKey), { disableNotifications: !0 });
   if (t || !e) {
     this._error = "Could not load the accessibility overview.";
     return;
   }
   this._error = null, this._overview = e;
 };
-_e = async function(e) {
+Ce = async function(e) {
   if (!this.settings) return;
-  const t = this.settings.settings, s = tt(t.version, t.level, t.scan.bestPractice), a = this.renderRoot.querySelector("#frames");
-  je(this, H, new Ts({
+  const t = this.settings.settings, i = nt(t.version, t.level, t.scan.bestPractice), s = this.renderRoot.querySelector("#frames");
+  Qe(this, j, new Mi({
     origin: location.origin,
-    getPages: (i) => ae(Ht(i)),
-    startScan: async (i, n, o) => (await ae(Jt(i, n, o))).scanId,
-    getDone: (i) => ae(Yt(i)),
-    postPage: async (i, n) => {
-      await ae(Qt(i, n));
+    getPages: (a) => ae(Zt(a)),
+    startScan: async (a, r, o) => (await ae(ii(a, r, o))).scanId,
+    getDone: (a) => ae(si(a)),
+    postPage: async (a, r) => {
+      await ae(ai(a, r));
     },
-    finishScan: (i, n) => ae(Zt(i, n)),
-    runJob: (i) => rt(i, a, { axeUrl: Rs, tags: s, settleMs: 1e3, timeoutMs: 3e4 })
+    finishScan: (a, r) => ae(ni(a, r)),
+    runJob: (a) => dt(a, s, { axeUrl: Ki, tags: i, settleMs: 1e3, timeoutMs: 3e4 })
   })), this._run = null, this._scanError = null, this._progress = { done: 0, total: 0, current: [] };
   try {
-    this._run = await Ee(this, H).start(this.siteKey, As(t.scan.mobileWidth, e), (i) => this._progress = i);
-  } catch (i) {
-    this._scanError = i instanceof Error ? i.message : "The scan could not start.";
+    this._run = await Pe(this, j).start(this.siteKey, Ii(t.scan.mobileWidth, e), (a) => this._progress = a);
+  } catch (a) {
+    this._scanError = a instanceof Error ? a.message : "The scan could not start.";
   } finally {
-    this._progress = null, je(this, H, null), await O(this, S, Se).call(this);
+    this._progress = null, Qe(this, j, null), await _(this, y, Te).call(this);
   }
 };
-lt = function() {
-  Ee(this, H)?.cancel();
+ht = function() {
+  Pe(this, j)?.cancel();
 };
-ct = function(e) {
-  const t = e.score.percent, s = us(t), a = ($.size - $.stroke) / 2, i = 2 * Math.PI * a, n = (t ?? 0) / 100 * i, o = ds(e.score), h = t === null ? "No score yet" : `Score ${t} percent, ${be(e.target)}, ${We[s]}`;
-  return r`
-      <figure class="ring ${s ?? "none"}" role="img" aria-label=${h}>
-        <svg width=${$.size} height=${$.size} viewBox="0 0 ${$.size} ${$.size}" aria-hidden="true">
-          <circle class="track" cx=${$.size / 2} cy=${$.size / 2} r=${a} stroke-width=${$.stroke} fill="none"></circle>
-          <circle class="fill" cx=${$.size / 2} cy=${$.size / 2} r=${a} stroke-width=${$.stroke} fill="none"
-            stroke-dasharray="${n} ${i}" stroke-linecap="round"
-            transform="rotate(-90 ${$.size / 2} ${$.size / 2})"></circle>
+gt = function(e, t) {
+  const i = e.score.percent, s = (T.size - T.stroke) / 2, a = 2 * Math.PI * s, r = (i ?? 0) / 100 * a, o = i === null ? "No score yet" : `Score ${i} percent, ${we(e.target)}, ${$e[t]}`, c = T.size / 2;
+  return n`
+      <figure class="ring" role="img" aria-label=${o}>
+        <svg width=${T.size} height=${T.size} viewBox="0 0 ${T.size} ${T.size}" aria-hidden="true">
+          <defs>
+            <linearGradient id="ring-gradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" class="stop-a"></stop>
+              <stop offset="100%" class="stop-b"></stop>
+            </linearGradient>
+          </defs>
+          <circle class="track" cx=${c} cy=${c} r=${s} stroke-width=${T.stroke} fill="none"></circle>
+          <circle class="fill ${i ? "" : "empty"}" cx=${c} cy=${c} r=${s} stroke-width=${T.stroke} fill="none" stroke="url(#ring-gradient)"
+            stroke-dasharray="${r} ${a}" stroke-linecap="round" transform="rotate(-90 ${c} ${c})"></circle>
         </svg>
         <div class="ring-text" aria-hidden="true">
-          <span class="ring-value">${t === null ? "–" : `${t}%`}</span>
-          <span class="ring-target">${be(e.target)}</span>
+          <span class="ring-value">${i === null ? "–" : `${i}%`}</span>
+          <span class="muted small">${we(e.target)}</span>
         </div>
-        <figcaption aria-hidden="true" class="ring-band">
-          ${s ? r`<uui-icon name=${s === "good" ? "icon-check" : s === "warning" ? "icon-alert" : "icon-wrong"}></uui-icon> ${We[s]}` : "Not scanned yet"}
+        <figcaption aria-hidden="true">
+          ${t ? n`<span class="tag tone-${t}"><uui-icon name=${vi[t]}></uui-icon>${$e[t]}</span>` : n`<span class="tag">Not scanned yet</span>`}
         </figcaption>
-      </figure>
-      <div class="ring-facts">
-        <span><strong>${e.score.pass}</strong> pass</span>
-        <span><strong>${e.score.fail}</strong> fail</span>
-        <span><strong>${e.score.notVerified}</strong> not verified:</span>
-        <span class="sub"><strong>${o.toConfirm}</strong> checked by the scanner, confirm by hand</span>
-        <span class="sub"><strong>${o.personOnly}</strong> only a person can check</span>
-        ${e.score.notApplicable ? r`<span><strong>${e.score.notApplicable}</strong> not applicable</span>` : l}
-        <details>
-          <summary>Why isn't this 100 %?</summary>
+      </figure>`;
+};
+ft = function(e) {
+  const t = mi(e.score);
+  return n`
+      <div class="facts">
+        <ul class="fact-list">
+          <li><span class="dot tone-good" aria-hidden="true"></span><strong>${e.score.pass}</strong> pass</li>
+          <li><span class="dot tone-critical" aria-hidden="true"></span><strong>${e.score.fail}</strong> fail</li>
+          <li><span class="dot tone-none" aria-hidden="true"></span><strong>${e.score.notVerified}</strong> not verified:</li>
+          <li class="sub"><strong>${t.toConfirm}</strong> checked by the scanner, confirm by hand</li>
+          <li class="sub"><strong>${t.personOnly}</strong> only a person can check</li>
+          ${e.score.notApplicable ? n`<li><span class="dot" aria-hidden="true"></span><strong>${e.score.notApplicable}</strong> not applicable</li>` : l}
+        </ul>
+        <details class="disclosure why">
+          <summary><uui-icon class="chevron" name="icon-navigation-right" aria-hidden="true"></uui-icon>Why isn't this 100 %?</summary>
           <p>A criterion only counts as passed when someone has confirmed it in the manual checklist, or when the scanner can check it completely (very few can). Automated tests find only part of the problems, so a clean scan alone never scores 100 %.</p>
           <p>“Checked by the scanner” means its rules for the criterion found nothing wrong, but they test only the mechanical part (that an image has alt text, not that the text describes it). Start with those: they are usually quick to confirm. The rest, such as captions, keyboard use and reading order, only a person can check.</p>
         </details>
       </div>`;
 };
-ut = function(e) {
-  return r`<p>Target: <strong>${be(e.target)}</strong></p>`;
-};
-dt = function(e) {
+vt = function(e) {
   const t = e.lastScan;
-  return t ? r`<p>
-      Last scan: ${xe(t.startedUtc)} · ${t.pagesDone} ${t.pagesDone === 1 ? "page" : "pages"}${t.pagesSkipped ? ` (${t.pagesSkipped} skipped)` : ""}${t.pagesFailed ? ` · ${t.pagesFailed} failed` : ""} · by ${t.userName}
-      ${t.status !== "complete" ? r` · <span class="tag">${at(t.status)}</span>` : l}
-    </p>` : r`<p class="muted">This site hasn't been scanned yet.</p>`;
+  return n`
+      <ul class="meta" aria-label="Last scan">
+        <li class="chip"><uui-icon name="icon-shield" aria-hidden="true"></uui-icon>Target ${we(e.target)}</li>
+        ${t ? n`
+          <li class="chip"><uui-icon name="icon-calendar" aria-hidden="true"></uui-icon>${ze(t.startedUtc)}</li>
+          <li class="chip"><uui-icon name="icon-documents" aria-hidden="true"></uui-icon>${t.pagesDone} ${t.pagesDone === 1 ? "page" : "pages"}${t.pagesSkipped ? ` · ${t.pagesSkipped} skipped` : ""}</li>
+          ${t.pagesFailed ? n`<li class="chip"><uui-icon name="icon-alert" aria-hidden="true"></uui-icon>${t.pagesFailed} failed</li>` : l}
+          <li class="chip"><uui-icon name="icon-user" aria-hidden="true"></uui-icon>By ${t.userName}</li>
+          ${t.status !== "complete" ? n`<li class="tag ${wt[t.status]}">${lt(t.status)}</li>` : l}` : l}
+      </ul>
+      ${t ? l : n`<p class="muted">This site hasn't been scanned yet.</p>`}`;
 };
-ht = function(e) {
-  const t = this._progress !== null, s = e.lastScan && e.lastScan.status !== "complete" ? e.lastScan : null;
-  return r`<div class="row">
-      <uui-button look="primary" color="positive" label="Scan now" ?disabled=${t} @click=${() => O(this, S, _e).call(this)}></uui-button>
-      ${s && !t ? r`<uui-button look="secondary" label="Resume last scan" @click=${() => O(this, S, _e).call(this, s)}></uui-button>` : l}
-      ${t ? r`<uui-button look="secondary" label="Cancel scan" @click=${O(this, S, lt)}></uui-button>` : l}
+mt = function(e) {
+  const t = this._progress !== null, i = e.lastScan && e.lastScan.status !== "complete" ? e.lastScan : null;
+  return n`<div class="row">
+      <uui-button look="primary" label="Scan now" ?disabled=${t} @click=${() => _(this, y, Ce).call(this)}>
+        <uui-icon name="icon-sync" aria-hidden="true"></uui-icon>&nbsp;Scan now
+      </uui-button>
+      ${i && !t ? n`<uui-button look="secondary" label="Resume last scan" @click=${() => _(this, y, Ce).call(this, i)}></uui-button>` : l}
+      ${t ? n`<uui-button look="secondary" label="Cancel scan" @click=${_(this, y, ht)}></uui-button>` : l}
     </div>
-    <p class="muted small">Pages load in hidden frames in your browser, so keep this dashboard open while scanning. Browsers slow down background tabs: a scan runs fastest while this tab is in front. Leaving the dashboard stops the scan; “Resume last scan” continues it.</p>`;
+    <p class="muted small help">Pages load in hidden frames in your browser, so keep this dashboard open while scanning. Browsers slow down background tabs: a scan runs fastest while this tab is in front. Leaving the dashboard stops the scan; “Resume last scan” continues it.</p>`;
 };
-pt = function() {
+bt = function() {
   const e = this._progress;
   if (!e) return l;
   const t = e.current[0] ? new URL(e.current[0]).pathname : "";
-  return r`
+  return n`
       <div class="progress">
-        <uui-loader-bar progress=${e.total ? Math.round(e.done / e.total * 100) : 0}></uui-loader-bar>
+        <div class="progress-bar" aria-hidden="true"><span style=${pe({ width: `${e.total ? Math.round(e.done / e.total * 100) : 0}%` })}></span></div>
         <p role="status">${e.total ? `Scanning page ${Math.min(e.done + 1, e.total)} of ${e.total}${t ? `: ${t}` : ""}` : "Getting the list of pages…"}</p>
       </div>`;
 };
-ft = function() {
-  const e = this._run;
-  return r`
-      ${this._scanError ? r`<p class="error" role="alert">${this._scanError}</p>` : l}
-      ${e?.blocked ? r`
-        <div class="notice" role="alert">
-          <h4>Pages can't be loaded for scanning</h4>
-          <p>${e.blocked.reason ?? e.blocked.message}</p>
-          <p>The scan loads each page in a frame on this site and runs axe-core in it, so the site must allow same-origin framing
-          (<code>X-Frame-Options: SAMEORIGIN</code> or <code>Content-Security-Policy: frame-ancestors 'self'</code>, not DENY / 'none')
-          and scripts from its own origin (<code>script-src 'self'</code>).</p>
-        </div>` : l}
-      ${e?.paused ? r`
-        <div class="notice" role="alert">
-          <h4>The scan was paused</h4>
-          <p>Results couldn't be saved (${e.paused.message}). Everything up to now is kept; use “Resume last scan” to continue.</p>
-        </div>` : l}
-      ${e?.mostlyFailed ? r`
-        <div class="notice" role="alert">
-          <h4>Most pages couldn't be scanned</h4>
-          <p>The scan was saved as incomplete so it doesn't replace your last full report. Check that the site is up, then use “Resume last scan” or scan again. Failed pages and reasons are listed in each page result.</p>
-        </div>` : l}
-      ${e?.otherOrigins.length ? r`<p class="muted">${ks(e.otherOrigins, location.origin)}</p>` : l}`;
+de = function(e, t) {
+  return n`
+      <div class="banner tone-critical" role="alert">
+        <span class="icon-badge solid round" aria-hidden="true"><uui-icon name="icon-alert"></uui-icon></span>
+        <div><h4>${e}</h4>${t}</div>
+      </div>`;
 };
-L.styles = [se, X`
-    .hero { display: flex; flex-wrap: wrap; gap: var(--uui-size-layout-2); align-items: center; }
-    .ring { position: relative; margin: 0; width: ${$.size}px; display: grid; justify-items: center; gap: var(--uui-size-space-2); }
-    .ring svg { display: block; }
-    .ring .track { stroke: var(--uui-color-surface-alt); }
-    .ring.good .fill { stroke: var(--a11y-good); }
-    .ring.good .track { stroke: color-mix(in srgb, var(--a11y-good) 22%, transparent); }
-    .ring.warning .fill { stroke: var(--a11y-warning); }
-    .ring.warning .track { stroke: color-mix(in srgb, var(--a11y-warning) 22%, transparent); }
-    .ring.critical .fill { stroke: var(--a11y-critical); }
-    .ring.critical .track { stroke: color-mix(in srgb, var(--a11y-critical) 22%, transparent); }
-    .ring-text { position: absolute; top: 0; height: ${$.size}px; display: grid; place-content: center; text-align: center; }
-    .ring-value { font-size: 48px; font-weight: 600; line-height: 1; }
-    .ring-target { color: var(--uui-color-text-alt); font-size: 0.85rem; margin-top: 4px; }
-    .ring-band { display: flex; gap: 4px; align-items: center; font-weight: 600; }
-    .ring-facts { display: grid; gap: 2px; min-width: 12rem; }
-    .ring-facts .sub { padding-left: var(--uui-size-space-4); }
-    .ring-facts details { margin-top: var(--uui-size-space-2); max-width: 28rem; }
-    .small { font-size: 0.85rem; line-height: 1.5; margin: var(--uui-size-space-5) 0 0; max-width: 40rem; }
-    .progress { margin-top: var(--uui-size-space-4); }
-    .notice { margin-top: var(--uui-size-space-4); padding: var(--uui-size-space-4); border-left: 4px solid var(--uui-color-danger); background: var(--uui-color-surface-alt); }
-    .section-title { margin-bottom: var(--uui-size-space-3); }
-    .tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--uui-size-space-4); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
-    .tile {
-      width: 100%; min-height: 44px; display: grid; gap: 4px; text-align: left; cursor: pointer;
-      padding: var(--uui-size-space-5); border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text); font: inherit;
+yt = function() {
+  const e = this._run;
+  return n`
+      ${this._scanError ? n`<p class="error" role="alert">${this._scanError}</p>` : l}
+      ${e?.blocked ? _(this, y, de).call(this, "Pages can't be loaded for scanning", n`
+        <p>${e.blocked.reason ?? e.blocked.message}</p>
+        <p>The scan loads each page in a frame on this site and runs axe-core in it, so the site must allow same-origin framing
+        (<code>X-Frame-Options: SAMEORIGIN</code> or <code>Content-Security-Policy: frame-ancestors 'self'</code>, not DENY / 'none')
+        and scripts from its own origin (<code>script-src 'self'</code>).</p>`) : l}
+      ${e?.paused ? _(this, y, de).call(this, "The scan was paused", n`
+        <p>Results couldn't be saved (${e.paused.message}). Everything up to now is kept; use “Resume last scan” to continue.</p>`) : l}
+      ${e?.mostlyFailed ? _(this, y, de).call(this, "Most pages couldn't be scanned", n`
+        <p>The scan was saved as incomplete so it doesn't replace your last full report. Check that the site is up, then use “Resume last scan” or scan again. Failed pages and reasons are listed in each page result.</p>`) : l}
+      ${e?.otherOrigins.length ? n`<p class="muted">${Ai(e.otherOrigins, location.origin)}</p>` : l}`;
+};
+N.styles = [ie, X`
+    .hero-card {
+      padding: var(--uui-size-space-6);
+      background: radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--tone) 16%, var(--uui-color-surface)) 0%, var(--uui-color-surface) 62%);
+      border-color: color-mix(in srgb, var(--tone) 30%, var(--a11y-line));
     }
-    .tile:hover { border-color: var(--uui-color-border-emphasis); }
-    .tile-label { color: var(--uui-color-text-alt); }
-    .tile-value { font-size: 1.25rem; font-weight: 600; }
+    .hero-card.tone-good { --ring-a: #4ade80; --ring-b: var(--a11y-good); }
+    .hero-card.tone-warning { --ring-a: #fcd34d; --ring-b: #ea7c0c; }
+    .hero-card.tone-critical { --ring-a: #fb7185; --ring-b: var(--a11y-critical); }
+    /* Columns have fixed shares and align to the top, so opening "Why isn't this 100 %?" only makes the middle column
+       taller: it never widens it (which wrapped the scan column underneath) or re-centres the ring. */
+    .hero { display: flex; flex-wrap: wrap; gap: var(--uui-size-layout-2); align-items: flex-start; }
+    .hero-body { flex: 1 1 20rem; min-width: 0; }
+    .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--a11y-muted); }
+    .hero-title { font-size: 28px; font-weight: 800; letter-spacing: -0.015em; line-height: 1.2; margin-top: 2px; }
+    .ring { position: relative; margin: 0; width: ${T.size}px; display: grid; justify-items: center; gap: var(--uui-size-space-3); }
+    .ring svg { display: block; filter: drop-shadow(0 8px 18px color-mix(in srgb, var(--tone) 30%, transparent)); }
+    .ring .track { stroke: color-mix(in srgb, var(--tone) 24%, var(--uui-color-surface)); }
+    .ring .fill.empty { display: none; }
+    .stop-a { stop-color: var(--ring-a, var(--tone)); }
+    .stop-b { stop-color: var(--ring-b, var(--tone)); }
+    .ring-text { position: absolute; top: 0; height: ${T.size}px; display: grid; place-content: center; text-align: center; gap: 2px; }
+    .ring-value { font-size: 48px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+
+    .facts { flex: 0 1 26rem; min-width: 12rem; display: grid; gap: var(--uui-size-space-3); }
+    .fact-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+    .fact-list li { display: flex; gap: var(--uui-size-space-2); align-items: center; }
+    .fact-list strong { font-variant-numeric: tabular-nums; }
+    .fact-list .sub { padding-left: calc(10px + var(--uui-size-space-2) + var(--uui-size-space-4)); }
+    .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--tone, var(--a11y-line)); }
+    .why > p { margin-top: var(--uui-size-space-3); color: var(--a11y-muted); }
+    .meta { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); }
+    .help { max-width: 40rem; line-height: 1.5; }
+    .progress { display: grid; gap: var(--uui-size-space-2); margin-top: var(--uui-size-space-5); }
+    .banner h4 { font-size: 15px; }
+    .banner code { white-space: nowrap; }
+
+    .tiles { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--a11y-gap); grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+    .tile {
+      font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%;
+      display: flex; gap: var(--uui-size-space-4); align-items: center; min-height: 96px; padding: var(--uui-size-space-4) var(--uui-size-space-5);
+      border-radius: var(--a11y-radius); border: 1px solid color-mix(in srgb, var(--tone) 35%, var(--a11y-line));
+      background: linear-gradient(135deg, color-mix(in srgb, var(--tone) 14%, var(--uui-color-surface)), var(--uui-color-surface) 78%);
+      box-shadow: var(--a11y-shadow);
+    }
+    .tile:hover { border-color: var(--tone); }
+    .tile .icon-badge { width: 44px; height: 44px; font-size: 22px; box-shadow: 0 6px 14px -6px var(--tone); }
+    .tile-text { display: grid; flex: 1; gap: 2px; }
+    .tile-label { font-size: 13px; font-weight: 700; color: var(--a11y-muted); }
+    .tile-value { font-size: 22px; font-weight: 800; line-height: 1.15; letter-spacing: -0.01em; }
+    .tile-go { color: var(--a11y-muted); transition: transform var(--a11y-ease); }
+    .tile:hover .tile-go { transform: translateX(3px); }
+
+    .results { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-5) var(--uui-size-layout-2); align-items: center; }
+    .result { display: flex; gap: var(--uui-size-space-3); align-items: center; }
+    .result .grow { display: grid; gap: 4px; min-width: 14rem; }
+    .result-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--a11y-muted); }
+    .results > uui-button { margin-left: auto; }
+
+    .score-cell { display: flex; gap: var(--uui-size-space-3); align-items: center; min-width: 10rem; max-width: 16rem; }
+    .score-bar { flex: 1; height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 15%, var(--uui-color-surface)); overflow: hidden; }
+    .score-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--tone); }
+    .score-num { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
     #frames { position: relative; height: 0; overflow: hidden; }
   `];
 W([
-  M({ attribute: !1 })
-], L.prototype, "siteKey", 2);
+  L({ attribute: !1 })
+], N.prototype, "siteKey", 2);
 W([
-  M({ attribute: !1 })
-], L.prototype, "settings", 2);
+  L({ attribute: !1 })
+], N.prototype, "settings", 2);
 W([
-  d()
-], L.prototype, "_overview", 2);
+  p()
+], N.prototype, "_overview", 2);
 W([
-  d()
-], L.prototype, "_error", 2);
+  p()
+], N.prototype, "_error", 2);
 W([
-  d()
-], L.prototype, "_progress", 2);
+  p()
+], N.prototype, "_progress", 2);
 W([
-  d()
-], L.prototype, "_run", 2);
+  p()
+], N.prototype, "_run", 2);
 W([
-  d()
-], L.prototype, "_scanError", 2);
-L = W([
+  p()
+], N.prototype, "_scanError", 2);
+N = W([
   ee("esatto-a11y-overview")
-], L);
-var Is = Object.defineProperty, Ls = Object.getOwnPropertyDescriptor, gt = (e) => {
+], N);
+var Fi = Object.defineProperty, Wi = Object.getOwnPropertyDescriptor, $t = (e) => {
   throw TypeError(e);
-}, K = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? Ls(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && Is(t, s, i), i;
-}, Ns = (e, t, s) => t.has(e) || gt("Cannot " + s), Ms = (e, t, s) => t.has(e) ? gt("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), A = (e, t, s) => (Ns(e, t, "access private method"), s), w, le, we, Ae, vt, mt, bt, $t, yt;
-const Us = "/App_Plugins/Esatto.Umbraco.Backoffice.Accessibility/axe.min.js", Ks = 1024;
-let z = class extends te {
+}, K = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? Wi(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && Fi(t, i, a), a;
+}, Bi = (e, t, i) => t.has(e) || $t("Cannot " + i), Vi = (e, t, i) => t.has(e) ? $t("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), z = (e, t, i) => (Bi(e, t, "access private method"), i), x, le, Se, Oe, xt, _t, kt, Ct, St;
+const qi = "/App_Plugins/Esatto.Umbraco.Backoffice.Accessibility/axe.min.js", Gi = 1024;
+let O = class extends te {
   constructor() {
-    super(...arguments), Ms(this, w), this.siteKey = "", this.settings = null, this._pending = null, this._note = "", this._noteError = !1, this._rechecking = null, this._message = null;
+    super(...arguments), Vi(this, x), this.siteKey = "", this.settings = null, this._pending = null, this._note = "", this._noteError = !1, this._rechecking = null, this._message = null;
   }
   firstUpdated() {
     this.renderRoot.querySelector("h3")?.focus();
   }
   render() {
     const e = this.group;
-    return r`
-      <div class="stack">
-        <uui-button look="secondary" label="Back to all issues" @click=${() => this.dispatchEvent(new CustomEvent("back"))}>← Back to all issues</uui-button>
-        <h3 tabindex="-1">${e.title}</h3>
-        <p class="facts">
-          ${e.criteria.length ? r`<strong>WCAG ${e.criteria.join(", ")}</strong> · Level ${it(e.level)} ·` : r`<strong>Best practice</strong> ·`}
-          ${e.kind === "incomplete" ? r`<span class="tag">Needs review</span> ·` : l}
-          ${e.pageCount} ${e.pageCount === 1 ? "page" : "pages"} (${e.elementCount} ${e.elementCount === 1 ? "element" : "elements"}) ·
-          Who fixes: <strong>${e.owner}</strong>${e.impact ? r` · Impact: ${e.impact}` : l}
-        </p>
-        ${this._message ? r`<p role="status" class="message">${this._message}</p>` : l}
+    return n`
+      <div class="page">
+        <div class="head">
+          <uui-button look="secondary" compact label="Back to all issues" @click=${() => this.dispatchEvent(new CustomEvent("back"))}>
+            <uui-icon name="icon-arrow-left" aria-hidden="true"></uui-icon>&nbsp;Back to all issues
+          </uui-button>
+          <h3 tabindex="-1">${e.title}</h3>
+          <ul class="meta" aria-label="About this issue">
+            ${e.criteria.length ? n`<li class="tag tone-notice">WCAG ${e.criteria.join(", ")}</li><li class="tag">Level ${ot(e.level)}</li>` : n`<li class="tag">Best practice</li>`}
+            ${e.kind === "incomplete" ? n`<li class="tag tone-warning">Needs review</li>` : l}
+            ${e.impact ? n`<li class="tag ${xe[e.impact] ?? ""}">Impact: ${e.impact}</li>` : l}
+            <li class="chip"><uui-icon name="icon-documents" aria-hidden="true"></uui-icon>${e.pageCount} ${e.pageCount === 1 ? "page" : "pages"} (${e.elementCount} ${e.elementCount === 1 ? "element" : "elements"})</li>
+            <li class="chip"><uui-icon name=${ct[e.owner]} aria-hidden="true"></uui-icon>Who fixes: ${e.owner}</li>
+          </ul>
+        </div>
+        ${this._message ? n`
+          <div role="status" class="banner compact tone-good">
+            <span class="icon-badge solid round" aria-hidden="true"><uui-icon name="icon-check"></uui-icon></span>
+            <div><p>${this._message}</p></div>
+          </div>` : l}
 
-        <uui-box>
-          <div class="guide">
-            <h4>Why it matters</h4><p>${e.why}</p>
-            <h4>How to fix</h4><p>${e.howToFix}</p>
-            ${e.caveats ? r`<h4>Caveats</h4><p>${e.caveats}</p>` : l}
-          </div>
-        </uui-box>
-        ${e.kind === "incomplete" ? r`<p class="muted">The scanner couldn't decide these automatically. Check each one by hand; mark it as a false positive if it's fine.</p>` : l}
-        ${re(e.learnMoreUrl) ? r`<p><a href=${re(e.learnMoreUrl)} target="_blank" rel="noopener">${e.criteria.length ? `Read W3C's “Understanding ${e.criteria[0]}”` : "Read more about this rule"}<span class="visually-hidden"> (opens in a new tab)</span></a></p>` : l}
+        <div class="explain">
+          <section class="note"><h4><uui-icon name="icon-info" aria-hidden="true"></uui-icon>Why it matters</h4><p>${e.why}</p></section>
+          <section class="note fix"><h4><uui-icon name="icon-wand" aria-hidden="true"></uui-icon>How to fix</h4><p>${e.howToFix}</p></section>
+          ${e.caveats ? n`<section class="note"><h4><uui-icon name="icon-lightbulb-active" aria-hidden="true"></uui-icon>Caveats</h4><p>${e.caveats}</p></section>` : l}
+        </div>
+        ${e.kind === "incomplete" ? n`<p class="muted">The scanner couldn't decide these automatically. Check each one by hand; mark it as a false positive if it's fine.</p>` : l}
+        ${ne(e.learnMoreUrl) ? n`<p><a class="learn" href=${ne(e.learnMoreUrl)} target="_blank" rel="noopener">${e.criteria.length ? `Read W3C's “Understanding ${e.criteria[0]}”` : "Read more about this rule"}<span class="visually-hidden"> (opens in a new tab)</span><uui-icon name="icon-arrow-right" aria-hidden="true"></uui-icon></a></p>` : l}
 
-        <h4>Where it occurs</h4>
-        ${e.pages.map((t) => A(this, w, $t).call(this, t))}
+        <section aria-labelledby="where-heading">
+          <h4 id="where-heading" class="section-label">Where it occurs</h4>
+          <div class="occurrences">${e.pages.map((t) => z(this, x, Ct).call(this, t))}</div>
+        </section>
         <div id="frames" aria-hidden="true"></div>
       </div>
-      ${A(this, w, yt).call(this)}`;
+      ${z(this, x, St).call(this)}`;
   }
 };
-w = /* @__PURE__ */ new WeakSet();
+x = /* @__PURE__ */ new WeakSet();
 le = function() {
   this.dispatchEvent(new CustomEvent("changed", { bubbles: !0, composed: !0 }));
 };
-we = function(e, t) {
+Se = function(e, t) {
   this._pending = { page: e, node: t }, this._note = "", this._noteError = !1, this.updateComplete.then(() => this.renderRoot.querySelector("dialog")?.showModal());
 };
-Ae = function() {
+Oe = function() {
   this.renderRoot.querySelector("dialog")?.close(), this._pending = null;
 };
-vt = async function() {
+xt = async function() {
   if (!this._pending) return;
   if (!this._note.trim()) {
     this._noteError = !0, this.renderRoot.querySelector("#fp-note")?.focus();
     return;
   }
-  const { page: e, node: t } = this._pending, { error: s } = await x(this, ns(this.siteKey, {
+  const { page: e, node: t } = this._pending, { error: i } = await C(this, pi(this.siteKey, {
     ruleId: this.group.ruleId,
     contentKey: e.contentKey,
     selector: t?.selector ?? null,
     note: this._note.trim()
   }));
-  s || (A(this, w, Ae).call(this), this._message = "Marked as a false positive.", A(this, w, le).call(this));
+  i || (z(this, x, Oe).call(this), this._message = "Marked as a false positive.", z(this, x, le).call(this));
 };
-mt = async function(e) {
-  const { error: t } = await x(this, os(e));
-  t || (this._message = "False positive removed.", A(this, w, le).call(this));
+_t = async function(e) {
+  const { error: t } = await C(this, hi(e));
+  t || (this._message = "False positive removed.", z(this, x, le).call(this));
 };
-bt = async function(e) {
+kt = async function(e) {
   if (!this.settings) return;
   const t = this.settings.settings;
   this._rechecking = e.contentKey, this._message = null;
-  const s = this.renderRoot.querySelector("#frames");
-  for (const a of Ps(e)) {
-    const i = await rt(a, s, { axeUrl: Us, tags: tt(t.version, t.level, t.scan.bestPractice), settleMs: 1e3, timeoutMs: 3e4 });
-    if (i.kind !== "ok" || !i.result) {
-      this._message = `Re-check failed at ${a.viewport} px: ${i.reason ?? i.kind}.`, this._rechecking = null, A(this, w, le).call(this);
+  const i = this.renderRoot.querySelector("#frames");
+  for (const s of Ni(e)) {
+    const a = await dt(s, i, { axeUrl: qi, tags: nt(t.version, t.level, t.scan.bestPractice), settleMs: 1e3, timeoutMs: 3e4 });
+    if (a.kind !== "ok" || !a.result) {
+      this._message = `Re-check failed at ${s.viewport} px: ${a.reason ?? a.kind}.`, this._rechecking = null, z(this, x, le).call(this);
       return;
     }
-    const { error: n } = await x(this, es(this.siteKey, i.result));
-    if (n) {
+    const { error: r } = await C(this, ri(this.siteKey, a.result));
+    if (r) {
       this._rechecking = null;
       return;
     }
   }
-  this._rechecking = null, this._message = `${e.name} was re-checked.`, A(this, w, le).call(this);
+  this._rechecking = null, this._message = `${e.name} was re-checked.`, z(this, x, le).call(this);
 };
-$t = function(e) {
-  const t = this._rechecking === e.contentKey;
-  return r`
-      <uui-box>
-        <div slot="headline" class="page-head">
-          <span>${e.name}</span> <span class="muted">${re(e.url) ? new URL(e.url).pathname : ""}</span>
+Ct = function(e) {
+  const t = this._rechecking === e.contentKey, i = ne(e.url) ? new URL(e.url).pathname : "";
+  return n`
+      <article class="card occurrence" aria-label=${e.name}>
+        <div class="card-head">
+          <span class="icon-badge tone-none" aria-hidden="true"><uui-icon name="icon-document"></uui-icon></span>
+          <h4>${e.name}</h4>
+          ${i ? n`<span class="chip url">${i}</span>` : l}
+          <span class="chip end">${e.nodes.length} ${e.nodes.length === 1 ? "element" : "elements"}</span>
         </div>
         <div class="row actions">
-          <a href=${hs(e.contentKey, e.culture)}>Edit page in Umbraco</a>
-          ${re(e.url) ? r`<a href=${re(e.url)} target="_blank" rel="noopener">View on page<span class="visually-hidden"> (opens in a new tab)</span></a>` : l}
-          <uui-button compact look="secondary" label="Re-check this page" ?disabled=${t} @click=${() => A(this, w, bt).call(this, e)}>${t ? "Re-checking…" : "Re-check this page"}</uui-button>
-          ${e.nodes.some((s) => s.falsePositiveId) ? l : r`<uui-button compact look="secondary" label="Mark all on this page as false positive" @click=${() => A(this, w, we).call(this, e, null)}></uui-button>`}
+          <a class="action" href=${bi(e.contentKey, e.culture)}><uui-icon name="icon-edit" aria-hidden="true"></uui-icon>Edit page in Umbraco</a>
+          ${ne(e.url) ? n`<a class="action" href=${ne(e.url)} target="_blank" rel="noopener"><uui-icon name="icon-out" aria-hidden="true"></uui-icon>View on page<span class="visually-hidden"> (opens in a new tab)</span></a>` : l}
+          <uui-button compact look="secondary" label="Re-check this page" ?disabled=${t} @click=${() => z(this, x, kt).call(this, e)}>${t ? "Re-checking…" : "Re-check this page"}</uui-button>
+          ${e.nodes.some((s) => s.falsePositiveId) ? l : n`<uui-button compact look="secondary" label="Mark all on this page as false positive" @click=${() => z(this, x, Se).call(this, e, null)}></uui-button>`}
         </div>
         <ul class="nodes">
-          ${e.nodes.map((s) => r`<li>
+          ${e.nodes.map((s) => n`<li>
             <pre>${s.html}</pre>
-            <p class="muted">Selector: <code>${s.selector}</code></p>
+            <p class="muted small">Selector: <code>${s.selector}</code></p>
             <div class="row">
-              ${s.mediaKey ? r`<a href=${ps(s.mediaKey)}>Edit image in Umbraco</a>` : l}
-              ${s.falsePositiveId ? r`<uui-button compact look="secondary" label="Undo false positive" @click=${() => A(this, w, mt).call(this, s.falsePositiveId)}></uui-button>` : r`<uui-button compact look="secondary" label="Mark as false positive" @click=${() => A(this, w, we).call(this, e, s)}></uui-button>`}
+              ${s.mediaKey ? n`<a class="action" href=${yi(s.mediaKey)}><uui-icon name="icon-picture" aria-hidden="true"></uui-icon>Edit image in Umbraco</a>` : l}
+              ${s.falsePositiveId ? n`<uui-button compact look="secondary" label="Undo false positive" @click=${() => z(this, x, _t).call(this, s.falsePositiveId)}></uui-button>` : n`<uui-button compact look="secondary" label="Mark as false positive" @click=${() => z(this, x, Se).call(this, e, s)}></uui-button>`}
             </div>
           </li>`)}
         </ul>
-      </uui-box>`;
+      </article>`;
 };
-yt = function() {
+St = function() {
   const e = this._pending;
-  return r`
+  return n`
       <dialog aria-labelledby="fp-title" @close=${() => this._pending = null}>
-        ${e ? r`
+        ${e ? n`
           <form method="dialog" @submit=${(t) => {
-    t.preventDefault(), A(this, w, vt).call(this);
+    t.preventDefault(), z(this, x, xt).call(this);
   }}>
             <h3 id="fp-title">Mark as false positive</h3>
-            <p>${e.node ? r`This element on <strong>${e.page.name}</strong>` : r`Every “${this.group.title}” finding on <strong>${e.page.name}</strong>`} will be hidden from the report and the score, now and in later scans.</p>
+            <p>${e.node ? n`This element on <strong>${e.page.name}</strong>` : n`Every “${this.group.title}” finding on <strong>${e.page.name}</strong>`} will be hidden from the report and the score, now and in later scans.</p>
             <label for="fp-note">Why is this not a problem? (required)</label>
-            <textarea id="fp-note" rows="3" maxlength=${Ks} aria-required="true" aria-invalid=${this._noteError ? "true" : "false"} aria-describedby=${this._noteError ? "fp-error" : l}
+            <textarea id="fp-note" rows="3" maxlength=${Gi} aria-required="true" aria-invalid=${this._noteError ? "true" : "false"} aria-describedby=${this._noteError ? "fp-error" : l}
               .value=${this._note} @input=${(t) => {
     this._note = t.target.value, this._noteError = !1;
   }}></textarea>
-            ${this._noteError ? r`<p id="fp-error" class="error">Write a short reason, so others know why.</p>` : l}
+            ${this._noteError ? n`<p id="fp-error" class="error">Write a short reason, so others know why.</p>` : l}
             <div class="row">
               <uui-button type="submit" look="primary" label="Mark as false positive"></uui-button>
-              <uui-button look="secondary" label="Cancel" @click=${A(this, w, Ae)}></uui-button>
+              <uui-button look="secondary" label="Cancel" @click=${z(this, x, Oe)}></uui-button>
             </div>
           </form>` : l}
       </dialog>`;
 };
-z.styles = [se, X`
-    h3:focus { outline: none; }
+O.styles = [ie, X`
+    .head { display: grid; gap: var(--uui-size-space-3); justify-items: start; }
+    .head h3 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.25; }
+    h3:focus, h4:focus { outline: none; }
     h3:focus-visible { outline: 2px solid var(--uui-color-focus); }
-    .facts { margin: 0; }
-    .guide { max-width: 60rem; }
-    .guide h4 { margin-top: var(--uui-size-space-4); }
-    .guide h4:first-child { margin-top: 0; }
-    .guide p { margin: var(--uui-size-space-2) 0 0; }
-    .message { padding: var(--uui-size-space-3); background: var(--uui-color-surface-alt); border-radius: var(--uui-border-radius); }
-    .page-head { display: flex; gap: var(--uui-size-space-3); flex-wrap: wrap; }
+    .meta { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); }
+
+    .explain { display: grid; gap: var(--uui-size-space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+    .note { display: grid; gap: var(--uui-size-space-2); align-content: start; padding: var(--uui-size-space-4); border-radius: var(--a11y-radius-sm); background: var(--a11y-wash); border: 1px solid var(--a11y-line); }
+    .note.fix { background: color-mix(in srgb, var(--a11y-good) 7%, var(--uui-color-surface)); border-color: color-mix(in srgb, var(--a11y-good) 30%, var(--a11y-line)); }
+    .note h4 { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+    .note h4 uui-icon { color: var(--a11y-muted); }
+    .learn, .action { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; }
+
+    .occurrences { display: grid; gap: var(--uui-size-space-3); }
+    .occurrence .card-head h4 { font-size: 15px; font-weight: 700; }
     .actions { margin-bottom: var(--uui-size-space-4); }
     .nodes { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--uui-size-space-4); }
-    .nodes li { border-top: 1px solid var(--uui-color-divider); padding-top: var(--uui-size-space-3); }
-    .nodes p { margin: var(--uui-size-space-2) 0; }
-    dialog { border: 1px solid var(--uui-color-border); border-radius: var(--uui-border-radius); padding: var(--uui-size-layout-1); max-width: 36rem; width: calc(100% - 2rem); background: var(--uui-color-surface); color: var(--uui-color-text); }
-    dialog::backdrop { background: rgb(0 0 0 / 0.4); }
+    .nodes li { display: grid; gap: var(--uui-size-space-2); border-top: 1px solid var(--a11y-line); padding-top: var(--uui-size-space-4); }
+
+    dialog {
+      border: 1px solid var(--a11y-line); border-radius: var(--a11y-radius); box-shadow: var(--a11y-shadow-raised);
+      padding: var(--uui-size-space-6); max-width: 36rem; width: calc(100% - 2rem); background: var(--uui-color-surface); color: var(--uui-color-text);
+    }
+    dialog::backdrop { background: rgb(0 0 0 / 0.45); }
     dialog form { display: grid; gap: var(--uui-size-space-3); }
-    textarea { font: inherit; padding: var(--uui-size-space-2); border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius); background: var(--uui-color-surface); color: var(--uui-color-text); }
+    dialog h3 { font-size: 18px; font-weight: 700; }
+    dialog label { font-size: 13px; font-weight: 600; }
     textarea[aria-invalid='true'] { border-color: var(--uui-color-danger); }
     #frames { position: relative; height: 0; overflow: hidden; }
   `];
 K([
-  M({ attribute: !1 })
-], z.prototype, "group", 2);
+  L({ attribute: !1 })
+], O.prototype, "group", 2);
 K([
-  M({ attribute: !1 })
-], z.prototype, "siteKey", 2);
+  L({ attribute: !1 })
+], O.prototype, "siteKey", 2);
 K([
-  M({ attribute: !1 })
-], z.prototype, "settings", 2);
+  L({ attribute: !1 })
+], O.prototype, "settings", 2);
 K([
-  d()
-], z.prototype, "_pending", 2);
+  p()
+], O.prototype, "_pending", 2);
 K([
-  d()
-], z.prototype, "_note", 2);
+  p()
+], O.prototype, "_note", 2);
 K([
-  d()
-], z.prototype, "_noteError", 2);
+  p()
+], O.prototype, "_noteError", 2);
 K([
-  d()
-], z.prototype, "_rechecking", 2);
+  p()
+], O.prototype, "_rechecking", 2);
 K([
-  d()
-], z.prototype, "_message", 2);
-z = K([
+  p()
+], O.prototype, "_message", 2);
+O = K([
   ee("esatto-a11y-issue-detail")
-], z);
-var Ds = Object.defineProperty, Fs = Object.getOwnPropertyDescriptor, _t = (e) => {
+], O);
+var ji = Object.defineProperty, Hi = Object.getOwnPropertyDescriptor, Et = (e) => {
   throw TypeError(e);
-}, D = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? Fs(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && Ds(t, s, i), i;
-}, Pe = (e, t, s) => t.has(e) || _t("Cannot " + s), Xe = (e, t, s) => (Pe(e, t, "read from private field"), s ? s.call(e) : t.get(e)), Je = (e, t, s) => t.has(e) ? _t("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), wt = (e, t, s, a) => (Pe(e, t, "write to private field"), t.set(e, s), s), y = (e, t, s) => (Pe(e, t, "access private method"), s), Q, f, de, Te, q, kt, xt, Ct, Et, St;
-const Ws = ["Perceivable", "Operable", "Understandable", "Robust"], Vs = ["critical", "serious", "moderate", "minor"], Oe = (e) => `${e.ruleId}|${e.kind}`;
+}, D = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? Hi(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && ji(t, i, a), a;
+}, Re = (e, t, i) => t.has(e) || Et("Cannot " + i), Ze = (e, t, i) => (Re(e, t, "read from private field"), i ? i.call(e) : t.get(e)), et = (e, t, i) => t.has(e) ? Et("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), zt = (e, t, i, s) => (Re(e, t, "write to private field"), t.set(e, i), i), w = (e, t, i) => (Re(e, t, "access private method"), i), Q, g, he, Ie, q, At, Pt, Tt, Ot, Rt;
+const Xi = ["Perceivable", "Operable", "Understandable", "Robust"], Ji = ["critical", "serious", "moderate", "minor"], Ne = (e) => `${e.ruleId}|${e.kind}`;
 let R = class extends te {
   constructor() {
-    super(...arguments), Je(this, f), this.siteKey = "", this.filter = {}, this.settings = null, this._filter = {}, this._groups = null, this._selected = null, this._detail = null, this._error = null, Je(this, Q, null);
+    super(...arguments), et(this, g), this.siteKey = "", this.filter = {}, this.settings = null, this._filter = {}, this._groups = null, this._selected = null, this._detail = null, this._error = null, et(this, Q, null);
   }
   willUpdate(e) {
     e.has("filter") && (this._filter = { ...this.filter });
   }
   updated(e) {
-    (e.has("siteKey") || e.has("filter")) && this.siteKey && y(this, f, de).call(this), e.has("_selected") && this._selected === null && Xe(this, Q) && (this.renderRoot.querySelector(`[data-group="${CSS.escape(Xe(this, Q))}"]`)?.focus(), wt(this, Q, null));
+    (e.has("siteKey") || e.has("filter")) && this.siteKey && w(this, g, he).call(this), e.has("_selected") && this._selected === null && Ze(this, Q) && (this.renderRoot.querySelector(`[data-group="${CSS.escape(Ze(this, Q))}"]`)?.focus(), zt(this, Q, null));
   }
   render() {
-    if (this._error) return r`<uui-box><p class="error">${this._error}</p></uui-box>`;
-    if (this._selected && !this._detail) return r`<uui-loader></uui-loader>`;
+    if (this._error) return n`<uui-box><p class="error">${this._error}</p></uui-box>`;
+    if (this._selected && !this._detail) return n`<uui-loader></uui-loader>`;
     const e = this._detail;
-    return this._selected && e ? r`<esatto-a11y-issue-detail .group=${e} .siteKey=${this.siteKey} .settings=${this.settings}
-        @back=${y(this, f, Ct)} @changed=${() => y(this, f, de).call(this)}></esatto-a11y-issue-detail>` : r`
-      <div class="stack">
-        ${y(this, f, Et).call(this)}
-        ${this._groups === null ? r`<uui-loader></uui-loader>` : y(this, f, St).call(this, this._groups)}
+    return this._selected && e ? n`<esatto-a11y-issue-detail .group=${e} .siteKey=${this.siteKey} .settings=${this.settings}
+        @back=${w(this, g, Tt)} @changed=${() => w(this, g, he).call(this)}></esatto-a11y-issue-detail>` : n`
+      <div class="page">
+        ${w(this, g, Ot).call(this)}
+        ${this._groups === null ? n`<uui-loader></uui-loader>` : w(this, g, Rt).call(this, this._groups)}
       </div>`;
   }
 };
 Q = /* @__PURE__ */ new WeakMap();
-f = /* @__PURE__ */ new WeakSet();
-de = async function() {
-  const { data: e, error: t } = await x(this, Ze(this.siteKey, this._filter), { disableNotifications: !0 });
+g = /* @__PURE__ */ new WeakSet();
+he = async function() {
+  const { data: e, error: t } = await C(this, st(this.siteKey, this._filter), { disableNotifications: !0 });
   if (t || !e) {
     this._error = "Could not load issues.";
     return;
   }
-  this._error = null, this._groups = e, this._selected && !e.some((s) => Oe(s) === this._selected) && (this._selected = null), this._selected && await y(this, f, Te).call(this);
+  this._error = null, this._groups = e, this._selected && !e.some((i) => Ne(i) === this._selected) && (this._selected = null), this._selected && await w(this, g, Ie).call(this);
 };
-Te = async function() {
-  const [e, t] = this._selected.split("|"), { data: s } = await x(this, Ze(this.siteKey, { ...this._filter, ruleId: e, kind: t }), { disableNotifications: !0 });
-  this._detail = s?.[0] ?? null, this._detail || (this._selected = null);
+Ie = async function() {
+  const [e, t] = this._selected.split("|"), { data: i } = await C(this, st(this.siteKey, { ...this._filter, ruleId: e, kind: t }), { disableNotifications: !0 });
+  this._detail = i?.[0] ?? null, this._detail || (this._selected = null);
 };
 q = function(e) {
-  this._filter = { ...this._filter, ...e }, this._selected = null, y(this, f, de).call(this);
+  this._filter = { ...this._filter, ...e }, this._selected = null, w(this, g, he).call(this);
 };
-kt = async function() {
-  const { data: e, error: t } = await x(this, ss(this.siteKey, this._filter));
+At = async function() {
+  const { data: e, error: t } = await C(this, li(this.siteKey, this._filter));
   if (t || !e) return;
-  const s = URL.createObjectURL(e), a = document.createElement("a");
-  a.href = s, a.download = `accessibility-issues-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.csv`, a.click(), setTimeout(() => URL.revokeObjectURL(s), 1e3);
+  const i = URL.createObjectURL(e), s = document.createElement("a");
+  s.href = i, s.download = `accessibility-issues-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.csv`, s.click(), setTimeout(() => URL.revokeObjectURL(i), 1e3);
 };
-xt = async function(e) {
-  this._selected = Oe(e), this._detail = null, await y(this, f, Te).call(this);
+Pt = async function(e) {
+  this._selected = Ne(e), this._detail = null, await w(this, g, Ie).call(this);
 };
-Ct = function() {
-  wt(this, Q, this._selected), this._selected = null, this._detail = null;
+Tt = function() {
+  zt(this, Q, this._selected), this._selected = null, this._detail = null;
 };
-Et = function() {
-  const e = this._filter, t = (s, a, i, n, o) => r`
+Ot = function() {
+  const e = this._filter, t = (i, s, a, r, o) => n`
       <div class="field">
-        <label for=${s}>${a}</label>
-        <select id=${s} @change=${(h) => o(h.target.value)}>
-          <option value="" ?selected=${!i}>All</option>
-          ${n.map(([h, P]) => r`<option value=${h} ?selected=${i === h}>${P}</option>`)}
+        <label for=${i}>${s}</label>
+        <select id=${i} @change=${(c) => o(c.target.value)}>
+          <option value="" ?selected=${!a}>All</option>
+          ${r.map(([c, A]) => n`<option value=${c} ?selected=${a === c}>${A}</option>`)}
         </select>
       </div>`;
-  return r`
-      <form class="filters" @submit=${(s) => s.preventDefault()} aria-label="Filter issues">
+  return n`
+      <form class="filters card" @submit=${(i) => i.preventDefault()} aria-label="Filter issues">
         ${t(
     "f-principle",
     "Principle",
     e.principle ? String(e.principle) : void 0,
-    Ws.map((s, a) => [String(a + 1), `${a + 1}. ${s}`]),
-    (s) => y(this, f, q).call(this, { principle: s ? Number(s) : void 0 })
+    Xi.map((i, s) => [String(s + 1), `${s + 1}. ${i}`]),
+    (i) => w(this, g, q).call(this, { principle: i ? Number(i) : void 0 })
   )}
-        ${t("f-level", "Level", e.level, [["A", "A"], ["AA", "AA"], ["AAA", "AAA"]], (s) => y(this, f, q).call(this, { level: s || void 0 }))}
-        ${t("f-owner", "Who fixes it", e.owner, [["Editor", "Editors"], ["Developer", "Developers"], ["Both", "Both"]], (s) => y(this, f, q).call(this, { owner: s || void 0 }))}
-        ${t("f-impact", "Impact", e.impact, Vs.map((s) => [s, s]), (s) => y(this, f, q).call(this, { impact: s || void 0 }))}
+        ${t("f-level", "Level", e.level, [["A", "A"], ["AA", "AA"], ["AAA", "AAA"]], (i) => w(this, g, q).call(this, { level: i || void 0 }))}
+        ${t("f-owner", "Who fixes it", e.owner, [["Editor", "Editors"], ["Developer", "Developers"], ["Both", "Both"]], (i) => w(this, g, q).call(this, { owner: i || void 0 }))}
+        ${t("f-impact", "Impact", e.impact, Ji.map((i) => [i, i]), (i) => w(this, g, q).call(this, { impact: i || void 0 }))}
         <div class="field checkbox">
-          <input id="f-fp" type="checkbox" ?checked=${!!e.falsePositives} @change=${(s) => y(this, f, q).call(this, { falsePositives: s.target.checked })}>
+          <input id="f-fp" type="checkbox" ?checked=${!!e.falsePositives} @change=${(i) => w(this, g, q).call(this, { falsePositives: i.target.checked })}>
           <label for="f-fp">Show false positives only</label>
         </div>
-        ${e.criterion ? r`<div class="field"><span class="tag">Criterion ${e.criterion}</span>
-          <uui-button compact look="secondary" label="Clear criterion filter" @click=${() => y(this, f, q).call(this, { criterion: void 0 })}></uui-button></div>` : l}
-        <uui-button look="secondary" label="Export CSV" @click=${y(this, f, kt)}></uui-button>
+        ${e.criterion ? n`<div class="criterion"><span class="tag tone-notice">Criterion ${e.criterion}</span>
+          <uui-button compact look="secondary" label="Clear criterion filter" @click=${() => w(this, g, q).call(this, { criterion: void 0 })}></uui-button></div>` : l}
+        <div class="filter-actions">
+          <uui-button look="outline" label="Export CSV" @click=${w(this, g, At)}><uui-icon name="icon-download-alt" aria-hidden="true"></uui-icon>&nbsp;Export CSV</uui-button>
+        </div>
       </form>`;
 };
-St = function(e) {
-  return e.length ? r`
-      <p class="muted" role="status">${e.length} ${e.length === 1 ? "issue" : "issues"}</p>
-      <table>
-        <caption class="visually-hidden">Issues, most severe first</caption>
-        <thead><tr>
-          <th scope="col">Issue</th><th scope="col">Criteria</th><th scope="col">Level</th>
-          <th scope="col" class="num">Pages</th><th scope="col" class="num">Elements</th><th scope="col">Who fixes</th><th scope="col">Impact</th>
-        </tr></thead>
-        <tbody>
-          ${e.map((t) => r`<tr>
-            <td>
-              <button class="link" data-group=${Oe(t)} @click=${() => y(this, f, xt).call(this, t)}>${t.title}</button>
-              ${t.kind === "incomplete" ? r` <span class="tag">Needs review</span>` : l}
-              ${t.bestPractice ? r` <span class="tag">Best practice</span>` : l}
-            </td>
-            <td>${t.criteria.join(", ") || "–"}</td>
-            <td>${it(t.level)}</td>
-            <td class="num">${t.pageCount}</td>
-            <td class="num">${t.elementCount}</td>
-            <td>${t.owner}</td>
-            <td>${t.impact ?? "–"}</td>
-          </tr>`)}
-        </tbody>
-      </table>` : r`<uui-box><p>${this._filter.falsePositives ? "No false positives marked." : "No issues match. Either the site passes the automated checks for these filters, or it hasn't been scanned yet."}</p></uui-box>`;
+Rt = function(e) {
+  return e.length ? n`
+      <section class="card" aria-labelledby="issues-heading">
+        <div class="card-head">
+          <span class="icon-badge tone-critical" aria-hidden="true"><uui-icon name="icon-alert"></uui-icon></span>
+          <h3 id="issues-heading">Issues</h3>
+          <span class="chip end" role="status">${e.length} ${e.length === 1 ? "issue" : "issues"}</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="visually-hidden">Issues, most severe first</caption>
+            <thead><tr>
+              <th scope="col">Issue</th><th scope="col">Criteria</th><th scope="col">Level</th>
+              <th scope="col" class="num">Pages</th><th scope="col" class="num">Elements</th><th scope="col">Who fixes</th><th scope="col">Impact</th>
+            </tr></thead>
+            <tbody>
+              ${e.map((t) => n`<tr class=${t.impact && xe[t.impact] || ""}>
+                <td class="issue">
+                  <button class="link" data-group=${Ne(t)} @click=${() => w(this, g, Pt).call(this, t)}>${t.title}</button>
+                  ${t.kind === "incomplete" ? n`<span class="tag tone-warning">Needs review</span>` : l}
+                  ${t.bestPractice ? n`<span class="tag">Best practice</span>` : l}
+                </td>
+                <td>${t.criteria.join(", ") || "–"}</td>
+                <td><span class="tag">${ot(t.level)}</span></td>
+                <td class="num">${t.pageCount}</td>
+                <td class="num">${t.elementCount}</td>
+                <td><span class="chip"><uui-icon name=${ct[t.owner]} aria-hidden="true"></uui-icon>${t.owner}</span></td>
+                <td>${t.impact ? n`<span class="tag ${xe[t.impact] ?? ""}">${t.impact}</span>` : n`<span class="muted">–</span>`}</td>
+              </tr>`)}
+            </tbody>
+          </table>
+        </div>
+      </section>` : n`
+        <div class="card empty">
+          <span class="icon-badge solid round tone-good" aria-hidden="true"><uui-icon name="icon-check"></uui-icon></span>
+          <p>${this._filter.falsePositives ? "No false positives marked." : "No issues match. Either the site passes the automated checks for these filters, or it hasn't been scanned yet."}</p>
+        </div>`;
 };
-R.styles = [se, X`
-    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: end; }
-    .field { display: grid; gap: 4px; }
-    .field.checkbox { display: flex; align-items: center; gap: var(--uui-size-space-2); min-height: 36px; } /* = the selects, so they share a centre line */
-    .field.checkbox input { width: 20px; height: 20px; }
-    .filters > uui-button { height: 36px; }
-    select { min-height: 36px; padding: 0 var(--uui-size-space-3); border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius); background: var(--uui-color-surface); color: var(--uui-color-text); font: inherit; }
-    button.link { background: none; border: 0; padding: 4px 0; font: inherit; color: var(--uui-color-interactive); text-decoration: underline; cursor: pointer; text-align: left; min-height: 24px; }
+R.styles = [ie, X`
+    .filters { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: flex-end; padding: var(--uui-size-space-4) var(--uui-size-space-5); }
+    .field.checkbox { display: flex; align-items: center; gap: var(--uui-size-space-2); min-height: 40px; } /* = the selects, so they share a centre line */
+    .field.checkbox input { width: 20px; height: 20px; margin: 0; }
+    .criterion { display: flex; gap: var(--uui-size-space-2); align-items: center; min-height: 40px; }
+    .filter-actions { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); margin-left: auto; }
+    .empty { display: flex; gap: var(--uui-size-space-3); align-items: center; }
+    /* The row's impact as a coloured edge on its first cell. */
+    tbody td:first-child { box-shadow: inset 3px 0 0 var(--tone, transparent); }
+    .issue .tag { margin-left: 6px; vertical-align: middle; }
+    button.link {
+      background: none; border: 0; padding: 4px 0; font: inherit; font-weight: 600; color: var(--uui-color-interactive);
+      text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; min-height: 24px;
+    }
     button.link:hover { color: var(--uui-color-interactive-emphasis); }
   `];
 D([
-  M({ attribute: !1 })
+  L({ attribute: !1 })
 ], R.prototype, "siteKey", 2);
 D([
-  M({ attribute: !1 })
+  L({ attribute: !1 })
 ], R.prototype, "filter", 2);
 D([
-  M({ attribute: !1 })
+  L({ attribute: !1 })
 ], R.prototype, "settings", 2);
 D([
-  d()
+  p()
 ], R.prototype, "_filter", 2);
 D([
-  d()
+  p()
 ], R.prototype, "_groups", 2);
 D([
-  d()
+  p()
 ], R.prototype, "_selected", 2);
 D([
-  d()
+  p()
 ], R.prototype, "_detail", 2);
 D([
-  d()
+  p()
 ], R.prototype, "_error", 2);
 R = D([
   ee("esatto-a11y-issues")
 ], R);
-var Bs = Object.defineProperty, qs = Object.getOwnPropertyDescriptor, At = (e) => {
+var Yi = Object.defineProperty, Qi = Object.getOwnPropertyDescriptor, It = (e) => {
   throw TypeError(e);
-}, V = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? qs(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && Bs(t, s, i), i;
-}, Gs = (e, t, s) => t.has(e) || At("Cannot " + s), Hs = (e, t, s) => t.has(e) ? At("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), k = (e, t, s) => (Gs(e, t, "access private method"), s), _, ze, ke, Pt, Tt, Re, he, Ie, Ot;
-const zt = [
+}, B = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? Qi(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && Yi(t, i, a), a;
+}, Zi = (e, t, i) => t.has(e) || It("Cannot " + i), es = (e, t, i) => t.has(e) ? It("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), k = (e, t, i) => (Zi(e, t, "access private method"), i), $, Me, Ee, Nt, Mt, Le, ge, Ue, Lt;
+const Ut = [
   { id: "all", label: "All", test: () => !0 },
   { id: "unchecked", label: "Not checked", test: (e) => !e.status },
   { id: "scanner", label: "Not checked, scanner found nothing", test: (e) => !e.status && e.scannerChecked },
   { id: "failed", label: "Failed", test: (e) => e.status === "fail" },
   { id: "recheck", label: "Needs re-check", test: (e) => e.needsRecheck }
-], js = 2048, ne = (e) => `c-${e.criterion.id.split(".").join("-")}`, Rt = [
+], ts = 2048, re = (e) => `c-${e.criterion.id.split(".").join("-")}`, Kt = [
   { id: "pass", label: "Pass" },
   { id: "fail", label: "Fail" },
   { id: "na", label: "Not applicable" }
-];
-let N = class extends te {
+], is = { pass: "tone-good", fail: "tone-critical", na: "tone-none" };
+let M = class extends te {
   constructor() {
-    super(...arguments), Hs(this, _), this.siteKey = "", this._items = null, this._view = "all", this._error = null, this._saved = null, this._confirmed = null, this._drafts = {};
+    super(...arguments), es(this, $), this.siteKey = "", this._items = null, this._view = "all", this._error = null, this._saved = null, this._confirmed = null, this._drafts = {};
   }
   updated(e) {
-    e.has("siteKey") && this.siteKey && k(this, _, ze).call(this);
+    e.has("siteKey") && this.siteKey && k(this, $, Me).call(this);
   }
   render() {
-    if (this._error) return r`<uui-box><p class="error">${this._error}</p></uui-box>`;
-    if (!this._items) return r`<uui-loader></uui-loader>`;
-    const e = this._items, t = e.filter((a) => a.status).length, s = k(this, _, he).call(this);
-    return r`
-      <div class="stack">
-        <div class="row header">
-          <p class="summary" tabindex="-1"><strong>${t} of ${e.length}</strong> checked</p>
+    if (this._error) return n`<uui-box><p class="error">${this._error}</p></uui-box>`;
+    if (!this._items) return n`<uui-loader></uui-loader>`;
+    const e = this._items, t = e.filter((s) => s.status).length, i = k(this, $, ge).call(this);
+    return n`
+      <div class="page">
+        <section class="card overview" aria-label="Manual checklist">
+          <div class="progress-head">
+            <span class="icon-badge tone-good" aria-hidden="true"><uui-icon name="icon-checkbox"></uui-icon></span>
+            <div class="grow">
+              <p class="summary" tabindex="-1"><strong>${t} of ${e.length}</strong> checked</p>
+              <div class="progress-bar" aria-hidden="true"><span style=${pe({ width: `${e.length ? Math.round(t / e.length * 100) : 0}%` })}></span></div>
+            </div>
+          </div>
           <fieldset class="views">
             <legend class="visually-hidden">Show</legend>
-            ${zt.map((a) => r`
-              <label><input type="radio" name="view" .checked=${this._view === a.id} @change=${() => this._view = a.id}>
-                ${a.label} <span class="muted">(${e.filter(a.test).length})</span></label>`)}
+            ${Ut.map((s) => n`
+              <label class="view"><input type="radio" name="view" .checked=${this._view === s.id} @change=${() => this._view = s.id}>
+                ${s.label} <span class="count">${e.filter(s.test).length}</span></label>`)}
           </fieldset>
-        </div>
-        <p class="muted">These criteria need a person to judge them. Follow the steps, then record the result. “Checked by the scanner” means its automated rules found nothing wrong, so those are usually quick to confirm. Results become “needs re-check” after the interval set in Settings.</p>
+          <p class="muted">These criteria need a person to judge them. Follow the steps, then record the result. “Checked by the scanner” means its automated rules found nothing wrong, so those are usually quick to confirm. Results become “needs re-check” after the interval set in Settings.</p>
+        </section>
         <p role="status" class="visually-hidden">${this._saved ?? ""}</p>
-        ${s.length ? r`<ul class="items">${Vt(s, (a) => a.criterion.id, (a) => k(this, _, Ot).call(this, a))}</ul>` : r`<uui-box><p>Nothing here.</p></uui-box>`}
+        ${i.length ? n`<ul class="items">${Xt(i, (s) => s.criterion.id, (s) => k(this, $, Lt).call(this, s))}</ul>` : n`<div class="card empty"><span class="icon-badge solid round tone-good" aria-hidden="true"><uui-icon name="icon-check"></uui-icon></span><p>Nothing here.</p></div>`}
       </div>`;
   }
 };
-_ = /* @__PURE__ */ new WeakSet();
-ze = async function() {
-  const { data: e, error: t } = await x(this, is(this.siteKey), { disableNotifications: !0 });
+$ = /* @__PURE__ */ new WeakSet();
+Me = async function() {
+  const { data: e, error: t } = await C(this, ci(this.siteKey), { disableNotifications: !0 });
   if (t || !e) {
     this._error = "Could not load the checklist.";
     return;
   }
   this._error = null, this._items = e;
 };
-ke = async function(e, t, s) {
+Ee = async function(e, t, i) {
   if (!t) return;
-  const { error: a } = await x(this, as(this.siteKey, e.criterion.id, t, s));
-  a || (k(this, _, Re).call(this, e.criterion.id), this._confirmed = { id: e.criterion.id, text: "Saved" }, await k(this, _, Ie).call(this, e, `${e.criterion.id} saved as ${Rt.find((i) => i.id === t).label}.`));
+  const { error: s } = await C(this, di(this.siteKey, e.criterion.id, t, i));
+  s || (k(this, $, Le).call(this, e.criterion.id), this._confirmed = { id: e.criterion.id, text: "Saved" }, await k(this, $, Ue).call(this, e, `${e.criterion.id} saved as ${Kt.find((a) => a.id === t).label}.`));
 };
-Pt = async function(e) {
-  const { error: t } = await x(this, rs(this.siteKey, e.criterion.id));
-  t || (this._confirmed = { id: e.criterion.id, text: "Cleared" }, await k(this, _, Ie).call(this, e, `${e.criterion.id} cleared; it's not checked any more.`));
+Nt = async function(e) {
+  const { error: t } = await C(this, ui(this.siteKey, e.criterion.id));
+  t || (this._confirmed = { id: e.criterion.id, text: "Cleared" }, await k(this, $, Ue).call(this, e, `${e.criterion.id} cleared; it's not checked any more.`));
 };
-Tt = function(e, t) {
-  const s = t.trim();
-  s === (e.note ?? "") ? k(this, _, Re).call(this, e.criterion.id) : this._drafts = { ...this._drafts, [e.criterion.id]: s };
+Mt = function(e, t) {
+  const i = t.trim();
+  i === (e.note ?? "") ? k(this, $, Le).call(this, e.criterion.id) : this._drafts = { ...this._drafts, [e.criterion.id]: i };
 };
-Re = function(e) {
+Le = function(e) {
   if (!(e in this._drafts)) return;
-  const { [e]: t, ...s } = this._drafts;
-  this._drafts = s;
+  const { [e]: t, ...i } = this._drafts;
+  this._drafts = i;
 };
-he = function() {
-  return (this._items ?? []).filter(zt.find((e) => e.id === this._view).test);
+ge = function() {
+  return (this._items ?? []).filter(Ut.find((e) => e.id === this._view).test);
 };
-Ie = async function(e, t) {
-  const s = k(this, _, he).call(this).findIndex((h) => h.criterion.id === e.criterion.id);
-  if (this._saved = t, await k(this, _, ze).call(this), await this.updateComplete, this.renderRoot.activeElement) return;
-  const a = k(this, _, he).call(this), i = a.find((h) => h.criterion.id === e.criterion.id), n = i ?? a[Math.min(s, a.length - 1)];
-  (i ? this.renderRoot.querySelector(`[aria-labelledby="${ne(i)}"] button`) : n ? this.renderRoot.querySelector(`#${ne(n)}`) : this.renderRoot.querySelector(".summary"))?.focus();
+Ue = async function(e, t) {
+  const i = k(this, $, ge).call(this).findIndex((c) => c.criterion.id === e.criterion.id);
+  if (this._saved = t, await k(this, $, Me).call(this), await this.updateComplete, this.renderRoot.activeElement) return;
+  const s = k(this, $, ge).call(this), a = s.find((c) => c.criterion.id === e.criterion.id), r = a ?? s[Math.min(i, s.length - 1)];
+  (a ? this.renderRoot.querySelector(`[aria-labelledby="${re(a)}"] button`) : r ? this.renderRoot.querySelector(`#${re(r)}`) : this.renderRoot.querySelector(".summary"))?.focus();
 };
-Ot = function(e) {
-  const t = e.criterion, s = t.id in this._drafts, a = `${ne(e)}-note-hint`;
-  return r`
+Lt = function(e) {
+  const t = e.criterion, i = t.id in this._drafts, s = `${re(e)}-note-hint`;
+  return n`
       <li>
-        <uui-box>
-          <div class="item">
-            <div class="title-row">
-              <h3 id=${ne(e)} tabindex="-1">${t.id} ${t.title}</h3>
-              <span class="tag">Level ${t.level}</span>
-              ${t.since !== "V20" ? r`<span class="tag">New in ${st(t.since)}</span>` : l}
-              ${e.needsRecheck ? r`<span class="tag warn">Needs re-check</span>` : l}
-              ${e.scannerChecked ? r`<span class="tag">Checked by the scanner</span>` : l}
-            </div>
-            <p><strong>How to test:</strong> ${t.howToTest}</p>
-            ${e.automatedFindings ? r`<p>
-              <a href="#" @click=${(i) => {
-    i.preventDefault(), me(this, "issues", { criterion: t.id });
+        <article class="card item ${e.status ? is[e.status] : ""}">
+          <div class="title-row">
+            <h3 id=${re(e)} tabindex="-1">${t.id} ${t.title}</h3>
+            <span class="tag">Level ${t.level}</span>
+            ${t.since !== "V20" ? n`<span class="tag tone-notice">New in ${rt(t.since)}</span>` : l}
+            ${e.needsRecheck ? n`<span class="tag tone-warning">Needs re-check</span>` : l}
+            ${e.scannerChecked ? n`<span class="chip"><uui-icon name="icon-wand" aria-hidden="true"></uui-icon>Checked by the scanner</span>` : l}
+          </div>
+          <p><strong>How to test:</strong> ${t.howToTest}</p>
+          ${e.automatedFindings ? n`<p>
+            <a href="#" @click=${(a) => {
+    a.preventDefault(), ye(this, "issues", { criterion: t.id });
   }}>
-                The scanner found ${e.automatedFindings} ${e.automatedFindings === 1 ? "thing" : "things"} to look at</a></p>` : l}
-            ${e.documentLinks ? r`<p class="muted">This site links ${e.documentLinks} ${e.documentLinks === 1 ? "document" : "documents"} (PDF/Office); they must be checked separately.</p>` : l}
-            <details>
-              <summary>Why it matters and how to fix</summary>
+              The scanner found ${e.automatedFindings} ${e.automatedFindings === 1 ? "thing" : "things"} to look at</a></p>` : l}
+          ${e.documentLinks ? n`<p class="muted">This site links ${e.documentLinks} ${e.documentLinks === 1 ? "document" : "documents"} (PDF/Office); they must be checked separately.</p>` : l}
+          <details class="disclosure">
+            <summary><uui-icon class="chevron" name="icon-navigation-right" aria-hidden="true"></uui-icon>Why it matters and how to fix</summary>
+            <div class="why">
               <p>${t.why}</p><p>${t.howToFix}</p><p class="muted">${t.caveats}</p>
               <p><a href=${t.understandingUrl} target="_blank" rel="noopener">Understanding ${t.id} (W3C)<span class="visually-hidden"> (opens in a new tab)</span></a></p>
-            </details>
-            <div class="row" role="group" aria-labelledby=${ne(e)}>
-              ${Rt.map((i) => r`
-                <button class="status ${i.id}" aria-pressed=${e.status === i.id ? "true" : "false"}
-                  @click=${() => k(this, _, ke).call(this, e, i.id, s ? this._drafts[t.id] || null : e.note)}>${i.label}</button>`)}
-              ${e.status ? r`<button class="clear" @click=${() => k(this, _, Pt).call(this, e)}>Clear result</button>` : l}
-              ${e.updatedUtc ? r`<span class="muted">${e.userName}, ${xe(e.updatedUtc, !1)}</span>` : l}
-              ${this._confirmed?.id === t.id ? r`<span class="confirmed" aria-hidden="true"><uui-icon name="icon-check"></uui-icon> ${this._confirmed.text}</span>` : l}
             </div>
-            <label class="note">
-              <span>Note${e.status ? "" : " (saved with a result)"}</span>
-              <textarea rows="2" maxlength=${js} .value=${e.note ?? ""} aria-describedby=${s ? a : l}
-                @input=${(i) => k(this, _, Tt).call(this, e, i.target.value)}
-                @blur=${() => {
-    e.status && s && k(this, _, ke).call(this, e, e.status, this._drafts[t.id] || null);
-  }}></textarea>
-            </label>
-            ${s ? r`<p id=${a} class="unsaved"><uui-icon name="icon-alert"></uui-icon>
-              ${e.status ? "Not saved yet. It saves when you leave the note field." : "Not saved yet. Choose Pass, Fail or Not applicable to save it with the note."}</p>` : l}
+          </details>
+          <div class="row" role="group" aria-labelledby=${re(e)}>
+            ${Kt.map((a) => n`
+              <button class="status ${a.id}" aria-pressed=${e.status === a.id ? "true" : "false"}
+                @click=${() => k(this, $, Ee).call(this, e, a.id, i ? this._drafts[t.id] || null : e.note)}>${e.status === a.id ? n`<uui-icon name="icon-check" aria-hidden="true"></uui-icon>` : l}${a.label}</button>`)}
+            ${e.status ? n`<button class="clear" @click=${() => k(this, $, Nt).call(this, e)}>Clear result</button>` : l}
+            ${e.updatedUtc ? n`<span class="muted small">${e.userName}, ${ze(e.updatedUtc, !1)}</span>` : l}
+            ${this._confirmed?.id === t.id ? n`<span class="confirmed" aria-hidden="true"><uui-icon name="icon-check"></uui-icon> ${this._confirmed.text}</span>` : l}
           </div>
-        </uui-box>
+          <label class="note">
+            <span>Note${e.status ? "" : " (saved with a result)"}</span>
+            <textarea rows="2" maxlength=${ts} .value=${e.note ?? ""} aria-describedby=${i ? s : l}
+              @input=${(a) => k(this, $, Mt).call(this, e, a.target.value)}
+              @blur=${() => {
+    e.status && i && k(this, $, Ee).call(this, e, e.status, this._drafts[t.id] || null);
+  }}></textarea>
+          </label>
+          ${i ? n`
+            <div id=${s} class="banner compact tone-warning unsaved">
+              <span class="icon-badge solid round" aria-hidden="true"><uui-icon name="icon-alert"></uui-icon></span>
+              <div><p>${e.status ? "Not saved yet. It saves when you leave the note field." : "Not saved yet. Choose Pass, Fail or Not applicable to save it with the note."}</p></div>
+            </div>` : l}
+        </article>
       </li>`;
 };
-N.styles = [se, X`
-    .header { justify-content: space-between; }
-    .header p { margin: 0; }
-    .views { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); }
-    .views label { display: flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
-    .views input { width: 18px; height: 18px; }
-    .items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--uui-size-space-4); }
-    .item { display: grid; gap: var(--uui-size-space-3); }
-    .item p { margin: 0; }
-    .title-row { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-3); align-items: center; }
-    .title-row h3 { font-size: 1rem; }
+M.styles = [ie, X`
+    .overview { display: grid; gap: var(--uui-size-space-4); }
+    .progress-head { display: flex; gap: var(--uui-size-space-4); align-items: center; }
+    .progress-head .grow { flex: 1; display: grid; gap: var(--uui-size-space-2); max-width: 32rem; }
+    .summary { font-size: 16px; }
+    .summary strong { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
     h3:focus, .summary:focus { outline: none; }
     h3:focus-visible, .summary:focus-visible { outline: 2px solid var(--uui-color-focus); }
-    button.clear { min-height: 44px; padding: 0 var(--uui-size-space-3); font: inherit; cursor: pointer; background: none; border: 0; color: var(--uui-color-interactive); text-decoration: underline; }
-    button.clear:hover { color: var(--uui-color-interactive-emphasis); }
-    .tag.warn { border-color: var(--a11y-warning); }
-    details p { margin: var(--uui-size-space-2) 0 0; }
-    button.status {
-      min-height: 44px; min-width: 44px; padding: 0 var(--uui-size-space-5); font: inherit; cursor: pointer;
-      border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text);
+
+    .views { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); }
+    .view {
+      display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 var(--uui-size-space-3) 0 var(--uui-size-space-3);
+      border: 1px solid var(--a11y-line); border-radius: 999px; background: var(--uui-color-surface); cursor: pointer; font-weight: 600;
+      transition: border-color var(--a11y-ease), background-color var(--a11y-ease);
     }
-    button.status[aria-pressed='true'] { font-weight: 600; border-width: 2px; }
-    button.status.pass[aria-pressed='true'] { border-color: var(--a11y-good); }
-    button.status.fail[aria-pressed='true'] { border-color: var(--a11y-critical); }
-    button.status.na[aria-pressed='true'] { border-color: var(--uui-color-border-emphasis); }
-    button.status[aria-pressed='true']::before { content: '✓ '; }
+    .view:hover { border-color: var(--uui-color-border-emphasis); }
+    .view:has(input:checked) { border-color: var(--uui-color-selected); background: color-mix(in srgb, var(--uui-color-selected) 10%, var(--uui-color-surface)); }
+    .view:has(input:focus-visible) { outline: 2px solid var(--uui-color-focus); outline-offset: 2px; }
+    .view input { width: 16px; height: 16px; margin: 0; }
+    .count { min-width: 1.5em; padding: 0 6px; border-radius: 999px; background: var(--a11y-wash); border: 1px solid var(--a11y-line); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
+
+    .empty { display: flex; gap: var(--uui-size-space-3); align-items: center; }
+    .items { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--uui-size-space-3); }
+    /* The recorded result as the card's edge: green pass, red fail, grey not applicable; none while unchecked. */
+    .item { display: grid; gap: var(--uui-size-space-3); box-shadow: inset 4px 0 0 var(--tone, transparent), var(--a11y-shadow); }
+    .title-row { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-2); align-items: center; }
+    .title-row h3 { font-size: 16px; font-weight: 700; margin-right: var(--uui-size-space-2); }
+    .why { display: grid; gap: var(--uui-size-space-2); margin-top: var(--uui-size-space-3); max-width: 60rem; padding: var(--uui-size-space-4); background: var(--a11y-wash); border: 1px solid var(--a11y-line); border-radius: var(--a11y-radius-sm); }
+
+    button.status {
+      display: inline-flex; gap: 6px; align-items: center; min-height: 44px; min-width: 44px; padding: 0 var(--uui-size-space-5);
+      font: inherit; font-weight: 600; cursor: pointer; border: 1px solid var(--uui-color-border-standalone); border-radius: 999px;
+      background: var(--uui-color-surface); color: var(--uui-color-text);
+      transition: background-color var(--a11y-ease), border-color var(--a11y-ease), box-shadow var(--a11y-ease);
+    }
+    button.status.pass { --tone: var(--a11y-good); --tone-on: var(--a11y-good-on); }
+    button.status.fail { --tone: var(--a11y-critical); --tone-on: var(--a11y-critical-on); }
+    button.status.na { --tone: var(--a11y-neutral); --tone-on: var(--a11y-neutral-on); }
+    button.status:hover { border-color: var(--tone); background: color-mix(in srgb, var(--tone) 8%, var(--uui-color-surface)); }
+    button.status[aria-pressed='true'] { background: var(--tone); color: var(--tone-on); border-color: var(--tone); box-shadow: 0 4px 12px -6px var(--tone); }
+    button.clear {
+      min-height: 44px; padding: 0 var(--uui-size-space-3); font: inherit; cursor: pointer; background: none; border: 0;
+      color: var(--uui-color-interactive); text-decoration: underline; text-underline-offset: 2px;
+    }
+    button.clear:hover { color: var(--uui-color-interactive-emphasis); }
     .confirmed { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
     .confirmed uui-icon { color: var(--a11y-good); }
-    .unsaved { display: flex; align-items: center; gap: var(--uui-size-space-2); max-width: 40rem; padding: var(--uui-size-space-2) var(--uui-size-space-3); border-left: 4px solid var(--a11y-warning); background: var(--uui-color-surface-alt); }
-    .unsaved uui-icon { flex: none; }
-    .note { display: grid; gap: 4px; max-width: 40rem; }
-    textarea { font: inherit; padding: var(--uui-size-space-2); border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius); background: var(--uui-color-surface); color: var(--uui-color-text); }
+    .note { display: grid; gap: 6px; max-width: 40rem; }
+    .note > span { font-size: 13px; font-weight: 600; }
+    .unsaved { max-width: 40rem; }
   `];
-V([
-  M({ attribute: !1 })
-], N.prototype, "siteKey", 2);
-V([
-  d()
-], N.prototype, "_items", 2);
-V([
-  d()
-], N.prototype, "_view", 2);
-V([
-  d()
-], N.prototype, "_error", 2);
-V([
-  d()
-], N.prototype, "_saved", 2);
-V([
-  d()
-], N.prototype, "_confirmed", 2);
-V([
-  d()
-], N.prototype, "_drafts", 2);
-N = V([
+B([
+  L({ attribute: !1 })
+], M.prototype, "siteKey", 2);
+B([
+  p()
+], M.prototype, "_items", 2);
+B([
+  p()
+], M.prototype, "_view", 2);
+B([
+  p()
+], M.prototype, "_error", 2);
+B([
+  p()
+], M.prototype, "_saved", 2);
+B([
+  p()
+], M.prototype, "_confirmed", 2);
+B([
+  p()
+], M.prototype, "_drafts", 2);
+M = B([
   ee("esatto-a11y-checklist")
-], N);
-var Xs = Object.defineProperty, Js = Object.getOwnPropertyDescriptor, It = (e) => {
+], M);
+var ss = Object.defineProperty, as = Object.getOwnPropertyDescriptor, Dt = (e) => {
   throw TypeError(e);
-}, ie = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? Js(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && Xs(t, s, i), i;
-}, Le = (e, t, s) => t.has(e) || It("Cannot " + s), Ys = (e, t, s) => (Le(e, t, "read from private field"), t.get(e)), Ye = (e, t, s) => t.has(e) ? It("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), Qs = (e, t, s, a) => (Le(e, t, "write to private field"), t.set(e, s), s), u = (e, t, s) => (Le(e, t, "access private method"), s), pe, c, j, E, Lt, Nt, Z, G, ue;
-const Zs = {
+}, se = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? as(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && ss(t, i, a), a;
+}, Ke = (e, t, i) => t.has(e) || Dt("Cannot " + i), ns = (e, t, i) => (Ke(e, t, "read from private field"), t.get(e)), tt = (e, t, i) => t.has(e) ? Dt("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), rs = (e, t, i, s) => (Ke(e, t, "write to private field"), t.set(e, i), i), u = (e, t, i) => (Ke(e, t, "access private method"), i), fe, d, H, E, Ft, Wt, Z, G, ue;
+const os = {
   ButtonLabel: "Accessibility",
   DialogTitle: "Accessibility preferences",
   LargerText: "Larger text",
@@ -1165,7 +1441,7 @@ const Zs = {
   Reset: "Reset",
   Close: "Close",
   Note: "These settings are saved in this browser only."
-}, ei = [
+}, ls = [
   { key: "largerText", label: "Larger text" },
   { key: "spacing", label: "Bigger buttons and more spacing" },
   { key: "highContrast", label: "High contrast" },
@@ -1173,76 +1449,80 @@ const Zs = {
   { key: "readableFont", label: "Readable font" },
   { key: "highlightLinks", label: "Highlight links" },
   { key: "readingGuide", label: "Reading guide" }
-], Mt = (e) => JSON.parse(JSON.stringify(e));
+], Bt = (e) => JSON.parse(JSON.stringify(e));
 let F = class extends te {
   constructor() {
-    super(), Ye(this, c), this.settings = null, this._draft = null, this._saving = !1, this._cultures = ["en", "sv"], this._newCulture = "", Ye(this, pe), this.consumeContext(Bt, (e) => Qs(this, pe, e));
+    super(), tt(this, d), this.settings = null, this._draft = null, this._saving = !1, this._cultures = ["en", "sv"], this._newCulture = "", tt(this, fe), this.consumeContext(Jt, (e) => rs(this, fe, e));
   }
   willUpdate(e) {
-    e.has("settings") && this.settings && (this._draft = Mt(this.settings.settings), this._cultures = [.../* @__PURE__ */ new Set(["en", "sv", ...Object.keys(this._draft.visitor.panel.texts ?? {})])]);
+    e.has("settings") && this.settings && (this._draft = Bt(this.settings.settings), this._cultures = [.../* @__PURE__ */ new Set(["en", "sv", ...Object.keys(this._draft.visitor.panel.texts ?? {})])]);
   }
   render() {
     const e = this._draft;
-    if (!e) return r`<uui-loader></uui-loader>`;
+    if (!e) return n`<uui-loader></uui-loader>`;
     const t = e.visitor.panel;
-    return r`
-      <form class="stack" @submit=${u(this, c, Lt)}>
-        ${this.settings?.locked.length ? r`<p class="muted">Fields marked “Set in configuration” come from appsettings (<code>Esatto:Accessibility</code>) and can't be changed here.</p>` : l}
+    return n`
+      <form class="page" @submit=${u(this, d, Ft)}>
+        ${this.settings?.locked.length ? n`<p class="muted">Fields marked “Set in configuration” come from appsettings (<code>Esatto:Accessibility</code>) and can't be changed here.</p>` : l}
 
-        <uui-box headline="Target">
+        <div class="cards">
+        <section class="card stack" aria-labelledby="h-target">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-target"></uui-icon></span><h3 id="h-target">Target</h3></div>
           <div class="row">
-            ${u(this, c, ue).call(this, "version", "WCAG version", e.version, [["V20", "2.0"], ["V21", "2.1"], ["V22", "2.2"]], (s) => u(this, c, E).call(this, (a) => a.version = s))}
-            ${u(this, c, ue).call(this, "level", "Level", e.level, [["A", "A"], ["AA", "AA"], ["AAA", "AAA"]], (s) => u(this, c, E).call(this, (a) => a.level = s))}
+            ${u(this, d, ue).call(this, "version", "WCAG version", e.version, [["V20", "2.0"], ["V21", "2.1"], ["V22", "2.2"]], (i) => u(this, d, E).call(this, (s) => s.version = i))}
+            ${u(this, d, ue).call(this, "level", "Level", e.level, [["A", "A"], ["AA", "AA"], ["AAA", "AAA"]], (i) => u(this, d, E).call(this, (s) => s.level = i))}
           </div>
           <p class="muted">The EU legal requirement today (European Accessibility Act, EN 301 549) is WCAG 2.1 AA. 2.2 AA adds six criteria, including minimum target size.</p>
-          ${e.level === "AAA" ? r`<p class="warning" role="note"><uui-icon name="icon-alert"></uui-icon> W3C does not recommend AAA as a requirement for entire sites: some AAA criteria cannot be met for all content.</p>` : l}
-        </uui-box>
+          ${e.level === "AAA" ? n`<p class="warning" role="note"><uui-icon name="icon-alert"></uui-icon> W3C does not recommend AAA as a requirement for entire sites: some AAA criteria cannot be met for all content.</p>` : l}
+        </section>
 
-        <uui-box headline="Scan">
+        <section class="card" aria-labelledby="h-scan">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-search"></uui-icon></span><h3 id="h-scan">Scan</h3></div>
           <div class="stack">
             <div class="field">
               <label for="exclude">Never scan these paths (one per line, e.g. /search)</label>
-              <textarea id="exclude" rows="3" ?disabled=${u(this, c, j).call(this, "scan.excludePaths")} .value=${e.scan.excludePaths.join(`
+              <textarea id="exclude" rows="3" ?disabled=${u(this, d, H).call(this, "scan.excludePaths")} .value=${e.scan.excludePaths.join(`
 `)}
-                @change=${(s) => u(this, c, E).call(this, (a) => a.scan.excludePaths = s.target.value.split(`
-`).map((i) => i.trim()).filter(Boolean))}></textarea>
-              ${u(this, c, Z).call(this, "scan.excludePaths")}
+                @change=${(i) => u(this, d, E).call(this, (s) => s.scan.excludePaths = i.target.value.split(`
+`).map((a) => a.trim()).filter(Boolean))}></textarea>
+              ${u(this, d, Z).call(this, "scan.excludePaths")}
             </div>
-            ${u(this, c, G).call(this, "scan.mobileWidth", "Also scan at mobile width (320 px)", e.scan.mobileWidth, (s) => u(this, c, E).call(this, (a) => a.scan.mobileWidth = s), "Doubles the scan time.")}
-            ${u(this, c, G).call(this, "scan.bestPractice", "Include axe best-practice rules", e.scan.bestPractice, (s) => u(this, c, E).call(this, (a) => a.scan.bestPractice = s), "Shown separately in Issues; never counted in the score.")}
+            ${u(this, d, G).call(this, "scan.mobileWidth", "Also scan at mobile width (320 px)", e.scan.mobileWidth, (i) => u(this, d, E).call(this, (s) => s.scan.mobileWidth = i), "Doubles the scan time.")}
+            ${u(this, d, G).call(this, "scan.bestPractice", "Include axe best-practice rules", e.scan.bestPractice, (i) => u(this, d, E).call(this, (s) => s.scan.bestPractice = i), "Shown separately in Issues; never counted in the score.")}
             <div class="field">
               <label for="recheck">Ask to re-check manual results after (months)</label>
-              <input id="recheck" type="number" min="1" max="24" ?disabled=${u(this, c, j).call(this, "scan.recheckMonths")} .value=${String(e.scan.recheckMonths)}
-                @change=${(s) => u(this, c, E).call(this, (a) => a.scan.recheckMonths = Number(s.target.value) || 6)}>
-              ${u(this, c, Z).call(this, "scan.recheckMonths")}
+              <input id="recheck" type="number" min="1" max="24" ?disabled=${u(this, d, H).call(this, "scan.recheckMonths")} .value=${String(e.scan.recheckMonths)}
+                @change=${(i) => u(this, d, E).call(this, (s) => s.scan.recheckMonths = Number(i.target.value) || 6)}>
+              ${u(this, d, Z).call(this, "scan.recheckMonths")}
             </div>
           </div>
-        </uui-box>
+        </section>
 
-        <uui-box headline="Visitor features (public website)">
+        <section class="card wide" aria-labelledby="h-visitor">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-globe"></uui-icon></span><h3 id="h-visitor">Visitor features (public website)</h3></div>
           <div class="stack">
             <p class="notice"><uui-icon name="icon-info"></uui-icon> The preferences button doesn't make the site compliant. It's an extra on top of a site that already passes.</p>
             <fieldset>
               <legend>Follow visitors' browser and OS settings</legend>
-              ${u(this, c, G).call(this, "visitor.followOsMotion", "Reduced motion", e.visitor.followOsMotion, (s) => u(this, c, E).call(this, (a) => a.visitor.followOsMotion = s))}
-              ${u(this, c, G).call(this, "visitor.followOsContrast", "More contrast", e.visitor.followOsContrast, (s) => u(this, c, E).call(this, (a) => a.visitor.followOsContrast = s), "Off by default: generic contrast CSS is what most often clashes with a design. Test the site with it on before enabling.")}
+              ${u(this, d, G).call(this, "visitor.followOsMotion", "Reduced motion", e.visitor.followOsMotion, (i) => u(this, d, E).call(this, (s) => s.visitor.followOsMotion = i))}
+              ${u(this, d, G).call(this, "visitor.followOsContrast", "More contrast", e.visitor.followOsContrast, (i) => u(this, d, E).call(this, (s) => s.visitor.followOsContrast = i), "Off by default: generic contrast CSS is what most often clashes with a design. Test the site with it on before enabling.")}
             </fieldset>
             <fieldset>
               <legend>Accessibility preferences button</legend>
-              ${u(this, c, G).call(this, "visitor.panel.enabled", "Show the preferences button", t.enabled, (s) => u(this, c, E).call(this, (a) => a.visitor.panel.enabled = s))}
+              ${u(this, d, G).call(this, "visitor.panel.enabled", "Show the preferences button", t.enabled, (i) => u(this, d, E).call(this, (s) => s.visitor.panel.enabled = i))}
               <div class="indent">
-                ${ei.map((s) => u(this, c, G).call(this, `visitor.panel.${s.key}`, s.label, t[s.key], (a) => u(this, c, E).call(this, (i) => i.visitor.panel[s.key] = a), void 0, !t.enabled))}
-                ${u(this, c, ue).call(this, "visitor.panel.position", "Button position", t.position, [["bottom-right", "Bottom right"], ["bottom-left", "Bottom left"]], (s) => u(this, c, E).call(this, (a) => a.visitor.panel.position = s), !t.enabled)}
+                ${ls.map((i) => u(this, d, G).call(this, `visitor.panel.${i.key}`, i.label, t[i.key], (s) => u(this, d, E).call(this, (a) => a.visitor.panel[i.key] = s), void 0, !t.enabled))}
+                ${u(this, d, ue).call(this, "visitor.panel.position", "Button position", t.position, [["bottom-right", "Bottom right"], ["bottom-left", "Bottom left"]], (i) => u(this, d, E).call(this, (s) => s.visitor.panel.position = i), !t.enabled)}
               </div>
             </fieldset>
-            <details>
-              <summary>Panel texts per language</summary>
+            <details class="disclosure">
+              <summary><uui-icon class="chevron" name="icon-navigation-right" aria-hidden="true"></uui-icon>Panel texts per language</summary>
               <p class="muted">Leave a field empty to use the built-in text (English and Swedish ship with the package).</p>
-              ${this._cultures.map((s) => u(this, c, Nt).call(this, s))}
+              ${this._cultures.map((i) => u(this, d, Wt).call(this, i))}
               <div class="row">
                 <div class="field">
                   <label for="new-culture">Add a language (e.g. da, de)</label>
-                  <input id="new-culture" .value=${this._newCulture} @input=${(s) => this._newCulture = s.target.value.trim().toLowerCase()}>
+                  <input id="new-culture" .value=${this._newCulture} @input=${(i) => this._newCulture = i.target.value.trim().toLowerCase()}>
                 </div>
                 <uui-button look="secondary" label="Add language" ?disabled=${!/^[a-z]{2}(-[a-z]{2})?$/.test(this._newCulture)}
                   @click=${() => {
@@ -1251,7 +1531,8 @@ let F = class extends te {
               </div>
             </details>
           </div>
-        </uui-box>
+        </section>
+        </div>
 
         <div class="row">
           <uui-button type="submit" look="primary" color="positive" label="Save settings" .state=${this._saving ? "waiting" : void 0}></uui-button>
@@ -1259,123 +1540,125 @@ let F = class extends te {
       </form>`;
   }
 };
-pe = /* @__PURE__ */ new WeakMap();
-c = /* @__PURE__ */ new WeakSet();
-j = function(e) {
+fe = /* @__PURE__ */ new WeakMap();
+d = /* @__PURE__ */ new WeakSet();
+H = function(e) {
   const t = e.toLowerCase();
-  return (this.settings?.locked ?? []).some((s) => s.toLowerCase() === t);
+  return (this.settings?.locked ?? []).some((i) => i.toLowerCase() === t);
 };
 E = function(e) {
-  const t = Mt(this._draft);
+  const t = Bt(this._draft);
   e(t), this._draft = t;
 };
-Lt = async function(e) {
+Ft = async function(e) {
   if (e.preventDefault(), !this._draft) return;
   this._saving = !0;
-  const { data: t, error: s } = await x(this, Xt(this._draft));
-  this._saving = !1, !(s || !t) && (Ys(this, pe)?.peek("positive", { data: { headline: "Settings saved", message: "The public site picks them up within a minute." } }), this.dispatchEvent(new CustomEvent("saved", { detail: t })));
+  const { data: t, error: i } = await C(this, ti(this._draft));
+  this._saving = !1, !(i || !t) && (ns(this, fe)?.peek("positive", { data: { headline: "Settings saved", message: "The public site picks them up within a minute." } }), this.dispatchEvent(new CustomEvent("saved", { detail: t })));
 };
-Nt = function(e) {
+Wt = function(e) {
   const t = this._draft.visitor.panel.texts?.[e] ?? {};
-  return r`
-      <table>
+  return n`
+      <div class="table-wrap"><table>
         <caption>${e}</caption>
         <thead><tr><th scope="col">Text</th><th scope="col">Override</th></tr></thead>
         <tbody>
-          ${Object.entries(Zs).map(([s, a]) => {
-    const i = `t-${e}-${s}`, n = `visitor.panel.texts.${e}.${s}`;
-    return r`<tr>
-              <th scope="row"><label for=${i}>${s}</label></th>
+          ${Object.entries(os).map(([i, s]) => {
+    const a = `t-${e}-${i}`, r = `visitor.panel.texts.${e}.${i}`;
+    return n`<tr>
+              <th scope="row"><label for=${a}>${i}</label></th>
               <td>
-                <input id=${i} placeholder=${a} ?disabled=${u(this, c, j).call(this, n)} .value=${t[s] ?? ""}
-                  @change=${(o) => u(this, c, E).call(this, (h) => {
-      const P = o.target.value.trim();
-      h.visitor.panel.texts ??= {};
-      const T = h.visitor.panel.texts[e] ??= {};
-      P ? T[s] = P : delete T[s];
+                <input id=${a} placeholder=${s} ?disabled=${u(this, d, H).call(this, r)} .value=${t[i] ?? ""}
+                  @change=${(o) => u(this, d, E).call(this, (c) => {
+      const A = o.target.value.trim();
+      c.visitor.panel.texts ??= {};
+      const P = c.visitor.panel.texts[e] ??= {};
+      A ? P[i] = A : delete P[i];
     })}>
-                ${u(this, c, Z).call(this, n)}
+                ${u(this, d, Z).call(this, r)}
               </td>
             </tr>`;
   })}
         </tbody>
-      </table>`;
+      </table></div>`;
 };
 Z = function(e) {
-  return u(this, c, j).call(this, e) ? r`<span class="lock"><uui-icon name="icon-lock"></uui-icon> Set in configuration</span>` : l;
+  return u(this, d, H).call(this, e) ? n`<span class="lock"><uui-icon name="icon-lock"></uui-icon> Set in configuration</span>` : l;
 };
-G = function(e, t, s, a, i, n = !1) {
-  const o = `c-${e.split(".").join("-")}`, h = i ? `${o}-hint` : void 0;
-  return r`
+G = function(e, t, i, s, a, r = !1) {
+  const o = `c-${e.split(".").join("-")}`, c = a ? `${o}-hint` : void 0;
+  return n`
       <div class="check">
-        <input id=${o} type="checkbox" .checked=${s} ?disabled=${n || u(this, c, j).call(this, e)} aria-describedby=${h ?? l}
-          @change=${(P) => a(P.target.checked)}>
+        <input id=${o} type="checkbox" .checked=${i} ?disabled=${r || u(this, d, H).call(this, e)} aria-describedby=${c ?? l}
+          @change=${(A) => s(A.target.checked)}>
         <label for=${o}>${t}</label>
-        ${u(this, c, Z).call(this, e)}
-        ${i ? r`<p id=${h} class="muted hint">${i}</p>` : l}
+        ${u(this, d, Z).call(this, e)}
+        ${a ? n`<p id=${c} class="muted hint">${a}</p>` : l}
       </div>`;
 };
-ue = function(e, t, s, a, i, n = !1) {
+ue = function(e, t, i, s, a, r = !1) {
   const o = `s-${e.split(".").join("-")}`;
-  return r`
+  return n`
       <div class="field">
         <label for=${o}>${t}</label>
-        <select id=${o} ?disabled=${n || u(this, c, j).call(this, e)} @change=${(h) => i(h.target.value)}>
-          ${a.map(([h, P]) => r`<option value=${h} ?selected=${h === s}>${P}</option>`)}
+        <select id=${o} ?disabled=${r || u(this, d, H).call(this, e)} @change=${(c) => a(c.target.value)}>
+          ${s.map(([c, A]) => n`<option value=${c} ?selected=${c === i}>${A}</option>`)}
         </select>
-        ${u(this, c, Z).call(this, e)}
+        ${u(this, d, Z).call(this, e)}
       </div>`;
 };
-F.styles = [se, X`
-    .field { display: grid; gap: 4px; }
+F.styles = [ie, X`
+    .cards { display: grid; gap: var(--a11y-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); align-items: stretch; }
+    .cards > .wide { grid-column: 1 / -1; }
     .check { display: grid; grid-template-columns: auto 1fr; column-gap: var(--uui-size-space-3); align-items: center; min-height: 44px; }
     .check input { width: 20px; height: 20px; margin: 0; }
+    .check > label { font-weight: 600; }
     .check .hint, .check .lock { grid-column: 2; margin: 0; }
+    .hint { font-size: 13px; }
     .indent { padding-left: var(--uui-size-space-6); display: grid; }
     fieldset { border: 0; padding: 0; margin: 0; }
-    legend { font-weight: 600; margin-bottom: var(--uui-size-space-2); }
-    select, input:not([type='checkbox']), textarea {
-      font: inherit; min-height: 36px; padding: 0 var(--uui-size-space-3); max-width: 32rem;
-      border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text);
+    legend { font-weight: 700; margin-bottom: var(--uui-size-space-2); }
+    select, input:not([type='checkbox']), textarea { width: 100%; max-width: 32rem; }
+    .lock { color: var(--a11y-muted); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+    .warning, .notice {
+      display: flex; gap: var(--uui-size-space-3); align-items: flex-start; padding: var(--uui-size-space-3) var(--uui-size-space-4);
+      border-radius: var(--a11y-radius-sm); color: var(--uui-color-text);
+      background: color-mix(in srgb, var(--tone) 9%, var(--uui-color-surface));
+      border: 1px solid color-mix(in srgb, var(--tone) 40%, var(--a11y-line)); box-shadow: inset 4px 0 0 var(--tone);
     }
-    textarea { padding: var(--uui-size-space-2); }
-    input:disabled, select:disabled, textarea:disabled { opacity: 0.7; }
-    .lock { color: var(--uui-color-text-alt); font-size: 0.85rem; display: inline-flex; gap: 4px; align-items: center; }
-    .warning, .notice { display: flex; gap: var(--uui-size-space-2); align-items: flex-start; padding: var(--uui-size-space-3); background: var(--uui-color-surface-alt); border-radius: var(--uui-border-radius); margin: 0; }
-    .warning { border-left: 4px solid var(--a11y-warning); }
-    /* Informational: Umbraco's blue, as a tint behind dark text (contrast unchanged) and on the edge and icon. */
-    .notice { --a11y-info: var(--uui-color-selected, #3544b1); border-left: 4px solid var(--a11y-info); background: color-mix(in srgb, var(--a11y-info) 8%, var(--uui-color-surface)); }
-    .notice uui-icon { color: var(--a11y-info); flex: none; margin-top: 2px; }
-    caption { text-align: left; font-weight: 600; padding: var(--uui-size-space-3) 0; }
-    table input { width: 100%; }
+    .warning { --tone: var(--a11y-warning); }
+    .notice { --tone: var(--a11y-notice); }
+    .warning uui-icon, .notice uui-icon { flex: none; margin-top: 2px; color: color-mix(in srgb, var(--tone) 80%, var(--uui-color-text)); }
+    details .muted, details .table-wrap, details > .row { margin-top: var(--uui-size-space-3); }
+    caption { text-align: left; font-weight: 700; padding: var(--uui-size-space-3) var(--uui-size-space-4); }
+    table input { width: 100%; max-width: none; }
   `];
-ie([
-  M({ attribute: !1 })
+se([
+  L({ attribute: !1 })
 ], F.prototype, "settings", 2);
-ie([
-  d()
+se([
+  p()
 ], F.prototype, "_draft", 2);
-ie([
-  d()
+se([
+  p()
 ], F.prototype, "_saving", 2);
-ie([
-  d()
+se([
+  p()
 ], F.prototype, "_cultures", 2);
-ie([
-  d()
+se([
+  p()
 ], F.prototype, "_newCulture", 2);
-F = ie([
+F = se([
   ee("esatto-a11y-settings")
 ], F);
-var ti = Object.defineProperty, si = Object.getOwnPropertyDescriptor, Ut = (e) => {
+var cs = Object.defineProperty, ds = Object.getOwnPropertyDescriptor, Vt = (e) => {
   throw TypeError(e);
-}, B = (e, t, s, a) => {
-  for (var i = a > 1 ? void 0 : a ? si(t, s) : t, n = e.length - 1, o; n >= 0; n--)
-    (o = e[n]) && (i = (a ? o(t, s, i) : o(i)) || i);
-  return a && i && ti(t, s, i), i;
-}, ii = (e, t, s) => t.has(e) || Ut("Cannot " + s), ai = (e, t, s) => t.has(e) ? Ut("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, s), Kt = (e, t, s) => (ii(e, t, "access private method"), s), fe, Dt, Ft;
-const ri = [
+}, V = (e, t, i, s) => {
+  for (var a = s > 1 ? void 0 : s ? ds(t, i) : t, r = e.length - 1, o; r >= 0; r--)
+    (o = e[r]) && (a = (s ? o(t, i, a) : o(a)) || a);
+  return s && a && cs(t, i, a), a;
+}, us = (e, t, i) => t.has(e) || Vt("Cannot " + i), ps = (e, t, i) => t.has(e) ? Vt("Cannot add the same private member more than once") : t instanceof WeakSet ? t.add(e) : t.set(e, i), qt = (e, t, i) => (us(e, t, "access private method"), i), ve, Gt, jt;
+const hs = [
   { id: "overview", label: "Overview" },
   { id: "issues", label: "Issues" },
   { id: "checklist", label: "Manual checklist" },
@@ -1383,94 +1666,106 @@ const ri = [
 ];
 let I = class extends te {
   constructor() {
-    super(), ai(this, fe), this._knowledge = null, this._sites = [], this._siteKey = "", this._settings = null, this._tab = "overview", this._filter = {}, this._error = null, this.addEventListener(et, (e) => {
-      const { tab: t, filter: s } = e.detail;
-      this._filter = s ?? {}, this._tab = t;
+    super(), ps(this, ve), this._knowledge = null, this._sites = [], this._siteKey = "", this._settings = null, this._tab = "overview", this._filter = {}, this._error = null, this.addEventListener(at, (e) => {
+      const { tab: t, filter: i } = e.detail;
+      this._filter = i ?? {}, this._tab = t;
     });
   }
   async connectedCallback() {
     super.connectedCallback();
-    const [e, t, s] = await Promise.all([
-      x(this, qt(), { disableNotifications: !0 }),
-      x(this, Gt(), { disableNotifications: !0 }),
-      x(this, jt(), { disableNotifications: !0 })
+    const [e, t, i] = await Promise.all([
+      C(this, Yt(), { disableNotifications: !0 }),
+      C(this, Qt(), { disableNotifications: !0 }),
+      C(this, ei(), { disableNotifications: !0 })
     ]);
-    if (e.error || t.error || s.error || !e.data || !t.data || !s.data) {
+    if (e.error || t.error || i.error || !e.data || !t.data || !i.data) {
       this._error = "Could not load the accessibility dashboard.";
       return;
     }
-    this._knowledge = e.data, this._sites = t.data, this._siteKey = t.data[0]?.key ?? "", this._settings = s.data;
+    this._knowledge = e.data, this._sites = t.data, this._siteKey = t.data[0]?.key ?? "", this._settings = i.data;
   }
   render() {
-    if (this._error) return r`<uui-box><p class="error">${this._error}</p></uui-box>`;
-    if (!this._settings || !this._knowledge) return r`<uui-loader></uui-loader>`;
+    if (this._error) return n`<uui-box><p class="error">${this._error}</p></uui-box>`;
+    if (!this._settings || !this._knowledge) return n`<uui-loader></uui-loader>`;
     if (!this._sites.length)
-      return r`<uui-box headline="Accessibility"><p>There is no published site to scan yet. Publish a root page with a template first.</p></uui-box>`;
-    const e = ri.filter((t) => t.id !== "settings" || this._settings.canEdit);
-    return r`
+      return n`<uui-box headline="Accessibility"><p>There is no published site to scan yet. Publish a root page with a template first.</p></uui-box>`;
+    const e = hs.filter((t) => t.id !== "settings" || this._settings.canEdit);
+    return n`
       <div class="header">
-        <h2>Accessibility</h2>
-        ${this._sites.length > 1 ? r`
+        <div class="brand">
+          <span class="logo" aria-hidden="true"><uui-icon name="icon-users"></uui-icon></span>
+          <div>
+            <h2>Accessibility</h2>
+            <p class="muted small">WCAG checks on every published page, and a checklist for what only a person can judge.</p>
+          </div>
+        </div>
+        ${this._sites.length > 1 ? n`
           <uui-select label="Site" .options=${this._sites.map((t) => ({ name: t.name, value: t.key, selected: t.key === this._siteKey }))}
             @change=${(t) => this._siteKey = t.target.value}></uui-select>` : l}
       </div>
       <uui-tab-group>
-        ${e.map((t) => r`<uui-tab id="tab-${t.id}" aria-controls="tabpanel" label=${t.label} ?active=${this._tab === t.id} @click=${() => {
+        ${e.map((t) => n`<uui-tab id="tab-${t.id}" aria-controls="tabpanel" label=${t.label} ?active=${this._tab === t.id} @click=${() => {
       this._filter = {}, this._tab = t.id;
     }}>${t.label}</uui-tab>`)}
       </uui-tab-group>
-      <div class="panel" id="tabpanel" role="tabpanel" aria-labelledby="tab-${this._tab}">${Kt(this, fe, Ft).call(this)}</div>`;
+      <div class="panel" id="tabpanel" role="tabpanel" aria-labelledby="tab-${this._tab}">${qt(this, ve, jt).call(this)}</div>`;
   }
 };
-fe = /* @__PURE__ */ new WeakSet();
-Dt = function(e) {
+ve = /* @__PURE__ */ new WeakSet();
+Gt = function(e) {
   this._settings = e.detail;
 };
-Ft = function() {
+jt = function() {
   switch (this._tab) {
     case "issues":
-      return r`<esatto-a11y-issues .siteKey=${this._siteKey} .filter=${this._filter} .settings=${this._settings}></esatto-a11y-issues>`;
+      return n`<esatto-a11y-issues .siteKey=${this._siteKey} .filter=${this._filter} .settings=${this._settings}></esatto-a11y-issues>`;
     case "checklist":
-      return r`<esatto-a11y-checklist .siteKey=${this._siteKey}></esatto-a11y-checklist>`;
+      return n`<esatto-a11y-checklist .siteKey=${this._siteKey}></esatto-a11y-checklist>`;
     case "settings":
-      return r`<esatto-a11y-settings .settings=${this._settings} @saved=${Kt(this, fe, Dt)}></esatto-a11y-settings>`;
+      return n`<esatto-a11y-settings .settings=${this._settings} @saved=${qt(this, ve, Gt)}></esatto-a11y-settings>`;
     default:
-      return r`<esatto-a11y-overview .siteKey=${this._siteKey} .settings=${this._settings}></esatto-a11y-overview>`;
+      return n`<esatto-a11y-overview .siteKey=${this._siteKey} .settings=${this._settings}></esatto-a11y-overview>`;
   }
 };
-I.styles = [se, X`
-    :host { padding: var(--uui-size-layout-1); }
-    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-4); }
-    uui-tab-group { border-bottom: 1px solid var(--uui-color-divider); }
-    .panel { padding-top: var(--uui-size-space-5); }
+I.styles = [ie, X`
+    :host { padding: var(--uui-size-layout-1); max-width: 1440px; }
+    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-5); }
+    .brand { display: flex; gap: var(--uui-size-space-4); align-items: center; }
+    .brand h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+    .logo {
+      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; color: #fff;
+      background: linear-gradient(135deg, #0e9f6e 0%, #2f6fde 100%); box-shadow: 0 6px 16px -6px rgb(14 159 110 / 0.6);
+    }
+    uui-tab-group { border-bottom: 1px solid var(--a11y-line); }
+    .panel { padding-top: var(--uui-size-space-6); }
   `];
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_knowledge", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_sites", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_siteKey", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_settings", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_tab", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_filter", 2);
-B([
-  d()
+V([
+  p()
 ], I.prototype, "_error", 2);
-I = B([
+I = V([
   ee("esatto-accessibility-dashboard")
 ], I);
-const di = I;
+const ys = I;
 export {
   I as EsattoAccessibilityDashboardElement,
-  di as default
+  ys as default
 };
 //# sourceMappingURL=accessibility-dashboard.js.map

@@ -87,19 +87,22 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
     if (!d) return html`<uui-loader></uui-loader>`;
     const panel = d.visitor.panel;
     return html`
-      <form class="stack" @submit=${this.#save}>
+      <form class="page" @submit=${this.#save}>
         ${this.settings?.locked.length ? html`<p class="muted">Fields marked “Set in configuration” come from appsettings (<code>Esatto:Accessibility</code>) and can't be changed here.</p>` : nothing}
 
-        <uui-box headline="Target">
+        <div class="cards">
+        <section class="card stack" aria-labelledby="h-target">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-target"></uui-icon></span><h3 id="h-target">Target</h3></div>
           <div class="row">
             ${this.#select('version', 'WCAG version', d.version, [['V20', '2.0'], ['V21', '2.1'], ['V22', '2.2']], (v) => this.#update((x) => (x.version = v as WcagVersion)))}
             ${this.#select('level', 'Level', d.level, [['A', 'A'], ['AA', 'AA'], ['AAA', 'AAA']], (v) => this.#update((x) => (x.level = v as WcagLevel)))}
           </div>
           <p class="muted">The EU legal requirement today (European Accessibility Act, EN 301 549) is WCAG 2.1 AA. 2.2 AA adds six criteria, including minimum target size.</p>
           ${d.level === 'AAA' ? html`<p class="warning" role="note"><uui-icon name="icon-alert"></uui-icon> W3C does not recommend AAA as a requirement for entire sites: some AAA criteria cannot be met for all content.</p>` : nothing}
-        </uui-box>
+        </section>
 
-        <uui-box headline="Scan">
+        <section class="card" aria-labelledby="h-scan">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-search"></uui-icon></span><h3 id="h-scan">Scan</h3></div>
           <div class="stack">
             <div class="field">
               <label for="exclude">Never scan these paths (one per line, e.g. /search)</label>
@@ -116,9 +119,10 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
               ${this.#lockNote('scan.recheckMonths')}
             </div>
           </div>
-        </uui-box>
+        </section>
 
-        <uui-box headline="Visitor features (public website)">
+        <section class="card wide" aria-labelledby="h-visitor">
+          <div class="card-head"><span class="icon-badge tone-notice" aria-hidden="true"><uui-icon name="icon-globe"></uui-icon></span><h3 id="h-visitor">Visitor features (public website)</h3></div>
           <div class="stack">
             <p class="notice"><uui-icon name="icon-info"></uui-icon> The preferences button doesn't make the site compliant. It's an extra on top of a site that already passes.</p>
             <fieldset>
@@ -137,8 +141,8 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
                   (v) => this.#update((x) => (x.visitor.panel.position = v as PanelSettings['position'])), !panel.enabled)}
               </div>
             </fieldset>
-            <details>
-              <summary>Panel texts per language</summary>
+            <details class="disclosure">
+              <summary><uui-icon class="chevron" name="icon-navigation-right" aria-hidden="true"></uui-icon>Panel texts per language</summary>
               <p class="muted">Leave a field empty to use the built-in text (English and Swedish ship with the package).</p>
               ${this._cultures.map((c) => this.#textsTable(c))}
               <div class="row">
@@ -151,7 +155,8 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
               </div>
             </details>
           </div>
-        </uui-box>
+        </section>
+        </div>
 
         <div class="row">
           <uui-button type="submit" look="primary" color="positive" label="Save settings" .state=${this._saving ? 'waiting' : undefined}></uui-button>
@@ -162,7 +167,7 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
   #textsTable(culture: string) {
     const texts = this._draft!.visitor.panel.texts?.[culture] ?? {};
     return html`
-      <table>
+      <div class="table-wrap"><table>
         <caption>${culture}</caption>
         <thead><tr><th scope="col">Text</th><th scope="col">Override</th></tr></thead>
         <tbody>
@@ -185,7 +190,7 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
             </tr>`;
           })}
         </tbody>
-      </table>`;
+      </table></div>`;
   }
 
   #lockNote(path: string) {
@@ -218,31 +223,32 @@ export class EsattoA11ySettingsElement extends UmbLitElement {
   }
 
   static override styles = [shared, css`
-    .field { display: grid; gap: 4px; }
+    .cards { display: grid; gap: var(--a11y-gap); grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); align-items: stretch; }
+    .cards > .wide { grid-column: 1 / -1; }
     .check { display: grid; grid-template-columns: auto 1fr; column-gap: var(--uui-size-space-3); align-items: center; min-height: 44px; }
     .check input { width: 20px; height: 20px; margin: 0; }
+    .check > label { font-weight: 600; }
     .check .hint, .check .lock { grid-column: 2; margin: 0; }
+    .hint { font-size: 13px; }
     .indent { padding-left: var(--uui-size-space-6); display: grid; }
     fieldset { border: 0; padding: 0; margin: 0; }
-    legend { font-weight: 600; margin-bottom: var(--uui-size-space-2); }
-    select, input:not([type='checkbox']), textarea {
-      font: inherit; min-height: 36px; padding: 0 var(--uui-size-space-3); max-width: 32rem;
-      border: 1px solid var(--uui-color-border-standalone); border-radius: var(--uui-border-radius);
-      background: var(--uui-color-surface); color: var(--uui-color-text);
+    legend { font-weight: 700; margin-bottom: var(--uui-size-space-2); }
+    select, input:not([type='checkbox']), textarea { width: 100%; max-width: 32rem; }
+    .lock { color: var(--a11y-muted); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+    .warning, .notice {
+      display: flex; gap: var(--uui-size-space-3); align-items: flex-start; padding: var(--uui-size-space-3) var(--uui-size-space-4);
+      border-radius: var(--a11y-radius-sm); color: var(--uui-color-text);
+      background: color-mix(in srgb, var(--tone) 9%, var(--uui-color-surface));
+      border: 1px solid color-mix(in srgb, var(--tone) 40%, var(--a11y-line)); box-shadow: inset 4px 0 0 var(--tone);
     }
-    textarea { padding: var(--uui-size-space-2); }
-    input:disabled, select:disabled, textarea:disabled { opacity: 0.7; }
-    .lock { color: var(--uui-color-text-alt); font-size: 0.85rem; display: inline-flex; gap: 4px; align-items: center; }
-    .warning, .notice { display: flex; gap: var(--uui-size-space-2); align-items: flex-start; padding: var(--uui-size-space-3); background: var(--uui-color-surface-alt); border-radius: var(--uui-border-radius); margin: 0; }
-    .warning { border-left: 4px solid var(--a11y-warning); }
-    /* Informational: Umbraco's blue, as a tint behind dark text (contrast unchanged) and on the edge and icon. */
-    .notice { --a11y-info: var(--uui-color-selected, #3544b1); border-left: 4px solid var(--a11y-info); background: color-mix(in srgb, var(--a11y-info) 8%, var(--uui-color-surface)); }
-    .notice uui-icon { color: var(--a11y-info); flex: none; margin-top: 2px; }
-    caption { text-align: left; font-weight: 600; padding: var(--uui-size-space-3) 0; }
-    table input { width: 100%; }
+    .warning { --tone: var(--a11y-warning); }
+    .notice { --tone: var(--a11y-notice); }
+    .warning uui-icon, .notice uui-icon { flex: none; margin-top: 2px; color: color-mix(in srgb, var(--tone) 80%, var(--uui-color-text)); }
+    details .muted, details .table-wrap, details > .row { margin-top: var(--uui-size-space-3); }
+    caption { text-align: left; font-weight: 700; padding: var(--uui-size-space-3) var(--uui-size-space-4); }
+    table input { width: 100%; max-width: none; }
   `];
 }
-
 declare global {
   interface HTMLElementTagNameMap {
     'esatto-a11y-settings': EsattoA11ySettingsElement;

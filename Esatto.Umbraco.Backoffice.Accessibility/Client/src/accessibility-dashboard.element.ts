@@ -71,7 +71,13 @@ export class EsattoAccessibilityDashboardElement extends UmbLitElement {
     const tabs = TABS.filter((t) => t.id !== 'settings' || this._settings!.canEdit);
     return html`
       <div class="header">
-        <h2>Accessibility</h2>
+        <div class="brand">
+          <span class="logo" aria-hidden="true"><uui-icon name="icon-users"></uui-icon></span>
+          <div>
+            <h2>Accessibility</h2>
+            <p class="muted small">WCAG checks on every published page, and a checklist for what only a person can judge.</p>
+          </div>
+        </div>
         ${this._sites.length > 1 ? html`
           <uui-select label="Site" .options=${this._sites.map((s) => ({ name: s.name, value: s.key, selected: s.key === this._siteKey }))}
             @change=${(e: Event) => (this._siteKey = (e.target as HTMLSelectElement).value)}></uui-select>` : nothing}
@@ -96,10 +102,16 @@ export class EsattoAccessibilityDashboardElement extends UmbLitElement {
   }
 
   static override styles = [shared, css`
-    :host { padding: var(--uui-size-layout-1); }
-    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-4); }
-    uui-tab-group { border-bottom: 1px solid var(--uui-color-divider); }
-    .panel { padding-top: var(--uui-size-space-5); }
+    :host { padding: var(--uui-size-layout-1); max-width: 1440px; }
+    .header { display: flex; flex-wrap: wrap; gap: var(--uui-size-space-4); align-items: center; justify-content: space-between; margin-bottom: var(--uui-size-space-5); }
+    .brand { display: flex; gap: var(--uui-size-space-4); align-items: center; }
+    .brand h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+    .logo {
+      display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; color: #fff;
+      background: linear-gradient(135deg, #0e9f6e 0%, #2f6fde 100%); box-shadow: 0 6px 16px -6px rgb(14 159 110 / 0.6);
+    }
+    uui-tab-group { border-bottom: 1px solid var(--a11y-line); }
+    .panel { padding-top: var(--uui-size-space-6); }
   `];
 }
 

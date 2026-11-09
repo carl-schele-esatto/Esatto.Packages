@@ -1,4 +1,4 @@
-import type { ScanSummary, ScoreResult, WcagLevel, WcagTarget, WcagVersion } from './types';
+import type { Owner, ScanSummary, ScoreResult, WcagLevel, WcagTarget, WcagVersion } from './types';
 
 export const versionLabel = (v: WcagVersion) => ({ V20: '2.0', V21: '2.1', V22: '2.2' })[v];
 
@@ -36,6 +36,7 @@ export function band(percent: number | null): Band | null {
 }
 
 export const bandLabel: Record<Band, string> = { good: 'Good', warning: 'Needs work', critical: 'Major gaps' };
+export const bandIcon: Record<Band, string> = { good: 'icon-check', warning: 'icon-alert', critical: 'icon-wrong' };
 
 /**
  * The "not verified" criteria in two parts: ones the scanner ran its checks on and found no violations
@@ -44,3 +45,8 @@ export const bandLabel: Record<Band, string> = { good: 'Good', warning: 'Needs w
 export function notVerifiedParts(score: Pick<ScoreResult, 'notVerified' | 'scannerChecked'>): { toConfirm: number; personOnly: number } {
   return { toConfirm: score.scannerChecked, personOnly: score.notVerified - score.scannerChecked };
 }
+
+/** axe's impact as a badge colour (a tone class), most severe red. */
+export const impactTone: Record<string, string> = { critical: 'tone-critical', serious: 'tone-warning', moderate: 'tone-notice', minor: 'tone-none' };
+
+export const ownerIcon: Record<Owner, string> = { Editor: 'icon-edit', Developer: 'icon-code', Both: 'icon-users' };
