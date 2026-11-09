@@ -1,0 +1,226 @@
+{
+  "title-missing": {
+    "title": "Page title missing",
+    "why": "The page title is the blue headline in search results and the text in the browser tab. Without one, Google invents a title from the page, often badly, and the page is much less likely to be clicked.",
+    "fix": "Open the page in Umbraco (in the right language) and fill in its title. Many sites have a separate SEO or meta title field, usually on an SEO tab; if the field is empty the site's template should fall back to the page name. If the page has a name and still no title, ask a developer to check the template.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/appearance/title-link"
+  },
+  "title-length": {
+    "title": "Page title too short or too long",
+    "why": "Google shows roughly 50–60 characters of a title. Longer titles are cut off with \"…\", so the end of the title — often the part that sets the page apart — is lost. Very short titles waste the most visible spot in the search result.",
+    "fix": "Aim for 30–60 characters: what the page is about first, the site name last if at all. Edit the page's title (or SEO title) field in Umbraco.",
+    "caveats": "Long titles aren't penalised; they're just cut off. Google may also rewrite titles it finds unhelpful. A site name appended by the template counts towards the length.",
+    "learnMore": "https://developers.google.com/search/docs/appearance/title-link"
+  },
+  "title-duplicate": {
+    "title": "Same title on several pages",
+    "why": "When several pages share a title, searchers can't tell them apart in the results, and Google has a harder time choosing which page to show.",
+    "fix": "Give each page a title that describes what is unique about it. Edit the title (or SEO title) field of the pages listed.",
+    "caveats": "Paged lists and filtered views often share titles on purpose; ignore them here if they are not meant to be found on their own.",
+    "learnMore": "https://developers.google.com/search/docs/appearance/title-link"
+  },
+  "description-missing": {
+    "title": "Meta description missing",
+    "why": "The meta description is often used as the grey text under the title in search results. Without one, Google picks a snippet from the page, which may not make anyone want to click.",
+    "fix": "Open the page in Umbraco and write a meta description — usually on an SEO tab — of one or two sentences that say what the visitor will find and why it is worth the click.",
+    "caveats": "Google decides per search whether to use your description, so it won't always show. It doesn't affect ranking directly, only how many people click.",
+    "learnMore": "https://developers.google.com/search/docs/appearance/snippet"
+  },
+  "description-length": {
+    "title": "Meta description too short or too long",
+    "why": "Descriptions longer than about 160 characters get cut off; very short ones give searchers too little reason to click.",
+    "fix": "Aim for 70–160 characters: a clear summary of the page with the most important words early. Edit the meta description field on the page in Umbraco.",
+    "caveats": "Google measures in pixels, not characters, and shortens snippets on mobile, so treat the range as a guide.",
+    "learnMore": "https://developers.google.com/search/docs/appearance/snippet"
+  },
+  "description-duplicate": {
+    "title": "Same meta description on several pages",
+    "why": "Identical descriptions make different pages look the same in search results, and Google tends to ignore them and write its own.",
+    "fix": "Write a description for each page that says what is specific to that page. If the template fills in a site-wide default, prefer leaving it empty over repeating it.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/appearance/snippet"
+  },
+  "h1-missing": {
+    "title": "Main heading (H1) missing",
+    "why": "The H1 is the page's main heading. It tells visitors and search engines what the page is about, and its absence often means the page's topic isn't stated anywhere prominent.",
+    "fix": "Make sure the page has one visible main heading. If the page's heading field is filled in and there is still no H1, ask a developer to check the template.",
+    "caveats": "A missing H1 isn't a ranking penalty in itself; it's a signal that the page lacks a clear topic.",
+    "learnMore": "https://developers.google.com/search/docs/appearance/title-link"
+  },
+  "h1-multiple": {
+    "title": "More than one main heading (H1)",
+    "why": "Several H1s on one page blur what the page is mainly about. It usually comes from a block or rich-text heading set to H1 in addition to the page heading.",
+    "fix": "Keep one H1 for the page's main heading and change the others to H2 — in the rich-text editor's format menu, or in the block's heading level setting.",
+    "caveats": "Google handles multiple H1s, so this is a tidiness issue more than a ranking issue.",
+    "learnMore": null
+  },
+  "thin-content": {
+    "title": "Little text on the page",
+    "why": "Pages with very little text give search engines little to understand and rank, and rarely answer a searcher's question well.",
+    "fix": "Add useful text that answers what a visitor to this page wants to know. If the page is a navigation or contact page that is fine as it is, ignore it here.",
+    "caveats": "Word count is a rough signal, not a rule. Text inside images, PDFs or content loaded by JavaScript isn't counted.",
+    "learnMore": "https://developers.google.com/search/docs/fundamentals/creating-helpful-content"
+  },
+  "broken-internal-link": {
+    "title": "Broken links to the site's own pages",
+    "why": "Links that lead to an error page frustrate visitors and waste the attention search engines spend on the site.",
+    "fix": "Open the page in Umbraco and update or remove the links listed. Links made with the content picker follow pages when they move; typed URLs don't. Links to media files break when the file is deleted.",
+    "caveats": "Only links to the site's own hosts are checked. A link to an unpublished page also counts as broken for visitors.",
+    "learnMore": null
+  },
+  "redirected-internal-link": {
+    "title": "Links that go through a redirect",
+    "why": "Each redirect adds a delay for visitors and an extra step for search engines. They usually come from links typed by hand to an old address.",
+    "fix": "Point the links listed straight at the final address — easiest by re-picking the page with Umbraco's link picker.",
+    "caveats": "A redirect from http to https or a missing trailing slash also counts; those are usually fixed in the template or site configuration.",
+    "learnMore": null
+  },
+  "og-missing": {
+    "title": "Social sharing tags missing",
+    "why": "Open Graph tags (og:title, og:image) decide what a link looks like when it's shared on LinkedIn, Facebook, Teams or Slack. Without them the share often shows no picture and a poor title.",
+    "fix": "If the site has a share image or Open Graph fields (often on an SEO tab), fill them in. If there are no such fields, ask a developer to add og:title and og:image to the template, with a site-wide default image.",
+    "caveats": "This doesn't affect Google rankings, only how shared links look.",
+    "learnMore": "https://ogp.me/"
+  },
+  "translation-missing": {
+    "title": "Page missing in some languages",
+    "why": "When a page exists in one language but not another, visitors switching language hit a dead end, and the site is invisible for searches in that language.",
+    "fix": "Open the page in Umbraco, switch to the missing language in the language picker, write the content and publish it.",
+    "caveats": "Some pages are meant for one language only — ignore them here.",
+    "learnMore": null
+  },
+  "status-error": {
+    "title": "Published page doesn't load",
+    "why": "The page is published in Umbraco but returns an error or doesn't answer. Search engines drop pages that keep failing, and visitors see an error.",
+    "fix": "Open the page's address and look at the error. A 404 usually means a routing or URL problem; a 500 is an error in the template or code — check Umbraco's log viewer for that time.",
+    "caveats": "A temporary problem during the scan also shows here; use Re-check to try again.",
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/http-network-errors"
+  },
+  "home-hidden": {
+    "title": "Home page is hidden from search engines",
+    "why": "The site's start page tells search engines not to index it, or robots.txt blocks it. The start page is usually the most important page on the site.",
+    "fix": "Check the start page in Umbraco for a \"hide from search engines\" or noindex setting and switch it off. If there is none, ask a developer to check the robots meta tag, the X-Robots-Tag header and robots.txt.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/block-indexing"
+  },
+  "hidden-but-blocked": {
+    "title": "Hidden page is also blocked in robots.txt",
+    "why": "The page says noindex, but robots.txt stops search engines from reading it — so they never see the noindex, and the address can still appear in results.",
+    "fix": "If the page should stay out of search results, remove its rule from robots.txt and keep the noindex. robots.txt controls crawling, not indexing.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/robots/intro"
+  },
+  "canonical-missing": {
+    "title": "Canonical link missing",
+    "why": "A canonical link tells search engines which address is the real one when the same page can be reached in several ways (with or without a slash, with tracking parameters, on several hosts).",
+    "fix": "Ask a developer to add <link rel=\"canonical\"> with the page's own full address to the template.",
+    "caveats": "Without it Google picks a canonical itself, which usually works; the tag removes the guesswork.",
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
+  },
+  "canonical-mismatch": {
+    "title": "Canonical points somewhere else",
+    "why": "The page's canonical link names another address, another host or a page that doesn't load or is hidden. Search engines may then index the other address instead, or ignore the tag.",
+    "fix": "If the page should be found on its own address, the canonical must point at that exact address. Check the template, and any canonical override field on the page.",
+    "caveats": "A canonical to another page is right when this page is a deliberate copy (for example a print or filtered version).",
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
+  },
+  "hreflang-missing": {
+    "title": "Language versions not linked (hreflang)",
+    "why": "The page exists in several languages, but doesn't tell search engines so. Without hreflang links, Google may show the wrong language to searchers.",
+    "fix": "Ask a developer to output <link rel=\"alternate\" hreflang=\"…\"> for every published language of the page, including the page itself.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/specialty/international/localized-versions"
+  },
+  "hreflang-invalid": {
+    "title": "Language links (hreflang) are wrong",
+    "why": "Search engines ignore hreflang links that use an invalid language code, point at a page that doesn't load, aren't returned by the other page, or don't include the page itself.",
+    "fix": "Ask a developer to check the hreflang output: valid codes such as sv or en-GB, full addresses of published pages, every language version listing all the others and itself.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/specialty/international/localized-versions"
+  },
+  "hreflang-no-x-default": {
+    "title": "No default language (x-default)",
+    "why": "x-default tells search engines which version to show searchers whose language isn't one of the site's languages.",
+    "fix": "Ask a developer to add an hreflang=\"x-default\" link, usually pointing at the main language or a language picker.",
+    "caveats": "Optional, but recommended for multilingual sites.",
+    "learnMore": "https://developers.google.com/search/docs/specialty/international/localized-versions"
+  },
+  "lang-mismatch": {
+    "title": "Page language not stated correctly",
+    "why": "The lang attribute on <html> is missing or doesn't match the page's language in Umbraco. It helps browsers, screen readers and search engines handle the text correctly.",
+    "fix": "Ask a developer to set <html lang=\"…\"> from the page's culture in the template.",
+    "caveats": null,
+    "learnMore": null
+  },
+  "structured-data-invalid": {
+    "title": "Structured data can't be read",
+    "why": "A JSON-LD block on the page isn't valid JSON, so search engines ignore it — and with it any rich results it was meant to give.",
+    "fix": "Ask a developer to fix the JSON-LD output and test the page with Google's Rich Results Test. Text from editors must be escaped properly.",
+    "caveats": "Only JSON syntax is checked here, not whether the schema.org content is complete.",
+    "learnMore": "https://search.google.com/test/rich-results"
+  },
+  "slow-response": {
+    "title": "Slow server response",
+    "why": "The server took a long time to start answering. Slow pages lose visitors and can be crawled less often.",
+    "fix": "Ask a developer to look at caching and heavy queries in the page's template and blocks. Measure again: a single slow response can be a cold start.",
+    "caveats": "Measured from the server to itself, so it shows server time, not what a visitor on a phone experiences.",
+    "learnMore": "https://web.dev/articles/ttfb"
+  },
+  "heavy-html": {
+    "title": "Very large page",
+    "why": "The HTML alone is very large, which slows the page down for visitors, especially on mobile.",
+    "fix": "Ask a developer to look for inlined images or data, huge menus or repeated markup in the template.",
+    "caveats": "Only the HTML is measured, not images, scripts or styles.",
+    "learnMore": null
+  },
+  "sitemap-missing-page": {
+    "title": "Page missing from the sitemap",
+    "why": "The sitemap is the list of pages the site asks search engines to index. Indexable pages missing from it may be found later or not at all.",
+    "fix": "Check whether the page is excluded by a setting (often a \"hide from sitemap\" checkbox). Otherwise ask a developer to check how the sitemap is built.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview"
+  },
+  "sitemap-bad-entry": {
+    "title": "Sitemap lists pages that shouldn't be there",
+    "why": "The sitemap lists an address that is hidden from search engines, doesn't load, or isn't a published page. That sends search engines mixed signals and wastes their visits.",
+    "fix": "Ask a developer to build the sitemap from published, indexable pages only, and to leave out pages marked noindex.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap"
+  },
+  "robots-missing": {
+    "title": "robots.txt missing",
+    "why": "robots.txt tells search engines what they may crawl and where the sitemap is. Without it everything may be crawled, which is usually fine, but the sitemap can't be announced there.",
+    "fix": "Ask a developer to add a robots.txt that allows crawling and lists the sitemap address.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/robots/intro"
+  },
+  "sitemap-missing": {
+    "title": "No sitemap",
+    "why": "A sitemap lists every page you want indexed, which helps search engines find new and changed pages quickly.",
+    "fix": "Ask a developer to add an XML sitemap at /sitemap.xml (or list it in robots.txt), built from published, indexable pages, and submit it in Google Search Console.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview"
+  },
+  "https-redirect": {
+    "title": "http doesn't redirect to https",
+    "why": "The site answers on unencrypted http without moving visitors to https. Browsers mark it as not secure, and the same pages exist on two addresses.",
+    "fix": "Ask a developer or the host to redirect all http requests permanently (301) to https.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
+  },
+  "host-duplicate": {
+    "title": "Site answers on both www and without",
+    "why": "The same pages answer on both www.example.com and example.com, so search engines see two copies of the site.",
+    "fix": "Ask a developer or the host to redirect one of them permanently (301) to the other, and use that one in Umbraco's Culture and Hostnames.",
+    "caveats": null,
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
+  },
+  "site-hidden": {
+    "title": "The whole site is hidden from search engines",
+    "why": "Every page tells search engines not to index it, or robots.txt blocks everything. That is expected on a Test or Dev environment; on the live site it is the most serious problem there is.",
+    "fix": "On the live site: ask a developer immediately to check robots.txt, the robots meta tag and the X-Robots-Tag header. On Test or Dev: set Esatto:Seo:IntentionallyHidden to true for that environment to turn this into a notice.",
+    "caveats": "While the whole site is hidden, the other checks still run as if pages were indexable, so content issues stay visible.",
+    "learnMore": "https://developers.google.com/search/docs/crawling-indexing/block-indexing"
+  }
+}

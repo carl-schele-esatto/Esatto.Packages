@@ -1,0 +1,107 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <!-- Serve wwwroot/App_Plugins/... at that literal path in the consumer. Default Razor SDK behaviour
+         would prefix it with /_content/<PackageId>/, which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+
+    <RootNamespace>Esatto.Umbraco.Backoffice.Seo</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.Seo</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.Seo</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>SEO Health for Umbraco: a Content-section dashboard that scans every published page in every language from the server, checks titles, meta descriptions, headings, canonical and hreflang tags, indexability, robots.txt, sitemaps, internal links and more against current best practice, scores the site over time, and lists prioritised issues with why they matter, how to fix them and a link to the page in Umbraco. Scans run nightly or on demand.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;seo;hreflang;sitemap;audit</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.Seo</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The check texts ship inside the assembly. WithCulture=false: "checks.en.json" would otherwise be
+         treated as an "en" satellite resource. -->
+    <EmbeddedResource Include="Knowledge\*.json" WithCulture="false" LogicalName="Esatto.Umbraco.Backoffice.Seo.Knowledge.%(Filename)%(Extension)" />
+    <!-- Embedded only: the Razor SDK would otherwise also pack them as content into consumers' projects. -->
+    <Content Remove="Knowledge\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Api.Management: controller base + versioned route, and the Umbraco dependency the Marketplace
+         detects. Web.Common: authorization policies. Min versions; resolve to the consumer's. -->
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="18.0.0" />
+    <!-- HTML parsing of the scanned pages (MIT). -->
+    <PackageReference Include="AngleSharp" Version="1.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.Seo.Tests" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Patched floors for advisories that Umbraco's transitive graph pulls in; same pins and reasons as
+         the Accessibility package. Drop each once Umbraco bumps its own dependency past it. -->
+    <PackageReference Include="MessagePack" Version="3.1.12" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="MailKit" Version="4.16.0" />
+    <PackageReference Include="MimeKit" Version="4.16.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project. Skipped during IDE
+       design-time builds, and when there's no client (yet). -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true' And Exists('$(MSBuildProjectDirectory)\Client\package.json')">
+    <Message Importance="high" Text="Installing client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+  <ItemGroup Label="NuGet audit: SixLabors.ImageSharp">
+    <!-- Umbraco 18 ships SixLabors.ImageSharp 3.x; these advisories are fixed only in 4.1.2. This package
+         doesn't use ImageSharp, and the site's own Umbraco reports them there. Drop once Umbraco moves on. -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-gwg2-r3hj-4w44" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-wmxv-xphr-5c9g" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j3p4-wp97-rph4" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-j9gm-c75j-xc9q" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-jjfr-hcj7-qf5w" />
+  </ItemGroup>
+
+</Project>

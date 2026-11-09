@@ -1,0 +1,19 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.Seo",
+  "name": "Esatto Umbraco Backoffice SEO Health",
+  "version": "1.0.0",
+  "allowTelemetry": false,
+  "extensions": [
+    {
+      "type": "dashboard",
+      "alias": "Esatto.Umbraco.Backoffice.Seo.Dashboard",
+      "name": "SEO Health",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.Seo/seo-dashboard.js",
+      "elementName": "esatto-seo-dashboard",
+      "weight": -110,
+      "meta": { "label": "SEO Health", "pathname": "seo-health" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}
