@@ -19,6 +19,8 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.0.0" />
+    <!-- The real SQL Server dialect, so the store's hand-written SQL is checked against what Umbraco Cloud runs. -->
+    <PackageReference Include="Umbraco.Cms.Persistence.SqlServer" Version="18.0.0" />
   </ItemGroup>
 
   <ItemGroup>

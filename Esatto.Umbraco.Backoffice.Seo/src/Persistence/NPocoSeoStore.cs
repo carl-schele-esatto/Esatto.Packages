@@ -1,6 +1,7 @@
 using System.Data.Common;
 using NPoco;
 using Umbraco.Cms.Infrastructure.Persistence;
+using Umbraco.Cms.Infrastructure.Persistence.SqlSyntax;
 using Umbraco.Cms.Infrastructure.Scoping;
 
 namespace Esatto.Umbraco.Backoffice.Seo.Persistence;
@@ -44,12 +45,23 @@ public sealed class NPocoSeoStore(IScopeProvider scopeProvider) : ISeoStore
     public Task<ScanEntity?> GetScanAsync(int id) => Read(db => (ScanEntity?)db.SingleOrDefaultById<ScanEntity>(id));
 
     /// <summary>Every column except the (large) JSON ones.</summary>
-    private const string SummaryColumns = "id, siteKey, startedUtc, finishedUtc, trigger, userName, status, pagesTotal, pagesDone, pagesFailed, "
-        + "pagesSkipped, score, scoreVersion, critical, warning, notice, cultures, trustedHosts, message";
+    private static readonly string[] SummaryColumns =
+    [
+        "id", "siteKey", "startedUtc", "finishedUtc", "trigger", "userName", "status", "pagesTotal", "pagesDone", "pagesFailed",
+        "pagesSkipped", "score", "scoreVersion", "critical", "warning", "notice", "cultures", "trustedHosts", "message",
+    ];
+
+    /// <summary>
+    /// The site's scans, newest first, summary columns only. Column names are quoted in the database's dialect:
+    /// "trigger" is a reserved word in SQL Server (SQLite lets it pass unquoted).
+    /// </summary>
+    internal static string ScansSql(ISqlSyntaxProvider syntax)
+        => $"SELECT {string.Join(", ", SummaryColumns.Select(syntax.GetQuotedColumnName))} FROM {syntax.GetQuotedTableName(ScanEntity.TableName)} "
+            + $"WHERE {syntax.GetQuotedColumnName("siteKey")} = @0 "
+            + $"ORDER BY {syntax.GetQuotedColumnName("startedUtc")} DESC, {syntax.GetQuotedColumnName("id")} DESC";
 
     public Task<IReadOnlyList<ScanEntity>> GetScansAsync(Guid siteKey, int take)
-        => Read<IReadOnlyList<ScanEntity>>(db => db.Fetch<ScanEntity>(
-            $"SELECT {SummaryColumns} FROM {ScanEntity.TableName} WHERE siteKey = @0 ORDER BY startedUtc DESC, id DESC", siteKey)
+        => Read<IReadOnlyList<ScanEntity>>(db => db.Fetch<ScanEntity>(ScansSql(db.SqlContext.SqlSyntax), siteKey)
             .Take(take)
             .ToList());
 
