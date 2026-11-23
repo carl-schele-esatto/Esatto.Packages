@@ -1,0 +1,26 @@
+{
+  "output": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678\u001fAda Example\u001f2026-11-20T10:01:00+01:00\u001fMake the footer links reachable by keyboard\u001fThe tab order now follows the visual order.\n\nSkip links come first.\n\nCo-Authored-By: Grace Example <grace@example.com>\n\u001e\nb2c3d4e5f60718293a4b5c6d7e8f901234567890\u001fBen Placeholder\u001f2026-11-19T16:30:00+01:00\u001fRaise the sitemap cache lifetime to ten minutes\u001f\u001e\nc3d4e5f60718293a4b5c6d7e8f90123456789012\u001fCleo Fixture\u001f2026-11-18T08:15:30+01:00\u001fAdd the cookie banner copy\u001fCo-Authored-By: Grace Example <grace@example.com>\n\u001e\n",
+  "commits": [
+    {
+      "sha": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "subject": "Make the footer links reachable by keyboard",
+      "body": "The tab order now follows the visual order.\n\nSkip links come first.",
+      "author": "Ada Example",
+      "dateUtc": "2026-11-20T09:01:00Z"
+    },
+    {
+      "sha": "b2c3d4e5f60718293a4b5c6d7e8f901234567890",
+      "subject": "Raise the sitemap cache lifetime to ten minutes",
+      "body": null,
+      "author": "Ben Placeholder",
+      "dateUtc": "2026-11-19T15:30:00Z"
+    },
+    {
+      "sha": "c3d4e5f60718293a4b5c6d7e8f90123456789012",
+      "subject": "Add the cookie banner copy",
+      "body": null,
+      "author": "Cleo Fixture",
+      "dateUtc": "2026-11-18T07:15:30Z"
+    }
+  ]
+}
