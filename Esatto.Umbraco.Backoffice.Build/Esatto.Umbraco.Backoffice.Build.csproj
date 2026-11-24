@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+    <!-- Serve wwwroot/App_Plugins/... at that literal path in the consumer. Default Razor SDK behaviour
+         would prefix it with /_content/<PackageId>/, which Umbraco's package discovery does not look at. -->
+    <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+
+    <RootNamespace>Esatto.Umbraco.Backoffice.Build</RootNamespace>
+    <AssemblyName>Esatto.Umbraco.Backoffice.Build</AssemblyName>
+
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <PackageId>Esatto.Umbraco.Backoffice.Build</PackageId>
+    <Authors>Carl Schéle</Authors>
+    <Description>Build for Umbraco: a Content-section dashboard that shows which build is deployed on this environment and what changed in it. It reads a small build-info.json stamp written by your CI pipeline (build number, commit, branch, pipeline target, and the commits since the previous deployment), shows the environment, the Umbraco version and the versions of the packages that decide how the site behaves, and in development falls back to the local git log. A reference script for Azure DevOps and GitHub Actions is in the repository.</Description>
+    <PackageTags>umbraco;umbraco-marketplace;umbraco-18;backoffice;build;deployment;ci</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/carl-schele-esatto/Esatto.Packages/tree/main/Esatto.Umbraco.Backoffice.Build</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/carl-schele-esatto/Esatto.Packages</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Api.Management: controller base + versioned route, and the Umbraco dependency the Marketplace
+         detects. Web.Common: authorization policies. Min versions; resolve to the consumer's. -->
+    <PackageReference Include="Umbraco.Cms.Api.Management" Version="18.0.0" />
+    <PackageReference Include="Umbraco.Cms.Web.Common" Version="18.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Esatto.Umbraco.Backoffice.Build.Tests" />
+  </ItemGroup>
+
+  <ItemGroup Label="Security overrides">
+    <!-- Patched floors for advisories that Umbraco's transitive graph pulls in; same pins and reasons as
+         the SEO Health package. Drop each once Umbraco bumps its own dependency past it. -->
+    <PackageReference Include="MessagePack" Version="3.1.12" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Don't include the client source as part of the nuget/static-web-assets build -->
+    <Content Remove="Client\**" />
+    <None Include="Client\public\umbraco-package.json" Pack="false" />
+  </ItemGroup>
+
+  <!-- Build the backoffice client (npm run build) before building this project. Skipped during IDE
+       design-time builds, and when there's no client (yet). -->
+  <Target Name="BuildBackofficeClient" BeforeTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' And '$(BuildingProject)' == 'true' And Exists('$(MSBuildProjectDirectory)\Client\package.json')">
+    <Message Importance="high" Text="Installing client dependencies (npm install)..." Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(MSBuildProjectDirectory)\Client" Condition="!Exists('$(MSBuildProjectDirectory)\Client\node_modules')" />
+    <Message Importance="high" Text="Building client (npm run build)..." />
+    <Exec Command="npm run build" WorkingDirectory="$(MSBuildProjectDirectory)\Client" />
+  </Target>
+
+  <PropertyGroup Label="AutoPush">
+    <!-- Off by default so a local `dotnet pack` never publishes. -->
+    <AutoPushToFeed Condition="'$(AutoPushToFeed)' == ''">false</AutoPushToFeed>
+    <AutoPushFeedName Condition="'$(AutoPushFeedName)' == ''">esatto-packages</AutoPushFeedName>
+  </PropertyGroup>
+
+  <Target Name="AutoPushAfterPack" AfterTargets="Pack" Condition="'$(AutoPushToFeed)' == 'true'">
+    <Message Importance="high" Text="Auto-pushing $(PackageId) $(PackageVersion) to '$(AutoPushFeedName)'..." />
+    <Exec Command="dotnet nuget push &quot;$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))$(PackageId).$(PackageVersion).nupkg&quot; --source $(AutoPushFeedName) --api-key az --skip-duplicate" />
+  </Target>
+
+</Project>

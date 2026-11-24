@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "buildNumber": "42",
+  "commit": "0123456789abcdef0123456789abcdef01234567",
+  "buildUrl": "https://git.example.com/acme/site/actions/runs/9042",
+  "commitMessage": "Add the contact form",
+  "commitUrl": "https://git.example.com/acme/site/commit/0123456789abcdef0123456789abcdef01234567",
+  "branch": "main",
+  "targetEnvironment": "live",
+  "builtAtUtc": "2026-11-20T09:12:00.000Z",
+  "changes": {
+    "sinceCommit": "89abcdef0123456789abcdef0123456789abcdef",
+    "sinceBuildNumber": "41",
+    "sinceBuildUrl": "https://git.example.com/acme/site/actions/runs/9041",
+    "truncated": false,
+    "commits": [
+      {
+        "sha": "0123456789abcdef0123456789abcdef01234567",
+        "subject": "Add the contact form",
+        "body": null,
+        "author": "A. Developer",
+        "dateUtc": "2026-11-20T09:01:00.000Z",
+        "url": "https://git.example.com/acme/site/commit/0123456789abcdef0123456789abcdef01234567"
+      },
+      {
+        "sha": "fedcba9876543210fedcba9876543210fedcba98",
+        "subject": "Fix the footer spacing",
+        "body": "The spacing now follows the design tokens.",
+        "author": "Dana Sample",
+        "dateUtc": "2026-11-19T16:30:00.000Z",
+        "url": "https://git.example.com/acme/site/commit/fedcba9876543210fedcba9876543210fedcba98"
+      }
+    ]
+  }
+}
