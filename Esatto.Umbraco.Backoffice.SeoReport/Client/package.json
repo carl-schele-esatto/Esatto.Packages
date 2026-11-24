@@ -1,0 +1,18 @@
+{
+  "name": "esatto-umbraco-backoffice-seo-report",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "watch": "tsc && vite build --watch",
+    "build": "tsc && vite build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@umbraco-cms/backoffice": "^18.0.0",
+    "chart.js": "4.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^2"
+  }
+}

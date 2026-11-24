@@ -1,0 +1,258 @@
+[
+  {
+    "name": "dates and sessions",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "20260701"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "12"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260702"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260703"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "7"
+            }
+          ]
+        }
+      ],
+      "rowCount": 3,
+      "kind": "analyticsData#runReport"
+    },
+    "points": [
+      [
+        "2026-07-01",
+        12
+      ],
+      [
+        "2026-07-02",
+        0
+      ],
+      [
+        "2026-07-03",
+        7
+      ]
+    ]
+  },
+  {
+    "name": "unknown date formats are skipped",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "2026-07-01"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260230"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": ""
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260704"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "4"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "2026070"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "5"
+            }
+          ]
+        }
+      ],
+      "rowCount": 5,
+      "kind": "analyticsData#runReport"
+    },
+    "points": [
+      [
+        "2026-07-04",
+        4
+      ]
+    ]
+  },
+  {
+    "name": "sessions that are not an integer count as zero",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "20260701"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "abc"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260702"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "1.5"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260703"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": " 8 "
+            }
+          ]
+        }
+      ],
+      "rowCount": 3,
+      "kind": "analyticsData#runReport"
+    },
+    "points": [
+      [
+        "2026-07-01",
+        0
+      ],
+      [
+        "2026-07-02",
+        0
+      ],
+      [
+        "2026-07-03",
+        8
+      ]
+    ]
+  },
+  {
+    "name": "a row without dimensions is skipped, a row without metrics counts zero",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "metricValues": [
+            {
+              "value": "5"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "20260705"
+            }
+          ]
+        }
+      ],
+      "rowCount": 2,
+      "kind": "analyticsData#runReport"
+    },
+    "points": [
+      [
+        "2026-07-05",
+        0
+      ]
+    ]
+  },
+  {
+    "name": "empty rows",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [],
+      "rowCount": 0,
+      "kind": "analyticsData#runReport"
+    },
+    "points": []
+  }
+]

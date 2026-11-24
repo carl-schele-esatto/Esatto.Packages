@@ -1,0 +1,19 @@
+[
+  { "type": "urn:esatto:seo-report:problem:periodInvalid", "title": "The request is not valid.", "status": 400, "code": "periodInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:periodOutOfRange", "title": "The request is not valid.", "status": 400, "code": "periodOutOfRange", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:dateInvalid", "title": "The request is not valid.", "status": 400, "code": "dateInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:dateOutOfRange", "title": "The request is not valid.", "status": 400, "code": "dateOutOfRange", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:requestInvalid", "title": "The request is not valid.", "status": 400, "code": "requestInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:ga4PropertyInvalid", "title": "The request is not valid.", "status": 400, "code": "ga4PropertyInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:searchConsoleInvalid", "title": "The request is not valid.", "status": 400, "code": "searchConsoleInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:keyInvalid", "title": "The request is not valid.", "status": 400, "code": "keyInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:alreadyRunning", "title": "The request conflicts with the current state.", "status": 409, "code": "alreadyRunning", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:notConfigured", "title": "The request conflicts with the current state.", "status": 409, "code": "notConfigured", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:keyUnreadable", "title": "The request conflicts with the current state.", "status": 409, "code": "keyUnreadable", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:keyInvalid", "title": "The request conflicts with the current state.", "status": 409, "code": "keyInvalid", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:apiDisabled", "title": "A fetch from Google failed.", "status": 502, "code": "apiDisabled", "args": { "api": "analyticsData" }, "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:noAccess", "title": "A fetch from Google failed.", "status": 502, "code": "noAccess", "args": { "source": "ga4" }, "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:propertyNotFound", "title": "A fetch from Google failed.", "status": 502, "code": "propertyNotFound", "args": { "source": "searchConsole" }, "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:quota", "title": "A fetch from Google failed.", "status": 502, "code": "quota", "traceId": "trace-1" },
+  { "type": "urn:esatto:seo-report:problem:unknown", "title": "A fetch from Google failed.", "status": 502, "code": "unknown", "traceId": "trace-1" }
+]

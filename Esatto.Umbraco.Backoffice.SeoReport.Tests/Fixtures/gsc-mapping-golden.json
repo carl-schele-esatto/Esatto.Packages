@@ -1,0 +1,1527 @@
+[
+  {
+    "name": "a whole report: probe, three months by three segments, queries, pages and query pages (measures rounded half to even)",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-10"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        },
+        {
+          "keys": [
+            "2026-07-11"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        },
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2026-04",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 1200.4,
+              "impressions": 52000.6,
+              "ctr": 0.0231,
+              "position": 14.37
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-04",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 800,
+              "impressions": 9000,
+              "ctr": 0.0889,
+              "position": 1.9
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-04",
+        "segment": "non_brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 400,
+              "impressions": 43000,
+              "ctr": 0.0093,
+              "position": 17.2
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-05",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 2.5,
+              "impressions": 3.5,
+              "ctr": 0.5,
+              "position": 1.5
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-05",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 3.5,
+              "impressions": 4.5,
+              "ctr": 0.25,
+              "position": 2.5
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-05",
+        "segment": "non_brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 0.5,
+              "impressions": 1.5,
+              "ctr": 0,
+              "position": 0
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 1500,
+              "impressions": 61000,
+              "ctr": 0.0246,
+              "position": 13.9
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-06",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 900,
+              "impressions": 10000,
+              "ctr": 0.09,
+              "position": 1.7
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-06",
+        "segment": "non_brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 600,
+              "impressions": 51000,
+              "ctr": 0.0118,
+              "position": 16.4
+            }
+          ]
+        }
+      }
+    ],
+    "queries": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "acme"
+          ],
+          "clicks": 700,
+          "impressions": 5000,
+          "ctr": 0.14,
+          "position": 1.2
+        },
+        {
+          "keys": [
+            "example widget"
+          ],
+          "clicks": 120.6,
+          "impressions": 9000,
+          "ctr": 0.0133,
+          "position": 6.55
+        },
+        {
+          "keys": [
+            "widget repair"
+          ],
+          "clicks": 40,
+          "impressions": 20000,
+          "ctr": 0.002,
+          "position": 11.8
+        }
+      ]
+    },
+    "pages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "https://www.example.com/"
+          ],
+          "clicks": 500,
+          "impressions": 8000,
+          "ctr": 0.0625,
+          "position": 2.1
+        },
+        {
+          "keys": [
+            "https://www.example.com/widgets/"
+          ],
+          "clicks": 250,
+          "impressions": 30000,
+          "ctr": 0.0083,
+          "position": 9.4
+        }
+      ]
+    },
+    "queryPages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "acme",
+            "https://www.example.com/"
+          ],
+          "clicks": 650,
+          "impressions": 4000,
+          "ctr": 0.1625,
+          "position": 1.1
+        },
+        {
+          "keys": [
+            "example widget",
+            "https://www.example.com/widgets/"
+          ],
+          "clicks": 100,
+          "impressions": 7000,
+          "ctr": 0.0143,
+          "position": 6.2
+        },
+        {
+          "keys": [
+            "example widget",
+            "https://www.example.com/widgets/blue/"
+          ],
+          "clicks": 20,
+          "impressions": 2000,
+          "ctr": 0.01,
+          "position": 7.9
+        }
+      ]
+    },
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-04",
+          "segment": "total",
+          "clicks": 1200,
+          "impressions": 52001,
+          "ctrFraction": 0.0231,
+          "position": 14.37
+        },
+        {
+          "period": "2026-04",
+          "segment": "brand",
+          "clicks": 800,
+          "impressions": 9000,
+          "ctrFraction": 0.0889,
+          "position": 1.9
+        },
+        {
+          "period": "2026-04",
+          "segment": "non_brand",
+          "clicks": 400,
+          "impressions": 43000,
+          "ctrFraction": 0.0093,
+          "position": 17.2
+        },
+        {
+          "period": "2026-05",
+          "segment": "total",
+          "clicks": 2,
+          "impressions": 4,
+          "ctrFraction": 0.5,
+          "position": 1.5
+        },
+        {
+          "period": "2026-05",
+          "segment": "brand",
+          "clicks": 4,
+          "impressions": 4,
+          "ctrFraction": 0.25,
+          "position": 2.5
+        },
+        {
+          "period": "2026-05",
+          "segment": "non_brand",
+          "clicks": 0,
+          "impressions": 2,
+          "ctrFraction": 0,
+          "position": 0
+        },
+        {
+          "period": "2026-06",
+          "segment": "total",
+          "clicks": 1500,
+          "impressions": 61000,
+          "ctrFraction": 0.0246,
+          "position": 13.9
+        },
+        {
+          "period": "2026-06",
+          "segment": "brand",
+          "clicks": 900,
+          "impressions": 10000,
+          "ctrFraction": 0.09,
+          "position": 1.7
+        },
+        {
+          "period": "2026-06",
+          "segment": "non_brand",
+          "clicks": 600,
+          "impressions": 51000,
+          "ctrFraction": 0.0118,
+          "position": 16.4
+        }
+      ],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [
+        {
+          "query": "acme",
+          "clicks": 700,
+          "impressions": 5000,
+          "ctrFraction": 0.14,
+          "position": 1.2
+        },
+        {
+          "query": "example widget",
+          "clicks": 121,
+          "impressions": 9000,
+          "ctrFraction": 0.0133,
+          "position": 6.55
+        },
+        {
+          "query": "widget repair",
+          "clicks": 40,
+          "impressions": 20000,
+          "ctrFraction": 0.002,
+          "position": 11.8
+        }
+      ],
+      "pages": [
+        {
+          "url": "https://www.example.com/",
+          "clicks": 500,
+          "impressions": 8000,
+          "ctrFraction": 0.0625,
+          "position": 2.1
+        },
+        {
+          "url": "https://www.example.com/widgets/",
+          "clicks": 250,
+          "impressions": 30000,
+          "ctrFraction": 0.0083,
+          "position": 9.4
+        }
+      ],
+      "queryPages": [
+        {
+          "query": "acme",
+          "url": "https://www.example.com/",
+          "clicks": 650,
+          "impressions": 4000,
+          "ctrFraction": 0.1625,
+          "position": 1.1
+        },
+        {
+          "query": "example widget",
+          "url": "https://www.example.com/widgets/",
+          "clicks": 100,
+          "impressions": 7000,
+          "ctrFraction": 0.0143,
+          "position": 6.2
+        },
+        {
+          "query": "example widget",
+          "url": "https://www.example.com/widgets/blue/",
+          "clicks": 20,
+          "impressions": 2000,
+          "ctrFraction": 0.01,
+          "position": 7.9
+        }
+      ]
+    }
+  },
+  {
+    "name": "an empty response is no row (never a row of zeros): no rows key, an empty array, a null response, several rows (the first counts)",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2026-04",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty"
+        }
+      },
+      {
+        "period": "2026-04",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty"
+        }
+      },
+      {
+        "period": "2026-04",
+        "segment": "non_brand",
+        "response": {
+          "rows": []
+        }
+      },
+      {
+        "period": "2026-05",
+        "segment": "total",
+        "response": null
+      },
+      {
+        "period": "2026-05",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 5,
+              "impressions": 50,
+              "ctr": 0.1,
+              "position": 4
+            },
+            {
+              "clicks": 99,
+              "impressions": 999,
+              "ctr": 0.9,
+              "position": 9
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-05",
+        "segment": "non_brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 7,
+              "impressions": 70,
+              "ctr": 0.1,
+              "position": 3
+            }
+          ]
+        }
+      }
+    ],
+    "queries": {
+      "responseAggregationType": "byProperty"
+    },
+    "pages": {
+      "rows": []
+    },
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-05",
+          "segment": "brand",
+          "clicks": 5,
+          "impressions": 50,
+          "ctrFraction": 0.1,
+          "position": 4
+        },
+        {
+          "period": "2026-05",
+          "segment": "non_brand",
+          "clicks": 7,
+          "impressions": 70,
+          "ctrFraction": 0.1,
+          "position": 3
+        }
+      ],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "missing measures count as zero",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {}
+          ]
+        }
+      },
+      {
+        "period": "2026-06",
+        "segment": "brand",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 9,
+              "position": 5
+            }
+          ]
+        }
+      }
+    ],
+    "queries": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "alpha"
+          ]
+        },
+        {
+          "keys": [
+            "beta"
+          ],
+          "clicks": 3,
+          "ctr": 0.5
+        }
+      ]
+    },
+    "pages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "https://www.example.com/a"
+          ],
+          "impressions": 10
+        }
+      ]
+    },
+    "queryPages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "gamma",
+            "https://www.example.com/g"
+          ],
+          "position": 2
+        }
+      ]
+    },
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-06",
+          "segment": "total",
+          "clicks": 0,
+          "impressions": 0,
+          "ctrFraction": 0,
+          "position": 0
+        },
+        {
+          "period": "2026-06",
+          "segment": "brand",
+          "clicks": 9,
+          "impressions": 0,
+          "ctrFraction": 0,
+          "position": 5
+        }
+      ],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [
+        {
+          "query": "alpha",
+          "clicks": 0,
+          "impressions": 0,
+          "ctrFraction": 0,
+          "position": 0
+        },
+        {
+          "query": "beta",
+          "clicks": 3,
+          "impressions": 0,
+          "ctrFraction": 0.5,
+          "position": 0
+        }
+      ],
+      "pages": [
+        {
+          "url": "https://www.example.com/a",
+          "clicks": 0,
+          "impressions": 10,
+          "ctrFraction": 0,
+          "position": 0
+        }
+      ],
+      "queryPages": [
+        {
+          "query": "gamma",
+          "url": "https://www.example.com/g",
+          "clicks": 0,
+          "impressions": 0,
+          "ctrFraction": 0,
+          "position": 2
+        }
+      ]
+    }
+  },
+  {
+    "name": "rows without a usable key are skipped: no keys property, an empty list, a blank key, a missing second key",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [],
+    "queries": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "keys": [],
+          "clicks": 2,
+          "impressions": 2,
+          "ctr": 0.1,
+          "position": 2
+        },
+        {
+          "keys": [
+            ""
+          ],
+          "clicks": 3,
+          "impressions": 3,
+          "ctr": 0.1,
+          "position": 3
+        },
+        {
+          "keys": [
+            "   "
+          ],
+          "clicks": 4,
+          "impressions": 4,
+          "ctr": 0.1,
+          "position": 4
+        },
+        {
+          "keys": [
+            "kept",
+            "ignored second key"
+          ],
+          "clicks": 5,
+          "impressions": 5,
+          "ctr": 0.1,
+          "position": 5
+        },
+        {
+          "keys": [
+            "  padded  "
+          ],
+          "clicks": 6,
+          "impressions": 6,
+          "ctr": 0.1,
+          "position": 6
+        }
+      ]
+    },
+    "pages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "keys": [
+            ""
+          ],
+          "clicks": 2,
+          "impressions": 2,
+          "ctr": 0.1,
+          "position": 2
+        },
+        {
+          "keys": [
+            "https://www.example.com/kept"
+          ],
+          "clicks": 3,
+          "impressions": 3,
+          "ctr": 0.1,
+          "position": 3
+        }
+      ]
+    },
+    "queryPages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "keys": [
+            "only a query"
+          ],
+          "clicks": 2,
+          "impressions": 2,
+          "ctr": 0.1,
+          "position": 2
+        },
+        {
+          "keys": [
+            "",
+            "https://www.example.com/x"
+          ],
+          "clicks": 3,
+          "impressions": 3,
+          "ctr": 0.1,
+          "position": 3
+        },
+        {
+          "keys": [
+            "a query",
+            ""
+          ],
+          "clicks": 4,
+          "impressions": 4,
+          "ctr": 0.1,
+          "position": 4
+        },
+        {
+          "keys": [
+            "a query",
+            "  "
+          ],
+          "clicks": 5,
+          "impressions": 5,
+          "ctr": 0.1,
+          "position": 5
+        },
+        {
+          "keys": [
+            "kept",
+            "https://www.example.com/k",
+            "a third key"
+          ],
+          "clicks": 6,
+          "impressions": 6,
+          "ctr": 0.1,
+          "position": 6
+        }
+      ]
+    },
+    "expected": {
+      "rows": [],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [
+        {
+          "query": "kept",
+          "clicks": 5,
+          "impressions": 5,
+          "ctrFraction": 0.1,
+          "position": 5
+        },
+        {
+          "query": "  padded  ",
+          "clicks": 6,
+          "impressions": 6,
+          "ctrFraction": 0.1,
+          "position": 6
+        }
+      ],
+      "pages": [
+        {
+          "url": "https://www.example.com/kept",
+          "clicks": 3,
+          "impressions": 3,
+          "ctrFraction": 0.1,
+          "position": 3
+        }
+      ],
+      "queryPages": [
+        {
+          "query": "kept",
+          "url": "https://www.example.com/k",
+          "clicks": 6,
+          "impressions": 6,
+          "ctrFraction": 0.1,
+          "position": 6
+        }
+      ]
+    }
+  },
+  {
+    "name": "the API\u0027s order is kept (not re-sorted by clicks)",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [],
+    "queries": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "low"
+          ],
+          "clicks": 1,
+          "impressions": 10,
+          "ctr": 0.1,
+          "position": 5
+        },
+        {
+          "keys": [
+            "high"
+          ],
+          "clicks": 90,
+          "impressions": 100,
+          "ctr": 0.9,
+          "position": 1
+        },
+        {
+          "keys": [
+            "mid"
+          ],
+          "clicks": 30,
+          "impressions": 40,
+          "ctr": 0.75,
+          "position": 2
+        }
+      ]
+    },
+    "pages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "https://www.example.com/low"
+          ],
+          "clicks": 1,
+          "impressions": 10,
+          "ctr": 0.1,
+          "position": 5
+        },
+        {
+          "keys": [
+            "https://www.example.com/high"
+          ],
+          "clicks": 90,
+          "impressions": 100,
+          "ctr": 0.9,
+          "position": 1
+        }
+      ]
+    },
+    "queryPages": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "z",
+            "https://www.example.com/z"
+          ],
+          "clicks": 1,
+          "impressions": 10,
+          "ctr": 0.1,
+          "position": 5
+        },
+        {
+          "keys": [
+            "a",
+            "https://www.example.com/a"
+          ],
+          "clicks": 90,
+          "impressions": 100,
+          "ctr": 0.9,
+          "position": 1
+        }
+      ]
+    },
+    "expected": {
+      "rows": [],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [
+        {
+          "query": "low",
+          "clicks": 1,
+          "impressions": 10,
+          "ctrFraction": 0.1,
+          "position": 5
+        },
+        {
+          "query": "high",
+          "clicks": 90,
+          "impressions": 100,
+          "ctrFraction": 0.9,
+          "position": 1
+        },
+        {
+          "query": "mid",
+          "clicks": 30,
+          "impressions": 40,
+          "ctrFraction": 0.75,
+          "position": 2
+        }
+      ],
+      "pages": [
+        {
+          "url": "https://www.example.com/low",
+          "clicks": 1,
+          "impressions": 10,
+          "ctrFraction": 0.1,
+          "position": 5
+        },
+        {
+          "url": "https://www.example.com/high",
+          "clicks": 90,
+          "impressions": 100,
+          "ctrFraction": 0.9,
+          "position": 1
+        }
+      ],
+      "queryPages": [
+        {
+          "query": "z",
+          "url": "https://www.example.com/z",
+          "clicks": 1,
+          "impressions": 10,
+          "ctrFraction": 0.1,
+          "position": 5
+        },
+        {
+          "query": "a",
+          "url": "https://www.example.com/a",
+          "clicks": 90,
+          "impressions": 100,
+          "ctrFraction": 0.9,
+          "position": 1
+        }
+      ]
+    }
+  },
+  {
+    "name": "no probe call: the documented lag of three days stands in (today 2026-07-02 -\u003E 2026-06-29, so June is not complete)",
+    "today": "2026-07-02",
+    "reportPeriod": "2026-05",
+    "probe": null,
+    "periods": [
+      {
+        "period": "2026-05",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 100,
+              "impressions": 1000,
+              "ctr": 0.1,
+              "position": 5
+            }
+          ]
+        }
+      }
+    ],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-05",
+          "segment": "total",
+          "clicks": 100,
+          "impressions": 1000,
+          "ctrFraction": 0.1,
+          "position": 5
+        }
+      ],
+      "dataThrough": null,
+      "latestCompletePeriod": "2026-05",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "a probe without rows: the documented lag stands in",
+    "today": "2026-07-04",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty"
+    },
+    "periods": [
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 100,
+              "impressions": 1000,
+              "ctr": 0.1,
+              "position": 5
+            }
+          ]
+        }
+      }
+    ],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-06",
+          "segment": "total",
+          "clicks": 100,
+          "impressions": 1000,
+          "ctrFraction": 0.1,
+          "position": 5
+        }
+      ],
+      "dataThrough": null,
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "the probe\u0027s last parsable date counts (unordered rows, junk and blank keys, a key list that is missing): data through the month end makes the month complete",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-06",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-06-30"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        },
+        {
+          "keys": [
+            "junk"
+          ],
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "keys": [
+            "2026-06-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        },
+        {
+          "keys": [
+            ""
+          ],
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.1,
+          "position": 1
+        },
+        {
+          "keys": [
+            "2026-06-29"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 100,
+              "impressions": 1000,
+              "ctr": 0.1,
+              "position": 5
+            }
+          ]
+        }
+      }
+    ],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-06",
+          "segment": "total",
+          "clicks": 100,
+          "impressions": 1000,
+          "ctrFraction": 0.1,
+          "position": 5
+        }
+      ],
+      "dataThrough": "2026-06-30",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "the report month is before the 16-month window: the months of the curve before it are listed",
+    "today": "2026-07-15",
+    "reportPeriod": "2025-12",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2025-04",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 100,
+              "impressions": 1000,
+              "ctr": 0.1,
+              "position": 5
+            }
+          ]
+        }
+      },
+      {
+        "period": "2025-12",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 120,
+              "impressions": 1100,
+              "ctr": 0.11,
+              "position": 4
+            }
+          ]
+        }
+      }
+    ],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2025-04",
+          "segment": "total",
+          "clicks": 100,
+          "impressions": 1000,
+          "ctrFraction": 0.1,
+          "position": 5
+        },
+        {
+          "period": "2025-12",
+          "segment": "total",
+          "clicks": 120,
+          "impressions": 1100,
+          "ctrFraction": 0.11,
+          "position": 4
+        }
+      ],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [
+        "2024-12",
+        "2025-01",
+        "2025-02",
+        "2025-03"
+      ],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "the report month is long before the window: every month of the curve is out of it",
+    "today": "2026-07-15",
+    "reportPeriod": "2024-01",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [
+        "2023-01",
+        "2023-02",
+        "2023-03",
+        "2023-04",
+        "2023-05",
+        "2023-06",
+        "2023-07",
+        "2023-08",
+        "2023-09",
+        "2023-10",
+        "2023-11",
+        "2023-12",
+        "2024-01"
+      ],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "a report month after the latest complete one: the rows are mapped as given and the window and latest complete month come from today and the probe",
+    "today": "2026-07-15",
+    "reportPeriod": "2026-07",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2026-07-12"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 1,
+              "impressions": 1,
+              "ctr": 0.5,
+              "position": 5
+            }
+          ]
+        }
+      },
+      {
+        "period": "2026-07",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 2,
+              "impressions": 2,
+              "ctr": 0.5,
+              "position": 5
+            }
+          ]
+        }
+      }
+    ],
+    "queries": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "x"
+          ],
+          "clicks": 1,
+          "impressions": 1,
+          "ctr": 0.5,
+          "position": 5
+        }
+      ]
+    },
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2026-06",
+          "segment": "total",
+          "clicks": 1,
+          "impressions": 1,
+          "ctrFraction": 0.5,
+          "position": 5
+        },
+        {
+          "period": "2026-07",
+          "segment": "total",
+          "clicks": 2,
+          "impressions": 2,
+          "ctrFraction": 0.5,
+          "position": 5
+        }
+      ],
+      "dataThrough": "2026-07-12",
+      "latestCompletePeriod": "2026-06",
+      "windowStart": "2025-04",
+      "outOfWindowPeriods": [],
+      "queries": [
+        {
+          "query": "x",
+          "clicks": 1,
+          "impressions": 1,
+          "ctrFraction": 0.5,
+          "position": 5
+        }
+      ],
+      "pages": [],
+      "queryPages": []
+    }
+  },
+  {
+    "name": "first of the year: the window crosses the year boundary",
+    "today": "2026-01-01",
+    "reportPeriod": "2025-12",
+    "probe": {
+      "responseAggregationType": "byProperty",
+      "rows": [
+        {
+          "keys": [
+            "2025-12-31"
+          ],
+          "clicks": 10,
+          "impressions": 100,
+          "ctr": 0.1,
+          "position": 8
+        }
+      ]
+    },
+    "periods": [
+      {
+        "period": "2025-12",
+        "segment": "total",
+        "response": {
+          "responseAggregationType": "byProperty",
+          "rows": [
+            {
+              "clicks": 8,
+              "impressions": 80,
+              "ctr": 0.1,
+              "position": 3
+            }
+          ]
+        }
+      }
+    ],
+    "queries": null,
+    "pages": null,
+    "queryPages": null,
+    "expected": {
+      "rows": [
+        {
+          "period": "2025-12",
+          "segment": "total",
+          "clicks": 8,
+          "impressions": 80,
+          "ctrFraction": 0.1,
+          "position": 3
+        }
+      ],
+      "dataThrough": "2025-12-31",
+      "latestCompletePeriod": "2025-12",
+      "windowStart": "2024-10",
+      "outOfWindowPeriods": [],
+      "queries": [],
+      "pages": [],
+      "queryPages": []
+    }
+  }
+]

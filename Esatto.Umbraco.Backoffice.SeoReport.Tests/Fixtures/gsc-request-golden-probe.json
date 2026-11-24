@@ -1,0 +1,9 @@
+{
+  "dataState": "final",
+  "dimensions": [
+    "date"
+  ],
+  "endDate": "2026-08-15",
+  "rowLimit": 60,
+  "startDate": "2026-07-01"
+}

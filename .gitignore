@@ -20,3 +20,6 @@ dist/
 *.user
 .DS_Store
 Thumbs.db
+
+## Local working notes of development sessions (reviews, ledgers, scratch reports): never part of the repository.
+.superpowers/

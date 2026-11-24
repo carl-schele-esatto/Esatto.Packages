@@ -1,0 +1,9 @@
+{
+  "dataState": "final",
+  "dimensions": [
+    "query"
+  ],
+  "endDate": "2026-07-31",
+  "rowLimit": 250,
+  "startDate": "2026-07-01"
+}

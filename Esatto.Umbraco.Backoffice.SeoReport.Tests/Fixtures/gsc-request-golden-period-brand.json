@@ -1,0 +1,18 @@
+{
+  "dataState": "final",
+  "dimensionFilterGroups": [
+    {
+      "filters": [
+        {
+          "dimension": "query",
+          "expression": "(?i)(acme|acme ab)",
+          "operator": "includingRegex"
+        }
+      ],
+      "groupType": "and"
+    }
+  ],
+  "endDate": "2026-07-31",
+  "rowLimit": 1,
+  "startDate": "2026-07-01"
+}

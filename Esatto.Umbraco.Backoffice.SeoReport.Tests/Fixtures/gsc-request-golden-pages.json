@@ -1,0 +1,9 @@
+{
+  "dataState": "final",
+  "dimensions": [
+    "page"
+  ],
+  "endDate": "2026-07-31",
+  "rowLimit": 200,
+  "startDate": "2026-07-01"
+}

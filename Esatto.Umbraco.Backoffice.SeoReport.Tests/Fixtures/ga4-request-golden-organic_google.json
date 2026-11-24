@@ -1,0 +1,60 @@
+{
+  "property": "properties/123456789",
+  "dimensions": [
+    {
+      "name": "yearMonth"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "sessions"
+    },
+    {
+      "name": "engagementRate"
+    },
+    {
+      "name": "averageSessionDuration"
+    },
+    {
+      "name": "keyEvents"
+    }
+  ],
+  "dateRanges": [
+    {
+      "startDate": "2025-01-01",
+      "endDate": "2026-07-31"
+    }
+  ],
+  "dimensionFilter": {
+    "andGroup": {
+      "expressions": [
+        {
+          "filter": {
+            "fieldName": "sessionDefaultChannelGroup",
+            "stringFilter": {
+              "matchType": "EXACT",
+              "value": "Organic Search"
+            }
+          }
+        },
+        {
+          "filter": {
+            "fieldName": "sessionSource",
+            "stringFilter": {
+              "matchType": "EXACT",
+              "value": "google"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "limit": "200",
+  "orderBys": [
+    {
+      "dimension": {
+        "dimensionName": "yearMonth"
+      }
+    }
+  ]
+}

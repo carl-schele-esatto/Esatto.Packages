@@ -1,0 +1,27 @@
+{
+  "property": "properties/123456789",
+  "dimensions": [
+    {
+      "name": "date"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "sessions"
+    }
+  ],
+  "dateRanges": [
+    {
+      "startDate": "2026-05-20",
+      "endDate": "2026-07-18"
+    }
+  ],
+  "limit": "200",
+  "orderBys": [
+    {
+      "dimension": {
+        "dimensionName": "date"
+      }
+    }
+  ]
+}

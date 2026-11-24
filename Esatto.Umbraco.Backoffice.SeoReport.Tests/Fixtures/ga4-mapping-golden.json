@@ -1,0 +1,820 @@
+[
+  {
+    "name": "organic: two months, key events rounded half-to-even (2.5 -\u003E 2, 3.5 -\u003E 4)",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 3,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202605"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "80"
+            },
+            {
+              "value": "0.4"
+            },
+            {
+              "value": "30"
+            },
+            {
+              "value": "3.5"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202606"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "120"
+            },
+            {
+              "value": "0.5"
+            },
+            {
+              "value": "61.25"
+            },
+            {
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "95"
+            },
+            {
+              "value": "0.6129032258064516"
+            },
+            {
+              "value": "74.5"
+            },
+            {
+              "value": "2.5"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-05",
+        "segment": "organic",
+        "sessions": 80,
+        "engagementRate": 0.4,
+        "avgSessionSeconds": 30,
+        "keyEvents": 4
+      },
+      {
+        "period": "2026-06",
+        "segment": "organic",
+        "sessions": 120,
+        "engagementRate": 0.5,
+        "avgSessionSeconds": 61.25,
+        "keyEvents": 3
+      },
+      {
+        "period": "2026-07",
+        "segment": "organic",
+        "sessions": 95,
+        "engagementRate": 0.6129032258064516,
+        "avgSessionSeconds": 74.5,
+        "keyEvents": 2
+      }
+    ]
+  },
+  {
+    "name": "total: two months",
+    "segment": "total",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 2,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202606"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "410"
+            },
+            {
+              "value": "0.55"
+            },
+            {
+              "value": "88.125"
+            },
+            {
+              "value": "7"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "388"
+            },
+            {
+              "value": "0.5801"
+            },
+            {
+              "value": "91.9"
+            },
+            {
+              "value": "0.4"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-06",
+        "segment": "total",
+        "sessions": 410,
+        "engagementRate": 0.55,
+        "avgSessionSeconds": 88.125,
+        "keyEvents": 7
+      },
+      {
+        "period": "2026-07",
+        "segment": "total",
+        "sessions": 388,
+        "engagementRate": 0.5801,
+        "avgSessionSeconds": 91.9,
+        "keyEvents": 0
+      }
+    ]
+  },
+  {
+    "name": "organic_google: two months",
+    "segment": "organic_google",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 2,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202606"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "99"
+            },
+            {
+              "value": "0.61"
+            },
+            {
+              "value": "70"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "90"
+            },
+            {
+              "value": "0.6667"
+            },
+            {
+              "value": "75.5"
+            },
+            {
+              "value": "0.6"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-06",
+        "segment": "organic_google",
+        "sessions": 99,
+        "engagementRate": 0.61,
+        "avgSessionSeconds": 70,
+        "keyEvents": 1
+      },
+      {
+        "period": "2026-07",
+        "segment": "organic_google",
+        "sessions": 90,
+        "engagementRate": 0.6667,
+        "avgSessionSeconds": 75.5,
+        "keyEvents": 1
+      }
+    ]
+  },
+  {
+    "name": "only the sessions column present",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "42"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-07",
+        "segment": "organic",
+        "sessions": 42,
+        "engagementRate": 0,
+        "avgSessionSeconds": 0,
+        "keyEvents": 0
+      }
+    ]
+  },
+  {
+    "name": "unparseable ratios become zero",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "10"
+            },
+            {
+              "value": "(not set)"
+            },
+            {
+              "value": ""
+            },
+            {
+              "value": "abc"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-07",
+        "segment": "organic",
+        "sessions": 10,
+        "engagementRate": 0,
+        "avgSessionSeconds": 0,
+        "keyEvents": 0
+      }
+    ]
+  },
+  {
+    "name": "decimal comma is not a number under invariant culture",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "10"
+            },
+            {
+              "value": "0,5"
+            },
+            {
+              "value": "1,5"
+            },
+            {
+              "value": "1,0"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-07",
+        "segment": "organic",
+        "sessions": 10,
+        "engagementRate": 0,
+        "avgSessionSeconds": 0,
+        "keyEvents": 0
+      }
+    ]
+  },
+  {
+    "name": "exponent, big session count, whitespace around sessions",
+    "segment": "total",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": " 1234567890123 "
+            },
+            {
+              "value": "1E-1"
+            },
+            {
+              "value": "1.5e2"
+            },
+            {
+              "value": "2.0"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-07",
+        "segment": "total",
+        "sessions": 1234567890123,
+        "engagementRate": 0.1,
+        "avgSessionSeconds": 150,
+        "keyEvents": 2
+      }
+    ]
+  },
+  {
+    "name": "no rows key at all",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 0,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport"
+    },
+    "rows": []
+  },
+  {
+    "name": "empty rows array",
+    "segment": "total",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 0,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": []
+    },
+    "rows": []
+  },
+  {
+    "name": "rows without dimensions or metrics are skipped",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 3,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "metricValues": [
+            {
+              "value": "5"
+            },
+            {
+              "value": "0.1"
+            },
+            {
+              "value": "1"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "202606"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "7"
+            },
+            {
+              "value": "0.2"
+            },
+            {
+              "value": "2"
+            },
+            {
+              "value": "2"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-06",
+        "segment": "organic",
+        "sessions": 7,
+        "engagementRate": 0.2,
+        "avgSessionSeconds": 2,
+        "keyEvents": 2
+      }
+    ]
+  },
+  {
+    "name": "a year-month that is not six characters is kept as is",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 2,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "2026"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "3"
+            },
+            {
+              "value": "0.5"
+            },
+            {
+              "value": "9"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": ""
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "4"
+            },
+            {
+              "value": "0.5"
+            },
+            {
+              "value": "9"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026",
+        "segment": "organic",
+        "sessions": 3,
+        "engagementRate": 0.5,
+        "avgSessionSeconds": 9,
+        "keyEvents": 1
+      },
+      {
+        "period": "",
+        "segment": "organic",
+        "sessions": 4,
+        "engagementRate": 0.5,
+        "avgSessionSeconds": 9,
+        "keyEvents": 1
+      }
+    ]
+  },
+  {
+    "name": "sessions that are not an integer fail the whole mapping",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "12.5"
+            },
+            {
+              "value": "0.5"
+            },
+            {
+              "value": "9"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "throws": true
+  },
+  {
+    "name": "a second dimension is ignored",
+    "segment": "organic",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "yearMonth"
+        }
+      ],
+      "metricHeaders": [
+        {
+          "name": "sessions",
+          "type": "TYPE_INTEGER"
+        }
+      ],
+      "rowCount": 1,
+      "metadata": {
+        "currencyCode": "SEK",
+        "timeZone": "Europe/Stockholm"
+      },
+      "kind": "analyticsData#runReport",
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "202607"
+            },
+            {
+              "value": "google"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "5"
+            },
+            {
+              "value": "0.5"
+            },
+            {
+              "value": "9"
+            },
+            {
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    },
+    "rows": [
+      {
+        "period": "2026-07",
+        "segment": "organic",
+        "sessions": 5,
+        "engagementRate": 0.5,
+        "avgSessionSeconds": 9,
+        "keyEvents": 1
+      }
+    ]
+  }
+]

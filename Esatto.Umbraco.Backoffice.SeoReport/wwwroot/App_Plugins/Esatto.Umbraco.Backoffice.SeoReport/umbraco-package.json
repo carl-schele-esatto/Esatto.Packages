@@ -1,0 +1,26 @@
+{
+  "$schema": "../umbraco-package-schema.json",
+  "id": "Esatto.Umbraco.Backoffice.SeoReport",
+  "name": "Esatto Umbraco Backoffice SEO Report",
+  "version": "1.0.0",
+  "allowTelemetry": false,
+  "extensions": [
+    {
+      "type": "localization",
+      "alias": "Esatto.Umbraco.Backoffice.SeoReport.Localization.En",
+      "name": "SEO Report (English)",
+      "meta": { "culture": "en" },
+      "js": "/App_Plugins/Esatto.Umbraco.Backoffice.SeoReport/lang/en.js"
+    },
+    {
+      "type": "dashboard",
+      "alias": "Esatto.Umbraco.Backoffice.SeoReport.Dashboard",
+      "name": "SEO Report",
+      "element": "/App_Plugins/Esatto.Umbraco.Backoffice.SeoReport/seo-report-dashboard.js",
+      "elementName": "esatto-seo-report-dashboard",
+      "weight": -105,
+      "meta": { "label": "SEO Report", "pathname": "seo-report" },
+      "conditions": [{ "alias": "Umb.Condition.SectionAlias", "match": "Umb.Section.Content" }]
+    }
+  ]
+}

@@ -1,0 +1,3321 @@
+{
+  "_about": ["Generated once by running Nova's TrafficMapper.Build (Manadsrapport.Core) on the synthetic inputs below; every figure is made up.", "expected = Nova's report trimmed to data: no prose, no client/agency/schema/generated_at, no keywords/positions/deliverables/actions.", "Chart labels converted to what the port sends: Swedish month names 'Jan'..'Dec' -> '01'..'12', 'Maj 26' -> '2026-05'.", "Annotation title+text, trend text and source note -> { key, numbers, periods, dates }: the port's base id for the Swedish sentence plus every number/YYYY-MM/YYYY-MM-DD it shows, sorted.", "Nova's series keys, severities and data_status are kept as Nova wrote them; ReportMapperTests documents the deliberate differences."],
+  "scenarios": [
+    {
+      "name": "full",
+      "input": {
+        "reportPeriod": "2026-10",
+        "rows": [
+          { "period": "2025-09", "segment": "organic", "sessions": 4000, "engagementRate": 0.5, "avgSessionSeconds": 100, "keyEvents": 2 },
+          { "period": "2025-09", "segment": "total", "sessions": 9000, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-09", "segment": "organic_google", "sessions": 3700, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "organic", "sessions": 4158, "engagementRate": 0.5131, "avgSessionSeconds": 107.3, "keyEvents": 3 },
+          { "period": "2025-10", "segment": "total", "sessions": 9333, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "organic_google", "sessions": 3847, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "organic", "sessions": 4316, "engagementRate": 0.5262, "avgSessionSeconds": 114.6, "keyEvents": 4 },
+          { "period": "2025-11", "segment": "total", "sessions": 9666, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "organic_google", "sessions": 3994, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-12", "segment": "organic", "sessions": 4375, "engagementRate": 0.5393, "avgSessionSeconds": 121.9, "keyEvents": 5 },
+          { "period": "2025-12", "segment": "total", "sessions": 9801, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-12", "segment": "organic_google", "sessions": 4042, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "organic", "sessions": 4533, "engagementRate": 0.5524, "avgSessionSeconds": 129.2, "keyEvents": 6 },
+          { "period": "2026-01", "segment": "total", "sessions": 10134, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "organic_google", "sessions": 4189, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "organic", "sessions": 4691, "engagementRate": 0.5655, "avgSessionSeconds": 136.5, "keyEvents": 2 },
+          { "period": "2026-02", "segment": "total", "sessions": 10467, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "organic_google", "sessions": 4336, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "organic", "sessions": 4750, "engagementRate": 0.5786, "avgSessionSeconds": 143.8, "keyEvents": 3 },
+          { "period": "2026-03", "segment": "total", "sessions": 10602, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "organic_google", "sessions": 4384, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "organic", "sessions": 4908, "engagementRate": 0.5917, "avgSessionSeconds": 151.1, "keyEvents": 4 },
+          { "period": "2026-04", "segment": "total", "sessions": 10935, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "organic_google", "sessions": 4531, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic", "sessions": 5066, "engagementRate": 0.6048, "avgSessionSeconds": 158.4, "keyEvents": 5 },
+          { "period": "2026-05", "segment": "total", "sessions": 11268, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic_google", "sessions": 4678, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-06", "segment": "organic", "sessions": 5125, "engagementRate": 0.6179, "avgSessionSeconds": 165.7, "keyEvents": 6 },
+          { "period": "2026-06", "segment": "total", "sessions": 11403, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-06", "segment": "organic_google", "sessions": 4726, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-07", "segment": "organic", "sessions": 5283, "engagementRate": 0.631, "avgSessionSeconds": 173, "keyEvents": 2 },
+          { "period": "2026-07", "segment": "total", "sessions": 11736, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-07", "segment": "organic_google", "sessions": 4873, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-08", "segment": "organic", "sessions": 5441, "engagementRate": 0.6441, "avgSessionSeconds": 180.3, "keyEvents": 3 },
+          { "period": "2026-08", "segment": "total", "sessions": 12069, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-08", "segment": "organic_google", "sessions": 5020, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-09", "segment": "organic", "sessions": 5500, "engagementRate": 0.6572, "avgSessionSeconds": 187.6, "keyEvents": 4 },
+          { "period": "2026-09", "segment": "total", "sessions": 12204, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-09", "segment": "organic_google", "sessions": 5068, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-10", "segment": "organic", "sessions": 5658, "engagementRate": 0.6703, "avgSessionSeconds": 194.89999999999998, "keyEvents": 5 },
+          { "period": "2026-10", "segment": "total", "sessions": 12537, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-10", "segment": "organic_google", "sessions": 5215, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2025-08", "segment": "total", "clicks": 2500, "impressions": 90000, "ctrFraction": 0.027777777777777776, "position": 12.5 },
+            { "period": "2025-08", "segment": "brand", "clicks": 700, "impressions": 5000, "ctrFraction": 0.14, "position": 2.25 },
+            { "period": "2025-08", "segment": "non_brand", "clicks": 1675, "impressions": 300000, "ctrFraction": 0.005583333333333333, "position": 14.75 },
+            { "period": "2025-09", "segment": "total", "clicks": 2560, "impressions": 91500, "ctrFraction": 0.027978142076502732, "position": 12.4 },
+            { "period": "2025-09", "segment": "brand", "clicks": 709, "impressions": 5050, "ctrFraction": 0.1403960396039604, "position": 2.28 },
+            { "period": "2025-09", "segment": "non_brand", "clicks": 1723, "impressions": 302000, "ctrFraction": 0.005705298013245033, "position": 14.7 },
+            { "period": "2025-10", "segment": "total", "clicks": 2620, "impressions": 93000, "ctrFraction": 0.028172043010752688, "position": 12.3 },
+            { "period": "2025-10", "segment": "brand", "clicks": 718, "impressions": 5100, "ctrFraction": 0.1407843137254902, "position": 2.31 },
+            { "period": "2025-10", "segment": "non_brand", "clicks": 1771, "impressions": 304000, "ctrFraction": 0.0058256578947368425, "position": 14.65 },
+            { "period": "2025-11", "segment": "total", "clicks": 2680, "impressions": 94500, "ctrFraction": 0.02835978835978836, "position": 12.2 },
+            { "period": "2025-11", "segment": "brand", "clicks": 727, "impressions": 5150, "ctrFraction": 0.14116504854368933, "position": 2.34 },
+            { "period": "2025-11", "segment": "non_brand", "clicks": 1819, "impressions": 306000, "ctrFraction": 0.005944444444444444, "position": 14.6 },
+            { "period": "2025-12", "segment": "total", "clicks": 2740, "impressions": 96000, "ctrFraction": 0.028541666666666667, "position": 12.1 },
+            { "period": "2025-12", "segment": "brand", "clicks": 736, "impressions": 5200, "ctrFraction": 0.14153846153846153, "position": 2.37 },
+            { "period": "2025-12", "segment": "non_brand", "clicks": 1867, "impressions": 308000, "ctrFraction": 0.006061688311688311, "position": 14.55 },
+            { "period": "2026-01", "segment": "total", "clicks": 2800, "impressions": 97500, "ctrFraction": 0.028717948717948718, "position": 12 },
+            { "period": "2026-01", "segment": "brand", "clicks": 745, "impressions": 5250, "ctrFraction": 0.1419047619047619, "position": 2.4 },
+            { "period": "2026-01", "segment": "non_brand", "clicks": 1915, "impressions": 310000, "ctrFraction": 0.00617741935483871, "position": 14.5 },
+            { "period": "2026-02", "segment": "total", "clicks": 2860, "impressions": 99000, "ctrFraction": 0.028888888888888888, "position": 11.9 },
+            { "period": "2026-02", "segment": "brand", "clicks": 754, "impressions": 5300, "ctrFraction": 0.14226415094339623, "position": 2.43 },
+            { "period": "2026-02", "segment": "non_brand", "clicks": 1963, "impressions": 312000, "ctrFraction": 0.006291666666666667, "position": 14.45 },
+            { "period": "2026-03", "segment": "total", "clicks": 2920, "impressions": 100500, "ctrFraction": 0.029054726368159204, "position": 11.8 },
+            { "period": "2026-03", "segment": "brand", "clicks": 763, "impressions": 5350, "ctrFraction": 0.14261682242990653, "position": 2.46 },
+            { "period": "2026-03", "segment": "non_brand", "clicks": 2011, "impressions": 314000, "ctrFraction": 0.006404458598726115, "position": 14.4 },
+            { "period": "2026-04", "segment": "total", "clicks": 2980, "impressions": 102000, "ctrFraction": 0.029215686274509805, "position": 11.7 },
+            { "period": "2026-04", "segment": "brand", "clicks": 772, "impressions": 5400, "ctrFraction": 0.14296296296296296, "position": 2.49 },
+            { "period": "2026-04", "segment": "non_brand", "clicks": 2059, "impressions": 316000, "ctrFraction": 0.006515822784810127, "position": 14.35 },
+            { "period": "2026-05", "segment": "total", "clicks": 3040, "impressions": 103500, "ctrFraction": 0.029371980676328503, "position": 11.6 },
+            { "period": "2026-05", "segment": "brand", "clicks": 781, "impressions": 5450, "ctrFraction": 0.14330275229357797, "position": 2.52 },
+            { "period": "2026-05", "segment": "non_brand", "clicks": 2107, "impressions": 318000, "ctrFraction": 0.006625786163522013, "position": 14.3 },
+            { "period": "2026-06", "segment": "total", "clicks": 3100, "impressions": 105000, "ctrFraction": 0.029523809523809525, "position": 11.5 },
+            { "period": "2026-06", "segment": "brand", "clicks": 790, "impressions": 5500, "ctrFraction": 0.14363636363636365, "position": 2.55 },
+            { "period": "2026-06", "segment": "non_brand", "clicks": 2155, "impressions": 320000, "ctrFraction": 0.006734375, "position": 14.25 },
+            { "period": "2026-07", "segment": "total", "clicks": 3160, "impressions": 106500, "ctrFraction": 0.029671361502347417, "position": 11.4 },
+            { "period": "2026-07", "segment": "brand", "clicks": 799, "impressions": 5550, "ctrFraction": 0.14396396396396396, "position": 2.58 },
+            { "period": "2026-07", "segment": "non_brand", "clicks": 2203, "impressions": 322000, "ctrFraction": 0.006841614906832298, "position": 14.2 },
+            { "period": "2026-08", "segment": "total", "clicks": 3220, "impressions": 108000, "ctrFraction": 0.029814814814814815, "position": 11.3 },
+            { "period": "2026-08", "segment": "brand", "clicks": 808, "impressions": 5600, "ctrFraction": 0.1442857142857143, "position": 2.61 },
+            { "period": "2026-08", "segment": "non_brand", "clicks": 2251, "impressions": 324000, "ctrFraction": 0.006947530864197531, "position": 14.15 },
+            { "period": "2026-09", "segment": "total", "clicks": 3280, "impressions": 109500, "ctrFraction": 0.02995433789954338, "position": 11.2 },
+            { "period": "2026-09", "segment": "brand", "clicks": 817, "impressions": 5650, "ctrFraction": 0.14460176991150442, "position": 2.64 },
+            { "period": "2026-09", "segment": "non_brand", "clicks": 2299, "impressions": 326000, "ctrFraction": 0.007052147239263804, "position": 14.1 },
+            { "period": "2026-10", "segment": "total", "clicks": 3340, "impressions": 111000, "ctrFraction": 0.03009009009009009, "position": 11.1 },
+            { "period": "2026-10", "segment": "brand", "clicks": 826, "impressions": 5700, "ctrFraction": 0.14491228070175438, "position": 2.67 },
+            { "period": "2026-10", "segment": "non_brand", "clicks": 2347, "impressions": 328000, "ctrFraction": 0.007155487804878049, "position": 14.05 }
+          ],
+          "dataThrough": "2026-11-16",
+          "latestCompletePeriod": "2026-10",
+          "windowStart": "2025-08",
+          "outOfWindowPeriods": [],
+          "queries": [
+            { "query": "acme widgets", "clicks": 400, "impressions": 5000, "ctrFraction": 0.08, "position": 1.4 },
+            { "query": "acme", "clicks": 300, "impressions": 2000, "ctrFraction": 0.15, "position": 1.1 },
+            { "query": "blue gadgets", "clicks": 120, "impressions": 15000, "ctrFraction": 0.008, "position": 8.6 },
+            { "query": "red gadgets guide", "clicks": 40, "impressions": 9000, "ctrFraction": 0.0044444, "position": 23.4 },
+            { "query": "gadget repair", "clicks": 25, "impressions": 3000, "ctrFraction": 0.0083333, "position": 14.2 },
+            { "query": "widget colours", "clicks": 10, "impressions": 800, "ctrFraction": 0.0125, "position": 31.7 }
+          ],
+          "pages": [
+            { "url": "https://www.example.com/", "clicks": 900, "impressions": 20000, "ctrFraction": 0.045, "position": 3.2 },
+            { "url": "https://example.com/gadgets/blue", "clicks": 110, "impressions": 16000, "ctrFraction": 0.006875, "position": 7.9 },
+            { "url": "https://example.com/gadgets/green", "clicks": 30, "impressions": 7000, "ctrFraction": 0.0042857, "position": 9.5 },
+            { "url": "https://example.com/widgets/care", "clicks": 12, "impressions": 4000, "ctrFraction": 0.003, "position": 4.1 },
+            { "url": "https://example.com/widgets/sizes", "clicks": 5, "impressions": 1200, "ctrFraction": 0.0041667, "position": 6.6 },
+            { "url": "https://shop.example.com/gadgets/red", "clicks": 20, "impressions": 9000, "ctrFraction": 0.0022222, "position": 24.9 },
+            { "url": "http://example.com", "clicks": 8, "impressions": 350, "ctrFraction": 0.0228571, "position": 21.5 },
+            { "url": "https://example.com/about", "clicks": 3, "impressions": 100, "ctrFraction": 0.03, "position": 30.2 }
+          ],
+          "queryPages": [
+            { "query": "acme widgets", "url": "https://www.example.com/", "clicks": 380, "impressions": 4600, "ctrFraction": 0.0826087, "position": 1.3 },
+            { "query": "blue gadgets", "url": "https://example.com/gadgets/blue", "clicks": 100, "impressions": 13000, "ctrFraction": 0.0076923, "position": 8.1 },
+            { "query": "red gadgets guide", "url": "https://shop.example.com/gadgets/red", "clicks": 18, "impressions": 8000, "ctrFraction": 0.00225, "position": 24.6 },
+            { "query": "an unarchived query", "url": "https://example.com/about", "clicks": 2, "impressions": 60, "ctrFraction": 0.0333333, "position": 29 }
+          ]
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-10",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          { "id": "ga4", "latest_period": "2026-10", "note": null },
+          {
+            "id": "gsc",
+            "latest_period": "2026-10",
+            "note": {
+              "key": "gscLag",
+              "numbers": [],
+              "periods": [],
+              "dates": ["2026-11-16"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 5658,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 36.1,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_engagement_rate",
+              "value": 67,
+              "format": "percent",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "engagementVsLastYear",
+                  "numbers": [51.3],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_session_seconds",
+              "value": 195,
+              "format": "duration",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "durationVsLastYear",
+                  "numbers": [107],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_key_events",
+              "value": 5,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 66.7,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "total_sessions",
+              "value": 12537,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 34.3,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 3340,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 27.5,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -1875,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, null, null, null, null, 4000, 4158, 4316, 4375],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [4533, 4691, 4750, 4908, 5066, 5125, 5283, 5441, 5500, 5658, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, null, null, null, null, 9000, 9333, 9666, 9801],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [10134, 10467, 10602, 10935, 11268, 11403, 11736, 12069, 12204, 12537, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2025",
+                "values": [null, null, null, null, null, null, null, null, 3700, 3847, 3994, 4042],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "clicks_2025",
+                "values": [null, null, null, null, null, null, null, 2500, 2560, 2620, 2680, 2740],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "sessions_2026",
+                "values": [4189, 4336, 4384, 4531, 4678, 4726, 4873, 5020, 5068, 5215, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [2800, 2860, 2920, 2980, 3040, 3100, 3160, 3220, 3280, 3340, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  {
+                    "key": "brand_clicks",
+                    "value": 826,
+                    "format": "integer",
+                    "source": "gsc",
+                    "period": "2026-10",
+                    "trend": {
+                      "direction": "up",
+                      "change_percent": 15,
+                      "text": {
+                        "key": "vsSameMonthLastYear",
+                        "numbers": [],
+                        "periods": [],
+                        "dates": []
+                      }
+                    }
+                  },
+                  {
+                    "key": "brand_impressions",
+                    "value": 5700,
+                    "format": "integer",
+                    "source": "gsc",
+                    "period": "2026-10",
+                    "trend": {
+                      "direction": "up",
+                      "change_percent": 11.8,
+                      "text": {
+                        "key": "vsSameMonthLastYear",
+                        "numbers": [],
+                        "periods": [],
+                        "dates": []
+                      }
+                    }
+                  },
+                  { "key": "brand_ctr", "value": 14.49, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "brand_position", "value": 2.7, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  {
+                    "key": "non_brand_clicks",
+                    "value": 2347,
+                    "format": "integer",
+                    "source": "gsc",
+                    "period": "2026-10",
+                    "trend": {
+                      "direction": "up",
+                      "change_percent": 32.5,
+                      "text": {
+                        "key": "vsSameMonthLastYear",
+                        "numbers": [],
+                        "periods": [],
+                        "dates": []
+                      }
+                    }
+                  },
+                  {
+                    "key": "non_brand_impressions",
+                    "value": 328000,
+                    "format": "integer",
+                    "source": "gsc",
+                    "period": "2026-10",
+                    "trend": {
+                      "direction": "up",
+                      "change_percent": 7.9,
+                      "text": {
+                        "key": "vsSameMonthLastYear",
+                        "numbers": [],
+                        "periods": [],
+                        "dates": []
+                      }
+                    }
+                  },
+                  { "key": "non_brand_ctr", "value": 0.72, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "non_brand_position", "value": 14, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [718, 727, 736, 745, 754, 763, 772, 781, 790, 799, 808, 817, 826],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [1771, 1819, 1867, 1915, 1963, 2011, 2059, 2107, 2155, 2203, 2251, 2299, 2347],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [5100, 5150, 5200, 5250, 5300, 5350, 5400, 5450, 5500, 5550, 5600, 5650, 5700],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [304000, 306000, 308000, 310000, 312000, 314000, 316000, 318000, 320000, 322000, 324000, 326000, 328000],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": "2026-10",
+                "severity": "info",
+                "text": {
+                  "key": "anonymizedQueries",
+                  "numbers": [95],
+                  "periods": ["2026-10"],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-10",
+                "severity": "warning",
+                "text": {
+                  "key": "pagesNotClicked",
+                  "numbers": [1, 4, 10, 300],
+                  "periods": [],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-10",
+                "severity": "warning",
+                "text": {
+                  "key": "pagesRankDeep",
+                  "numbers": [2, 20, 300],
+                  "periods": [],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-10",
+                "severity": "warning",
+                "text": {
+                  "key": "nonBrandNotClicked",
+                  "numbers": [0.72, 14.1, 2347, 328000],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": [
+              { "query": "acme widgets", "clicks": 400, "impressions": 5000, "ctr_percent": 8, "position": 1.4 },
+              { "query": "acme", "clicks": 300, "impressions": 2000, "ctr_percent": 15, "position": 1.1 },
+              { "query": "blue gadgets", "clicks": 120, "impressions": 15000, "ctr_percent": 0.8, "position": 8.6 },
+              { "query": "red gadgets guide", "clicks": 40, "impressions": 9000, "ctr_percent": 0.44, "position": 23.4 },
+              { "query": "gadget repair", "clicks": 25, "impressions": 3000, "ctr_percent": 0.83, "position": 14.2 },
+              { "query": "widget colours", "clicks": 10, "impressions": 800, "ctr_percent": 1.25, "position": 31.7 }
+            ],
+            "pages": [
+              { "url": "https://www.example.com/", "path": "/", "clicks": 900, "impressions": 20000, "ctr_percent": 4.5, "position": 3.2 },
+              { "url": "https://example.com/gadgets/blue", "path": "/gadgets/blue", "clicks": 110, "impressions": 16000, "ctr_percent": 0.69, "position": 7.9 },
+              { "url": "https://example.com/gadgets/green", "path": "/gadgets/green", "clicks": 30, "impressions": 7000, "ctr_percent": 0.43, "position": 9.5 },
+              { "url": "https://example.com/widgets/care", "path": "/widgets/care", "clicks": 12, "impressions": 4000, "ctr_percent": 0.3, "position": 4.1 },
+              { "url": "https://example.com/widgets/sizes", "path": "/widgets/sizes", "clicks": 5, "impressions": 1200, "ctr_percent": 0.42, "position": 6.6 },
+              { "url": "https://shop.example.com/gadgets/red", "path": "shop.example.com/gadgets/red", "clicks": 20, "impressions": 9000, "ctr_percent": 0.22, "position": 24.9 },
+              { "url": "http://example.com", "path": "/", "clicks": 8, "impressions": 350, "ctr_percent": 2.29, "position": 21.5 },
+              { "url": "https://example.com/about", "path": "/about", "clicks": 3, "impressions": 100, "ctr_percent": 3, "position": 30.2 }
+            ],
+            "total": {
+              "key": "total",
+              "metrics": [
+                {
+                  "key": "total_clicks",
+                  "value": 3340,
+                  "format": "integer",
+                  "source": "gsc",
+                  "period": "2026-10",
+                  "trend": {
+                    "direction": "up",
+                    "change_percent": 27.5,
+                    "text": {
+                      "key": "vsSameMonthLastYear",
+                      "numbers": [],
+                      "periods": [],
+                      "dates": []
+                    }
+                  }
+                },
+                {
+                  "key": "total_impressions",
+                  "value": 111000,
+                  "format": "integer",
+                  "source": "gsc",
+                  "period": "2026-10",
+                  "trend": {
+                    "direction": "up",
+                    "change_percent": 19.4,
+                    "text": {
+                      "key": "vsSameMonthLastYear",
+                      "numbers": [],
+                      "periods": [],
+                      "dates": []
+                    }
+                  }
+                },
+                { "key": "total_ctr", "value": 3.01, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                { "key": "total_position", "value": 11.1, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+              ]
+            },
+            "query_pages": [
+              { "query": "acme widgets", "url": "https://www.example.com/", "path": "/", "clicks": 380, "impressions": 4600, "ctr_percent": 8.26, "position": 1.3 },
+              { "query": "blue gadgets", "url": "https://example.com/gadgets/blue", "path": "/gadgets/blue", "clicks": 100, "impressions": 13000, "ctr_percent": 0.77, "position": 8.1 },
+              { "query": "red gadgets guide", "url": "https://shop.example.com/gadgets/red", "path": "shop.example.com/gadgets/red", "clicks": 18, "impressions": 8000, "ctr_percent": 0.22, "position": 24.6 }
+            ]
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "gaps",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2024-01", "segment": "organic", "sessions": 6000, "engagementRate": 0, "avgSessionSeconds": 90.4, "keyEvents": 0 },
+          { "period": "2024-02", "segment": "organic", "sessions": 6037, "engagementRate": 0, "avgSessionSeconds": 91.5, "keyEvents": 0 },
+          { "period": "2024-03", "segment": "organic", "sessions": 6074, "engagementRate": 0, "avgSessionSeconds": 92.60000000000001, "keyEvents": 0 },
+          { "period": "2024-05", "segment": "organic", "sessions": 6148, "engagementRate": 0, "avgSessionSeconds": 94.80000000000001, "keyEvents": 0 },
+          { "period": "2024-06", "segment": "organic", "sessions": 6185, "engagementRate": 0, "avgSessionSeconds": 95.9, "keyEvents": 0 },
+          { "period": "2024-07", "segment": "organic", "sessions": 4722, "engagementRate": 0, "avgSessionSeconds": 97, "keyEvents": 0 },
+          { "period": "2024-08", "segment": "organic", "sessions": 6259, "engagementRate": 0, "avgSessionSeconds": 98.10000000000001, "keyEvents": 0 },
+          { "period": "2024-09", "segment": "organic", "sessions": 6296, "engagementRate": 0, "avgSessionSeconds": 99.2, "keyEvents": 0 },
+          { "period": "2024-10", "segment": "organic", "sessions": 6333, "engagementRate": 0, "avgSessionSeconds": 100.30000000000001, "keyEvents": 0 },
+          { "period": "2024-11", "segment": "organic", "sessions": 6370, "engagementRate": 0, "avgSessionSeconds": 101.4, "keyEvents": 0 },
+          { "period": "2024-12", "segment": "organic", "sessions": 6407, "engagementRate": 0, "avgSessionSeconds": 102.5, "keyEvents": 0 },
+          { "period": "2025-01", "segment": "organic", "sessions": 6444, "engagementRate": 0, "avgSessionSeconds": 103.60000000000001, "keyEvents": 0 },
+          { "period": "2025-02", "segment": "organic", "sessions": 6481, "engagementRate": 0, "avgSessionSeconds": 104.7, "keyEvents": 0 },
+          { "period": "2025-03", "segment": "organic", "sessions": 6518, "engagementRate": 0, "avgSessionSeconds": 105.80000000000001, "keyEvents": 0 },
+          { "period": "2025-04", "segment": "organic", "sessions": 6555, "engagementRate": 0, "avgSessionSeconds": 106.9, "keyEvents": 0 },
+          { "period": "2025-05", "segment": "organic", "sessions": 450, "engagementRate": 0, "avgSessionSeconds": 108, "keyEvents": 0 },
+          { "period": "2025-06", "segment": "organic", "sessions": 6629, "engagementRate": 0, "avgSessionSeconds": 109.10000000000001, "keyEvents": 0 },
+          { "period": "2025-07", "segment": "organic", "sessions": 5166, "engagementRate": 0, "avgSessionSeconds": 110.2, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "organic", "sessions": 6777, "engagementRate": 0, "avgSessionSeconds": 113.5, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "organic", "sessions": 6814, "engagementRate": 0, "avgSessionSeconds": 114.60000000000001, "keyEvents": 0 },
+          { "period": "2025-12", "segment": "organic", "sessions": 6851, "engagementRate": 0, "avgSessionSeconds": 115.7, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "organic", "sessions": 6888, "engagementRate": 0.608, "avgSessionSeconds": 116.80000000000001, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "organic", "sessions": 6925, "engagementRate": 0.58, "avgSessionSeconds": 117.9, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "organic", "sessions": 6962, "engagementRate": 0.587, "avgSessionSeconds": 119, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "organic", "sessions": 6999, "engagementRate": 0.594, "avgSessionSeconds": 120.10000000000001, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic", "sessions": 7036, "engagementRate": 0.601, "avgSessionSeconds": 121.20000000000002, "keyEvents": 0 },
+          { "period": "2025-01", "segment": "total", "sessions": 15000, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-02", "segment": "total", "sessions": 15090, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-03", "segment": "total", "sessions": 15180, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-04", "segment": "total", "sessions": 15270, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-05", "segment": "total", "sessions": 15360, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-06", "segment": "total", "sessions": 15450, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-07", "segment": "total", "sessions": 15540, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-08", "segment": "total", "sessions": 15630, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-09", "segment": "total", "sessions": 15720, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "total", "sessions": 15810, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "total", "sessions": 15900, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "total", "sessions": 16080, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "total", "sessions": 16170, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "total", "sessions": 16260, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "total", "sessions": 16350, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "total", "sessions": 16440, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2025-08", "segment": "total", "clicks": 2000, "impressions": 70000, "ctrFraction": 0.02857142857142857, "position": 11.2 },
+            { "period": "2025-08", "segment": "brand", "clicks": 500, "impressions": 6000, "ctrFraction": 0.08333333333333333, "position": 1.8 },
+            { "period": "2025-08", "segment": "non_brand", "clicks": 1300, "impressions": 60000, "ctrFraction": 0.021666666666666667, "position": 13.3 },
+            { "period": "2025-12", "segment": "total", "clicks": 2030, "impressions": 70900, "ctrFraction": 0.028631875881523272, "position": 11 },
+            { "period": "2025-12", "segment": "brand", "clicks": 505, "impressions": 6040, "ctrFraction": 0.0836092715231788, "position": 1.82 },
+            { "period": "2025-12", "segment": "non_brand", "clicks": 1320, "impressions": 60800, "ctrFraction": 0.021710526315789475, "position": 13.200000000000001 },
+            { "period": "2026-01", "segment": "total", "clicks": 2060, "impressions": 71800, "ctrFraction": 0.028690807799442896, "position": 10.799999999999999 },
+            { "period": "2026-01", "segment": "brand", "clicks": 510, "impressions": 6080, "ctrFraction": 0.08388157894736842, "position": 1.84 },
+            { "period": "2026-01", "segment": "non_brand", "clicks": 1340, "impressions": 61600, "ctrFraction": 0.021753246753246754, "position": 13.100000000000001 },
+            { "period": "2026-02", "segment": "total", "clicks": 2090, "impressions": 72700, "ctrFraction": 0.02874828060522696, "position": 10.6 },
+            { "period": "2026-02", "segment": "brand", "clicks": 515, "impressions": 6120, "ctrFraction": 0.08415032679738563, "position": 1.86 },
+            { "period": "2026-02", "segment": "non_brand", "clicks": 1360, "impressions": 62400, "ctrFraction": 0.021794871794871794, "position": 13 },
+            { "period": "2026-03", "segment": "total", "clicks": 2120, "impressions": 73600, "ctrFraction": 0.028804347826086957, "position": 10.399999999999999 },
+            { "period": "2026-03", "segment": "brand", "clicks": 520, "impressions": 6160, "ctrFraction": 0.08441558441558442, "position": 1.8800000000000001 },
+            { "period": "2026-03", "segment": "non_brand", "clicks": 1380, "impressions": 63200, "ctrFraction": 0.021835443037974682, "position": 12.9 },
+            { "period": "2026-04", "segment": "total", "clicks": 2150, "impressions": 74500, "ctrFraction": 0.028859060402684565, "position": 10.2 },
+            { "period": "2026-04", "segment": "brand", "clicks": 525, "impressions": 6200, "ctrFraction": 0.0846774193548387, "position": 1.9000000000000001 },
+            { "period": "2026-04", "segment": "non_brand", "clicks": 1400, "impressions": 64000, "ctrFraction": 0.021875, "position": 12.8 },
+            { "period": "2026-05", "segment": "total", "clicks": 3000, "impressions": 75400, "ctrFraction": 0.03978779840848806, "position": 10 },
+            { "period": "2026-05", "segment": "brand", "clicks": 1500, "impressions": 6240, "ctrFraction": 0.2403846153846154, "position": 1.92 },
+            { "period": "2026-05", "segment": "non_brand", "clicks": 2400, "impressions": 64800, "ctrFraction": 0.037037037037037035, "position": 12.700000000000001 }
+          ],
+          "dataThrough": null,
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-08",
+          "outOfWindowPeriods": ["2025-06", "2025-07"],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "https://www.example.com/",
+        "ga4Property": null,
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": []
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 7036,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": 1463.6,
+                "text": {
+                  "key": "anomalousBaseline",
+                  "numbers": [450],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_engagement_rate",
+              "value": 60.1,
+              "format": "percent",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "engagementShare",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_session_seconds",
+              "value": 121,
+              "format": "duration",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "durationVsLastYear",
+                  "numbers": [108],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "total_sessions",
+              "value": 16440,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "up",
+                "change_percent": 7,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 3000,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -4036,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2024",
+                "values": [6000, 6037, 6074, null, 6148, 6185, 4722, 6259, 6296, 6333, 6370, 6407],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "2025",
+                "values": [6444, 6481, 6518, 6555, 450, 6629, 5166, null, null, 6777, 6814, 6851],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [6888, 6925, 6962, 6999, 7036, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2025-05",
+                "severity": "warning",
+                "text": {
+                  "key": "anomalousBaseline",
+                  "numbers": [450, 6481],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [15000, 15090, 15180, 15270, 15360, 15450, 15540, 15630, 15720, 15810, 15900, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [16080, 16170, 16260, 16350, 16440, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2025",
+                "values": [6444, 6481, 6518, 6555, 450, 6629, 5166, null, null, 6777, 6814, 6851],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "clicks_2025",
+                "values": [null, null, null, null, null, null, null, 2000, null, null, null, 2030],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "sessions_2026",
+                "values": [6888, 6925, 6962, 6999, 7036, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [2060, 2090, 2120, 2150, 3000, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": 1500, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": 6240, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": 24.04, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": 1.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": 2400, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": 64800, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": 3.7, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": 12.7, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, 500, null, null, null, 505, 510, 515, 520, 525, 1500, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, 1300, null, null, null, 1320, 1340, 1360, 1380, 1400, 2400, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, 6000, null, null, null, 6040, 6080, 6120, 6160, 6200, 6240, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, 60000, null, null, null, 60800, 61600, 62400, 63200, 64000, 64800, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "warning",
+                "text": {
+                  "key": "segmentsExceedTotal",
+                  "numbers": [130],
+                  "periods": ["2026-05"],
+                  "dates": []
+                }
+              },
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "outsideGscWindow",
+                  "numbers": [2],
+                  "periods": ["2025-08"],
+                  "dates": []
+                }
+              },
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-09", "2025-11"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 3000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 75400, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 3.98, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 10, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "https://www.example.com/", "ga4_property": null, "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "noGsc",
+      "input": {
+        "reportPeriod": "2026-10",
+        "rows": [
+          { "period": "2025-09", "segment": "organic", "sessions": 4000, "engagementRate": 0.5, "avgSessionSeconds": 100, "keyEvents": 2 },
+          { "period": "2025-09", "segment": "total", "sessions": 9000, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-09", "segment": "organic_google", "sessions": 3700, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "organic", "sessions": 4158, "engagementRate": 0.5131, "avgSessionSeconds": 107.3, "keyEvents": 3 },
+          { "period": "2025-10", "segment": "total", "sessions": 9333, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-10", "segment": "organic_google", "sessions": 3847, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "organic", "sessions": 4316, "engagementRate": 0.5262, "avgSessionSeconds": 114.6, "keyEvents": 4 },
+          { "period": "2025-11", "segment": "total", "sessions": 9666, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-11", "segment": "organic_google", "sessions": 3994, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-12", "segment": "organic", "sessions": 4375, "engagementRate": 0.5393, "avgSessionSeconds": 121.9, "keyEvents": 5 },
+          { "period": "2025-12", "segment": "total", "sessions": 9801, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-12", "segment": "organic_google", "sessions": 4042, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "organic", "sessions": 4533, "engagementRate": 0.5524, "avgSessionSeconds": 129.2, "keyEvents": 6 },
+          { "period": "2026-01", "segment": "total", "sessions": 10134, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-01", "segment": "organic_google", "sessions": 4189, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "organic", "sessions": 4691, "engagementRate": 0.5655, "avgSessionSeconds": 136.5, "keyEvents": 2 },
+          { "period": "2026-02", "segment": "total", "sessions": 10467, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-02", "segment": "organic_google", "sessions": 4336, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "organic", "sessions": 4750, "engagementRate": 0.5786, "avgSessionSeconds": 143.8, "keyEvents": 3 },
+          { "period": "2026-03", "segment": "total", "sessions": 10602, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-03", "segment": "organic_google", "sessions": 4384, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "organic", "sessions": 4908, "engagementRate": 0.5917, "avgSessionSeconds": 151.1, "keyEvents": 4 },
+          { "period": "2026-04", "segment": "total", "sessions": 10935, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-04", "segment": "organic_google", "sessions": 4531, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic", "sessions": 5066, "engagementRate": 0.6048, "avgSessionSeconds": 158.4, "keyEvents": 5 },
+          { "period": "2026-05", "segment": "total", "sessions": 11268, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic_google", "sessions": 4678, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-06", "segment": "organic", "sessions": 5125, "engagementRate": 0.6179, "avgSessionSeconds": 165.7, "keyEvents": 6 },
+          { "period": "2026-06", "segment": "total", "sessions": 11403, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-06", "segment": "organic_google", "sessions": 4726, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-07", "segment": "organic", "sessions": 5283, "engagementRate": 0.631, "avgSessionSeconds": 173, "keyEvents": 2 },
+          { "period": "2026-07", "segment": "total", "sessions": 11736, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-07", "segment": "organic_google", "sessions": 4873, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-08", "segment": "organic", "sessions": 5441, "engagementRate": 0.6441, "avgSessionSeconds": 180.3, "keyEvents": 3 },
+          { "period": "2026-08", "segment": "total", "sessions": 12069, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-08", "segment": "organic_google", "sessions": 5020, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-09", "segment": "organic", "sessions": 5500, "engagementRate": 0.6572, "avgSessionSeconds": 187.6, "keyEvents": 4 },
+          { "period": "2026-09", "segment": "total", "sessions": 12204, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-09", "segment": "organic_google", "sessions": 5068, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-10", "segment": "organic", "sessions": 5658, "engagementRate": 0.6703, "avgSessionSeconds": 194.89999999999998, "keyEvents": 5 },
+          { "period": "2026-10", "segment": "total", "sessions": 12537, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-10", "segment": "organic_google", "sessions": 5215, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": null,
+        "gscProperty": null,
+        "ga4Property": "properties/123456789",
+        "brandRegex": null
+      },
+      "expected": {
+        "report_period": "2026-10",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          { "id": "ga4", "latest_period": "2026-10", "note": null }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 5658,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 36.1,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_engagement_rate",
+              "value": 67,
+              "format": "percent",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "engagementVsLastYear",
+                  "numbers": [51.3],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_session_seconds",
+              "value": 195,
+              "format": "duration",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "durationVsLastYear",
+                  "numbers": [107],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_key_events",
+              "value": 5,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 66.7,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "total_sessions",
+              "value": 12537,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "up",
+                "change_percent": 34.3,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, null, null, null, null, 4000, 4158, 4316, 4375],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [4533, 4691, 4750, 4908, 5066, 5125, 5283, 5441, 5500, 5658, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, null, null, null, null, 9000, 9333, 9666, 9801],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [10134, 10467, 10602, 10935, 11268, 11403, 11736, 12069, 12204, 12537, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search": null
+        },
+        "measured": { "gsc_property": null, "ga4_property": "properties/123456789", "brand_regex": null }
+      }
+    },
+    {
+      "name": "empty",
+      "input": {
+        "reportPeriod": "2026-10",
+        "rows": [],
+        "gsc": null,
+        "gscProperty": null,
+        "ga4Property": null,
+        "brandRegex": null
+      },
+      "expected": {
+        "report_period": "2026-10",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          { "id": "ga4", "latest_period": "2026-10", "note": null }
+        ],
+        "traffic": {
+          "kpis": [
+            { "key": "organic_sessions", "value": null, "format": "integer", "source": "ga4", "period": "2026-10", "trend": null }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search": null
+        },
+        "measured": null
+      }
+    },
+    {
+      "name": "gscOnly",
+      "input": {
+        "reportPeriod": "2026-10",
+        "rows": [],
+        "gsc": {
+          "rows": [
+            { "period": "2026-09", "segment": "total", "clicks": 1234, "impressions": 56789, "ctrFraction": 0.021729560302171196, "position": 10.1 }
+          ],
+          "dataThrough": "2026-10-20",
+          "latestCompletePeriod": "2026-09",
+          "windowStart": "2025-07",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-10",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          { "id": "ga4", "latest_period": "2026-10", "note": null },
+          {
+            "id": "gsc",
+            "latest_period": "2026-09",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-09"],
+              "dates": ["2026-10-20"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            { "key": "organic_sessions", "value": null, "format": "integer", "source": "ga4", "period": "2026-10", "trend": null },
+            {
+              "key": "gsc_clicks",
+              "value": 1234,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-09",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-09"],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, null, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, null, null, null, null, 1234, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-09", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "non_brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "non_brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-09", "trend": null },
+                  { "key": "non_brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-09", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-10", "2026-08"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 1234, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                { "key": "total_impressions", "value": 56789, "format": "integer", "source": "gsc", "period": "2026-09", "trend": null },
+                { "key": "total_ctr", "value": 2.17, "format": "percent", "source": "gsc", "period": "2026-09", "trend": null },
+                { "key": "total_position", "value": 10.1, "format": "decimal", "source": "gsc", "period": "2026-09", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "smallOverlap",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2026-05", "segment": "organic", "sessions": 5555, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2026-05", "segment": "total", "clicks": 4000, "impressions": 120000, "ctrFraction": 0.03333333333333333, "position": 9.9 },
+            { "period": "2026-05", "segment": "brand", "clicks": 1100, "impressions": 9000, "ctrFraction": 0.12222222222222222, "position": 1.9 },
+            { "period": "2026-05", "segment": "non_brand", "clicks": 2910, "impressions": 100000, "ctrFraction": 0.0291, "position": 12.4 }
+          ],
+          "dataThrough": "2026-06-12",
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-03",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": ["2026-06-12"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 5555,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 4000,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -1555,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 5555, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, 5555, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, 4000, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": 1100, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": 9000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": 12.22, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": 1.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": 2910, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": 100000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": 2.91, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": 12.4, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, 1100, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, 2910, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, 9000, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, 100000, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "segmentsExceedTotal",
+                  "numbers": [100.3],
+                  "periods": ["2026-05"],
+                  "dates": []
+                }
+              },
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-06", "2026-04"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 4000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 120000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 3.33, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 9.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "missingSegment",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2026-05", "segment": "organic", "sessions": 5555, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2026-05", "segment": "total", "clicks": 4000, "impressions": 120000, "ctrFraction": 0.03333333333333333, "position": 9.9 }
+          ],
+          "dataThrough": "2026-06-12",
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-03",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": ["2026-06-12"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 5555,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 4000,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -1555,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 5555, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, 5555, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, 4000, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-06", "2026-04"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 4000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 120000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 3.33, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 9.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "mismatchedMonths",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2026-04", "segment": "organic", "sessions": 4444, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2026-05", "segment": "total", "clicks": 4000, "impressions": 120000, "ctrFraction": 0.03333333333333333, "position": 9.9 }
+          ],
+          "dataThrough": "2026-06-12",
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-03",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-04",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": ["2026-06-12"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 4444,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-04",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-04"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 4000,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2026",
+                "values": [null, null, null, 4444, null, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-04",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, 4444, null, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, 4000, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-06", "2026-04"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 4000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 120000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 3.33, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 9.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "comparisonYears",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2022-05", "segment": "organic", "sessions": 7000, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2023-05", "segment": "organic", "sessions": 7111, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2024-05", "segment": "organic", "sessions": 7222, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2025-05", "segment": "organic", "sessions": 7333, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic", "sessions": 7444, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2025-11", "segment": "total", "clicks": 3333, "impressions": 99000, "ctrFraction": 0.033666666666666664, "position": 12.9 },
+            { "period": "2026-05", "segment": "total", "clicks": 4444, "impressions": 111000, "ctrFraction": 0.04003603603603604, "position": 11.7 }
+          ],
+          "dataThrough": "2026-06-12",
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-03",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": ["2026-06-12"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 7444,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "up",
+                "change_percent": 1.5,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 4444,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -3000,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2022",
+                "values": [null, null, null, null, 7000, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "2023",
+                "values": [null, null, null, null, 7111, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "2024",
+                "values": [null, null, null, null, 7222, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "2025",
+                "values": [null, null, null, null, 7333, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 7444, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2025",
+                "values": [null, null, null, null, 7333, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "clicks_2025",
+                "values": [null, null, null, null, null, null, null, null, null, null, 3333, null],
+                "emphasis": false,
+                "style": "dashed"
+              },
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, 7444, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, 4444, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-06", "2026-04"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 4444, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 111000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 4, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 11.7, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "keyEventsTrend",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2025-05", "segment": "organic", "sessions": 6000, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 4 },
+          { "period": "2026-05", "segment": "organic", "sessions": 6600, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 10 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2026-05", "segment": "total", "clicks": 4000, "impressions": 120000, "ctrFraction": 0.03333333333333333, "position": 9.9 }
+          ],
+          "dataThrough": "2026-06-12",
+          "latestCompletePeriod": "2026-05",
+          "windowStart": "2025-03",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": null,
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          },
+          {
+            "id": "gsc",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "gscIncomplete",
+              "numbers": [],
+              "periods": ["2026-05"],
+              "dates": ["2026-06-12"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 6600,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "up",
+                "change_percent": 10,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_key_events",
+              "value": 10,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "up",
+                "change_percent": 150,
+                "text": {
+                  "key": "vsSameMonthLastYear",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 4000,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -2600,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, 6000, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 6600, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, 6600, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, 4000, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_impressions", "value": null, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_ctr", "value": null, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                  { "key": "non_brand_position", "value": null, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, null],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-06", "2026-04"],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": null,
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 4000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_impressions", "value": 120000, "format": "integer", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_ctr", "value": 3.33, "format": "percent", "source": "gsc", "period": "2026-05", "trend": null },
+                { "key": "total_position", "value": 9.9, "format": "decimal", "source": "gsc", "period": "2026-05", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    },
+    {
+      "name": "zeroBaseline",
+      "input": {
+        "reportPeriod": "2026-06",
+        "rows": [
+          { "period": "2025-05", "segment": "organic", "sessions": 0, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "organic", "sessions": 7777, "engagementRate": 0.4444, "avgSessionSeconds": 77.7, "keyEvents": 0 },
+          { "period": "2026-05", "segment": "total", "sessions": 9999, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": null,
+        "gscProperty": null,
+        "ga4Property": "properties/123456789",
+        "brandRegex": null
+      },
+      "expected": {
+        "report_period": "2026-06",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          {
+            "id": "ga4",
+            "latest_period": "2026-05",
+            "note": {
+              "key": "ga4Incomplete",
+              "numbers": [],
+              "periods": [],
+              "dates": []
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 7777,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_engagement_rate",
+              "value": 44.4,
+              "format": "percent",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "engagementShare",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "organic_session_seconds",
+              "value": 78,
+              "format": "duration",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "durationPerVisit",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "total_sessions",
+              "value": 9999,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-05",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-05"],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2025",
+                "values": [null, null, null, null, 0, null, null, null, null, null, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 7777, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-05",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2026",
+                "values": [null, null, null, null, 9999, null, null, null, null, null, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search": null
+        },
+        "measured": { "gsc_property": null, "ga4_property": "properties/123456789", "brand_regex": null }
+      }
+    },
+    {
+      "name": "singleFindings",
+      "input": {
+        "reportPeriod": "2026-10",
+        "rows": [
+          { "period": "2026-10", "segment": "organic", "sessions": 3210, "engagementRate": 0, "avgSessionSeconds": 0, "keyEvents": 0 }
+        ],
+        "gsc": {
+          "rows": [
+            { "period": "2026-10", "segment": "total", "clicks": 1500, "impressions": 60000, "ctrFraction": 0.025, "position": 8.8 },
+            { "period": "2026-10", "segment": "brand", "clicks": 400, "impressions": 3000, "ctrFraction": 0.13333333333333333, "position": 1.5 },
+            { "period": "2026-10", "segment": "non_brand", "clicks": 1050, "impressions": 50000, "ctrFraction": 0.021, "position": 9.4 }
+          ],
+          "dataThrough": "2026-11-15",
+          "latestCompletePeriod": "2026-10",
+          "windowStart": "2025-08",
+          "outOfWindowPeriods": [],
+          "queries": null,
+          "pages": [
+            { "url": "https://example.com/gadgets/blue", "clicks": 2, "impressions": 900, "ctrFraction": 0.0022222, "position": 5.5 },
+            { "url": "https://example.com/widgets/deep", "clicks": 1, "impressions": 400, "ctrFraction": 0.0025, "position": 35.5 }
+          ],
+          "queryPages": null
+        },
+        "gscProperty": "sc-domain:example.com",
+        "ga4Property": "properties/123456789",
+        "brandRegex": "(?i)(acme)"
+      },
+      "expected": {
+        "report_period": "2026-10",
+        "data_status": "live",
+        "data_status_note": null,
+        "sources": [
+          { "id": "ga4", "latest_period": "2026-10", "note": null },
+          {
+            "id": "gsc",
+            "latest_period": "2026-10",
+            "note": {
+              "key": "gscLag",
+              "numbers": [],
+              "periods": [],
+              "dates": ["2026-11-15"]
+            }
+          }
+        ],
+        "traffic": {
+          "kpis": [
+            {
+              "key": "organic_sessions",
+              "value": 3210,
+              "format": "integer",
+              "source": "ga4",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-10"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "gsc_clicks",
+              "value": 1500,
+              "format": "integer",
+              "source": "gsc",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "noComparison",
+                  "numbers": [],
+                  "periods": ["2025-10"],
+                  "dates": []
+                }
+              }
+            },
+            {
+              "key": "clicks_vs_sessions",
+              "value": -1710,
+              "format": "signed",
+              "source": "gsc",
+              "period": "2026-10",
+              "trend": {
+                "direction": "note",
+                "change_percent": null,
+                "text": {
+                  "key": "clicksMinusVisits",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            }
+          ],
+          "organic": {
+            "id": "traffic_organic",
+            "type": "line",
+            "palette": "ramp",
+            "height": 290,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "2026",
+                "values": [null, null, null, null, null, null, null, null, null, 3210, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [
+              {
+                "period": "2026-10",
+                "severity": "info",
+                "text": {
+                  "key": "noKeyEvents",
+                  "numbers": [],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": []
+          },
+          "total": {
+            "id": "traffic_total",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": [],
+            "series": [],
+            "annotations": [],
+            "insights": []
+          },
+          "search_comparison": {
+            "id": "traffic_search_comparison",
+            "type": "line",
+            "palette": "ramp",
+            "height": 240,
+            "labels": ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"],
+            "series": [
+              {
+                "key": "sessions_2026",
+                "values": [null, null, null, null, null, null, null, null, null, 3210, null, null],
+                "emphasis": false,
+                "style": "solid"
+              },
+              {
+                "key": "clicks_2026",
+                "values": [null, null, null, null, null, null, null, null, null, 1500, null, null],
+                "emphasis": true,
+                "style": "solid"
+              }
+            ],
+            "annotations": [],
+            "insights": []
+          },
+          "search": {
+            "id": "traffic_search",
+            "segments": [
+              {
+                "key": "brand",
+                "metrics": [
+                  { "key": "brand_clicks", "value": 400, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "brand_impressions", "value": 3000, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "brand_ctr", "value": 13.33, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "brand_position", "value": 1.5, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+                ]
+              },
+              {
+                "key": "non_brand",
+                "metrics": [
+                  { "key": "non_brand_clicks", "value": 1050, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "non_brand_impressions", "value": 50000, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "non_brand_ctr", "value": 2.1, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                  { "key": "non_brand_position", "value": 9.4, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+                ]
+              }
+            ],
+            "clicks": {
+              "id": "traffic_search_clicks",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, 400],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, 1050],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "impressions": {
+              "id": "traffic_search_impressions",
+              "type": "line",
+              "palette": "segment",
+              "height": 240,
+              "labels": ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08", "2026-09", "2026-10"],
+              "series": [
+                {
+                  "key": "brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, 3000],
+                  "emphasis": false,
+                  "style": "solid"
+                },
+                {
+                  "key": "non_brand",
+                  "values": [null, null, null, null, null, null, null, null, null, null, null, null, 50000],
+                  "emphasis": false,
+                  "style": "solid"
+                }
+              ],
+              "annotations": [],
+              "insights": []
+            },
+            "annotations": [
+              {
+                "period": "2026-10",
+                "severity": "info",
+                "text": {
+                  "key": "anonymizedQueries",
+                  "numbers": [96.7],
+                  "periods": ["2026-10"],
+                  "dates": []
+                }
+              },
+              {
+                "period": null,
+                "severity": "info",
+                "text": {
+                  "key": "missingGscMonths",
+                  "numbers": [],
+                  "periods": ["2025-10", "2026-09"],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-10",
+                "severity": "warning",
+                "text": {
+                  "key": "pagesNotClicked",
+                  "numbers": [1, 1, 10, 300],
+                  "periods": [],
+                  "dates": []
+                }
+              },
+              {
+                "period": "2026-10",
+                "severity": "warning",
+                "text": {
+                  "key": "pagesRankDeep",
+                  "numbers": [1, 20, 300],
+                  "periods": [],
+                  "dates": []
+                }
+              }
+            ],
+            "insights": [],
+            "queries": null,
+            "pages": [
+              { "url": "https://example.com/gadgets/blue", "path": "/gadgets/blue", "clicks": 2, "impressions": 900, "ctr_percent": 0.22, "position": 5.5 },
+              { "url": "https://example.com/widgets/deep", "path": "/widgets/deep", "clicks": 1, "impressions": 400, "ctr_percent": 0.25, "position": 35.5 }
+            ],
+            "total": {
+              "key": "total",
+              "metrics": [
+                { "key": "total_clicks", "value": 1500, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                { "key": "total_impressions", "value": 60000, "format": "integer", "source": "gsc", "period": "2026-10", "trend": null },
+                { "key": "total_ctr", "value": 2.5, "format": "percent", "source": "gsc", "period": "2026-10", "trend": null },
+                { "key": "total_position", "value": 8.8, "format": "decimal", "source": "gsc", "period": "2026-10", "trend": null }
+              ]
+            },
+            "query_pages": null
+          }
+        },
+        "measured": { "gsc_property": "sc-domain:example.com", "ga4_property": "properties/123456789", "brand_regex": "(?i)(acme)" }
+      }
+    }
+  ]
+}

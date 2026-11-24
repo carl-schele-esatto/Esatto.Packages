@@ -1,0 +1,183 @@
+[
+  {
+    "name": "channel, source, sessions; zero-session rows dropped",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "Email"
+            },
+            {
+              "value": "newsletter"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "400"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "Organic Social"
+            },
+            {
+              "value": "linkedin.com"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "25"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "Direct"
+            },
+            {
+              "value": "(direct)"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "0"
+            }
+          ]
+        }
+      ],
+      "rowCount": 3,
+      "kind": "analyticsData#runReport"
+    },
+    "sources": [
+      {
+        "channel": "Email",
+        "source": "newsletter",
+        "sessions": 400
+      },
+      {
+        "channel": "Organic Social",
+        "source": "linkedin.com",
+        "sessions": 25
+      }
+    ]
+  },
+  {
+    "name": "missing dimensions fall back to empty strings",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "Email"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "metricValues": [
+            {
+              "value": "2"
+            }
+          ]
+        }
+      ],
+      "rowCount": 2,
+      "kind": "analyticsData#runReport"
+    },
+    "sources": [
+      {
+        "channel": "Email",
+        "source": "",
+        "sessions": 3
+      },
+      {
+        "channel": "",
+        "source": "",
+        "sessions": 2
+      }
+    ]
+  },
+  {
+    "name": "unparseable sessions drop the row",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [
+        {
+          "dimensionValues": [
+            {
+              "value": "Email"
+            },
+            {
+              "value": "a"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "x"
+            }
+          ]
+        },
+        {
+          "dimensionValues": [
+            {
+              "value": "Email"
+            },
+            {
+              "value": "b"
+            }
+          ],
+          "metricValues": [
+            {
+              "value": "1"
+            }
+          ]
+        }
+      ],
+      "rowCount": 2,
+      "kind": "analyticsData#runReport"
+    },
+    "sources": [
+      {
+        "channel": "Email",
+        "source": "b",
+        "sessions": 1
+      }
+    ]
+  },
+  {
+    "name": "empty rows",
+    "response": {
+      "dimensionHeaders": [
+        {
+          "name": "date"
+        }
+      ],
+      "rows": [],
+      "rowCount": 0,
+      "kind": "analyticsData#runReport"
+    },
+    "sources": []
+  }
+]
